@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.dotnet
+/.dotnet-cli/.dotnet
+/.dotnet-home/.dotnet
+/.vs
+/bin
+/IecSlaveSimulator/obj/x64/Debug/net48
+/IecSlaveSimulator/obj/Release/net48
+/obj
+/packages
+/Vendor/lib60870/obj
+/IecSlaveSimulator/bin/x64/Debug/net48
+/IecSlaveSimulator/obj
