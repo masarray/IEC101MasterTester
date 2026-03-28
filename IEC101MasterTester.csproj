@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{761B5358-1DB2-4B03-9804-4EA37CFFB5BB}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>IEC101MasterTester</RootNamespace>
+    <AssemblyName>IEC101MasterTester</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="netstandard">
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades\netstandard.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.IO.Ports, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.IO.Ports.6.0.0\lib\net461\System.IO.Ports.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SharedUi\DemoModeAlert.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ConnectionSetupWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SharedUi\AboutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SharedUi\ModernTheme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\FindingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\LineMonitorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NucSoeAuditWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SignalCommandWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\BufferedEventAuditWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AvailabilityDashboardWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NucLinkSetupWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\SemiCircleGauge.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\NucRedundancyWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Models\ConnectionSettings.cs" />
+    <Compile Include="Models\ConnectionStatusInfo.cs" />
+    <Compile Include="Models\AvailabilityTimelineRow.cs" />
+    <Compile Include="Models\BufferReplaySession.cs" />
+    <Compile Include="Models\CommandLifeMonitorRow.cs" />
+    <Compile Include="Models\EventLogRow.cs" />
+    <Compile Include="Models\FindingRow.cs" />
+    <Compile Include="Models\Iec101ChannelOperationMode.cs" />
+    <Compile Include="Models\LineMonitorRow.cs" />
+    <Compile Include="Models\Licensing\DemoAlertMode.cs" />
+    <Compile Include="Models\Licensing\LicenseSnapshot.cs" />
+    <Compile Include="Models\Licensing\LicenseState.cs" />
+    <Compile Include="Models\Licensing\PersistedLicensePayload.cs" />
+    <Compile Include="Models\NucChannelRole.cs" />
+    <Compile Include="Models\NucChannelSnapshot.cs" />
+    <Compile Include="Models\NucChannelState.cs" />
+    <Compile Include="Models\NucControllerState.cs" />
+    <Compile Include="Models\NucRedundancyConnectionEventArgs.cs" />
+    <Compile Include="Models\NucRedundancyLineMonitorEventArgs.cs" />
+    <Compile Include="Models\NucLinkHealthState.cs" />
+    <Compile Include="Models\NucRedundancySettings.cs" />
+    <Compile Include="Models\NucRedundancySessionState.cs" />
+    <Compile Include="Models\NucRedundancyValueEventArgs.cs" />
+    <Compile Include="Models\PointDefinition.cs" />
+    <Compile Include="Models\RedundancyTimelineRow.cs" />
+    <Compile Include="Models\RedundancyEventJournalRow.cs" />
+    <Compile Include="Models\StatusHistoryRow.cs" />
+    <Compile Include="Models\SlaveAvailabilityState.cs" />
+    <Compile Include="Models\ValueViewerRow.cs" />
+    <Compile Include="Services\Iec101\Iec101DataMapper.cs" />
+    <Compile Include="Services\Iec101\Iec101MasterService.cs" />
+    <Compile Include="Services\Iec101\IIec101MasterService.cs" />
+    <Compile Include="Services\Iec101\LineMonitorFormatter.cs" />
+    <Compile Include="Services\Licensing\HardwareFingerprintService.cs" />
+    <Compile Include="Services\Licensing\LicenseCryptoService.cs" />
+    <Compile Include="Services\Licensing\LicenseManager.cs" />
+    <Compile Include="Services\Licensing\LicenseStore.cs" />
+    <Compile Include="Services\Profiles\OfficialPointProfile.cs" />
+    <Compile Include="Services\Profiles\OfficialPointProfiles.cs" />
+    <Compile Include="Services\Licensing\TrialPolicyEvaluator.cs" />
+    <Compile Include="Services\Redundancy\INucRedundancyService.cs" />
+    <Compile Include="Services\Redundancy\INucLinkChannel.cs" />
+    <Compile Include="Services\Redundancy\NucIec101LinkChannel.cs" />
+    <Compile Include="Services\Redundancy\NucRedundancyService.cs" />
+    <Compile Include="Services\Iec101\SerialPortStream.cs" />
+    <Compile Include="Services\Settings\ISettingsStore.cs" />
+    <Compile Include="Services\Settings\INucRedundancySettingsStore.cs" />
+    <Compile Include="Services\Settings\JsonNucRedundancySettingsStore.cs" />
+    <Compile Include="Services\Settings\JsonSettingsStore.cs" />
+    <Compile Include="SharedUi\DemoModeAlert.xaml.cs">
+      <DependentUpon>DemoModeAlert.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\ConnectionSetupViewModel.cs" />
+    <Compile Include="ViewModels\CommandLifeTrackerEngine.cs" />
+    <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\NucLinkSetupViewModel.cs" />
+    <Compile Include="ViewModels\NucEndpointPanelViewModel.cs" />
+    <Compile Include="ViewModels\NucInfoRowViewModel.cs" />
+    <Compile Include="ViewModels\NucLinkVisualViewModel.cs" />
+    <Compile Include="ViewModels\NucStatusBadgeViewModel.cs" />
+    <Compile Include="ViewModels\RelayCommand.cs" />
+    <Compile Include="ViewModels\ViewModelBase.cs" />
+    <Compile Include="Views\ConnectionSetupWindow.xaml.cs">
+      <DependentUpon>ConnectionSetupWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SharedUi\AboutWindow.xaml.cs">
+      <DependentUpon>AboutWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\FindingsWindow.xaml.cs">
+      <DependentUpon>FindingsWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\LineMonitorWindow.xaml.cs">
+      <DependentUpon>LineMonitorWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\NucSoeAuditWindow.xaml.cs">
+      <DependentUpon>NucSoeAuditWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SignalCommandWindow.xaml.cs">
+      <DependentUpon>SignalCommandWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\BufferedEventAuditWindow.xaml.cs">
+      <DependentUpon>BufferedEventAuditWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\AvailabilityDashboardWindow.xaml.cs">
+      <DependentUpon>AvailabilityDashboardWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\NucLinkSetupWindow.xaml.cs">
+      <DependentUpon>NucLinkSetupWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Controls\SemiCircleGauge.xaml.cs">
+      <DependentUpon>SemiCircleGauge.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\NucRedundancyWindow.xaml.cs">
+      <DependentUpon>NucRedundancyWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Vendor\lib60870\**\*.cs" Exclude="Vendor\lib60870\Properties\AssemblyInfo.cs;Vendor\lib60870\obj\**\*.cs;Vendor\lib60870\bin\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="SharedUi\Assets\Icons\iec60870-icon.png" />
+    <Resource Include="SharedUi\Assets\Profile\ari-profile.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="app.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="iec60870-icon.jpg" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

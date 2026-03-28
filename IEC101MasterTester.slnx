@@ -1,0 +1,12 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="IEC101MasterTester.csproj" Id="761b5358-1db2-4b03-9804-4ea37cffb5bb">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
+  <Project Path="IecSlaveSimulator\IecSlaveSimulator.csproj" Id="5d13a9b4-76cb-4cfe-a51d-5d0e4df69a91">
+    <Platform Solution="Debug|x64" Project="x64" />
+  </Project>
+</Solution>

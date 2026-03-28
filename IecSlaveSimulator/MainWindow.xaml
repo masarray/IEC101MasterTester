@@ -1,0 +1,608 @@
+<Window x:Class="IecSlaveSimulator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:model="clr-namespace:IecSlaveSimulator.Models"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="IEC-101 RTU Database Editor"
+        Width="1680"
+        Height="980"
+        MinWidth="1200"
+        MinHeight="760"
+        Background="#0F172A">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        <ObjectDataProvider x:Key="SignalTypeOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:SlaveSignalType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="SignalClassOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:SignalClass" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="PublishModeOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:SignalPublishMode" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        
+        <ObjectDataProvider x:Key="CommandBindingModeOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:CommandBindingMode" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        
+        <ObjectDataProvider x:Key="CommandOperateModeOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:CommandOperateMode" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="AnalogAnimationOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:AnalogAnimationKind" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="DiscreteAnimationOptionsResource" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:DiscreteAnimationKind" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <x:Array x:Key="LiveCotOptionsResource" Type="{x:Type sys:String}">
+            <sys:String>BgScan</sys:String>
+            <sys:String>Spont</sys:String>
+            <sys:String>GI</sys:String>
+            <sys:String>CmdFb</sys:String>
+        </x:Array>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style x:Key="RuntimeValueTextStyle" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+        </Style>
+
+        <Style x:Key="InactiveDisplayTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource PopupMutedBrush}" />
+        </Style>
+        <Style x:Key="AnalogOnlyDisplayTextStyle" TargetType="TextBlock" BasedOn="{StaticResource InactiveDisplayTextStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsAnalogFields}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DiscreteOnlyDisplayTextStyle" TargetType="TextBlock" BasedOn="{StaticResource InactiveDisplayTextStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsDiscreteFields}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CommandOnlyDisplayTextStyle" TargetType="TextBlock" BasedOn="{StaticResource InactiveDisplayTextStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsCommandFields}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="InactiveTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource DarkPopupTextBoxStyle}">
+            <Setter Property="Foreground" Value="{StaticResource PopupMutedBrush}" />
+            <Setter Property="Background" Value="{StaticResource PopupInputDisabledBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+        </Style>
+        <Style x:Key="InactiveComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource DarkPopupComboBoxStyle}">
+            <Setter Property="Foreground" Value="{StaticResource PopupMutedBrush}" />
+            <Setter Property="Background" Value="{StaticResource PopupInputDisabledBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+        </Style>
+
+        <Style x:Key="AnalogOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource InactiveTextBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsAnalogFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AnalogOnlyComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource InactiveComboBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsAnalogFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DiscreteOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource InactiveTextBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsDiscreteFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="DiscreteOnlyComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource InactiveComboBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsDiscreteFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CommandOnlyTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource InactiveTextBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsCommandFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CommandOnlyComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource InactiveComboBoxStyle}">
+            <Setter Property="IsEnabled" Value="False" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsCommandFields}" Value="True">
+                    <Setter Property="IsEnabled" Value="True" />
+                    <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                    <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="GridEditingComboBoxStyle" TargetType="ComboBox" BasedOn="{StaticResource DarkPopupComboBoxStyle}">
+            <Setter Property="IsEditable" Value="False" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="GridEditingTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource DarkPopupTextBoxStyle}" />
+        <Style x:Key="GridDisplayTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="UiScaleTransform" ScaleX="1" ScaleY="1" />
+        </Grid.LayoutTransform>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="180" />
+        </Grid.RowDefinitions>
+
+                <Border Background="{StaticResource HeaderBrush}" Padding="18">
+            <DockPanel>
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Left">
+                    <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="White" Text="IEC-101 RTU Database Editor" />
+                    <TextBlock Margin="0,4,0,0" Foreground="#CBD5E1" Text="Advanced database editor and configuration workspace for the RTU simulator." />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Width="30"
+                            Height="30"
+                            Margin="0,0,8,0"
+                            Click="About_Click"
+                            Background="#1F2937"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            ToolTip="About">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="15">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <TextBlock Text="?" FontSize="15" FontWeight="Bold" />
+                    </Button>
+                    <Border Padding="26,8,16,6" CornerRadius="18" Background="#0F766E">
+                        <TextBlock Foreground="White" FontWeight="SemiBold" Margin="10,10,0,9" Text="{Binding StatusText}" />
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="12,12,12,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>            <Border Grid.Row="0" Padding="12" CornerRadius="10" Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Left">
+                        <TextBlock FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" Text="Connection Setup" />
+                        <TextBlock Margin="0,4,0,0" Foreground="{StaticResource TextSubBrush}" Text="{Binding ConnectionSummary}" />
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding RefreshPortsCommand}" Content="Refresh Ports" />
+                        <Button Padding="14,6" Click="ConnectionSetup_Click" Content="Open Setup" />
+                        <Button Margin="8,0,0,0" Padding="14,6" Click="OpenNucSlave_Click" Content="Open RTU Workspace" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Row="1" Margin="0,12,0,0" Padding="12" CornerRadius="10" Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1" Visibility="{Binding ShowEditChrome, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Margin="0,0,8,0" Padding="14,8" Command="{Binding NewProjectCommand}" Content="New Project" />
+                    <Button Grid.Column="1" Margin="0,0,8,0" Padding="14,8" Click="Load_Click" Content="Load JSON" />
+                    <Button Grid.Column="2" Margin="0,0,8,0" Padding="14,8" Click="Save_Click" Content="Save JSON" />
+                    <Button Grid.Column="3" Margin="0,0,8,0" Padding="14,8" Command="{Binding AddSignalCommand}" Content="Add Signal" />
+                    <Button Grid.Column="4" Margin="0,0,8,0" Padding="14,8" Command="{Binding RemoveSignalCommand}" Content="Delete Signal" />
+                    <Button Grid.Column="5" Margin="0,0,8,0" Padding="14,8" Command="{Binding RunCommand}" Content="RUN" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2" Margin="0,12,0,0" Padding="12" CornerRadius="10" Background="{StaticResource HeaderAltBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" Visibility="{Binding ShowRuntimeChrome, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Button Margin="0,0,8,0" Padding="14,8" Command="{Binding StopCommand}" Content="STOP" />
+                        <Button Margin="0,0,8,0" Padding="14,8" Click="Save_Click" Content="Save JSON" />
+                        <Button Margin="0,0,8,0" Padding="14,8" Click="RuntimeSignalControl_Click" Content="Signal Control" />
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding SimulateOpenCommand}" Content="Sim OPEN" />
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding SimulateCloseCommand}" Content="Sim CLOSE" />
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding SimulateOnCommand}" Content="Sim ON" />
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding SimulateOffCommand}" Content="Sim OFF" />
+                        <Button Margin="0,0,8,0" Padding="12,6" Command="{Binding InjectBufferBurstCommand}" Content="Inject 600+" />
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource TextSubBrush}" Text="{Binding SelectedComPort, StringFormat=Runtime on {0}}" />
+                        <StackPanel Margin="0,4,0,0" Visibility="{Binding IsNucDualLinkMode, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock HorizontalAlignment="Right" Foreground="{StaticResource TextMainBrush}" FontWeight="SemiBold" Text="{Binding NucRuntimeSummary}" />
+                            <TextBlock HorizontalAlignment="Right" Margin="0,2,0,0" Foreground="{StaticResource TextSubBrush}" Text="{Binding NucLink1StatusText}" />
+                            <TextBlock HorizontalAlignment="Right" Margin="0,2,0,0" Foreground="{StaticResource TextSubBrush}" Text="{Binding NucLink2StatusText}" />
+                            <TextBlock HorizontalAlignment="Right" Margin="0,2,0,0" Foreground="{StaticResource TextSubBrush}" Text="{Binding NucBufferStatusText}" />
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <Grid Grid.Row="3" Margin="0,12,0,0">
+                <Grid.Resources>
+                    <BooleanToVisibilityConverter x:Key="GridBoolToVisibility" />
+                </Grid.Resources>
+
+                <Grid Visibility="{Binding IsEditMode, Converter={StaticResource GridBoolToVisibility}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Padding="10" CornerRadius="10" Background="#2A2212" BorderBrush="#B45309" BorderThickness="1">
+                        <TextBlock Foreground="#FDE68A" TextWrapping="Wrap"><Run Text="Publish mode is the master setting. " /><Run Text="Bg/Spont flags are resolved automatically: BackgroundScan=Bg only, Spontaneous=Spont only, BackgroundAndSpontaneous=both, GI/CommandFeedback=neither." /></TextBlock>
+                    </Border>
+                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding EditableSignals}" SelectedItem="{Binding SelectedEditSignal}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="False" HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="All" AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}" Background="{StaticResource PopupSurfaceBrush}">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="On" Binding="{Binding IsEnabled}" Width="50" />
+                            <DataGridTextColumn Header="IOA" Binding="{Binding Ioa}" Width="70" />
+                            <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="170" />
+                            <DataGridComboBoxColumn Header="Type" SelectedItemBinding="{Binding SignalType}" ItemsSource="{Binding Source={StaticResource SignalTypeOptionsResource}}" Width="165" ElementStyle="{StaticResource GridEditingComboBoxStyle}" EditingElementStyle="{StaticResource GridEditingComboBoxStyle}" />
+                            <DataGridTextColumn Header="CA" Binding="{Binding Casdu}" Width="60" />
+                            <DataGridComboBoxColumn Header="Class" SelectedItemBinding="{Binding SignalClass}" ItemsSource="{Binding Source={StaticResource SignalClassOptionsResource}}" Width="90" ElementStyle="{StaticResource GridEditingComboBoxStyle}" EditingElementStyle="{StaticResource GridEditingComboBoxStyle}" />
+                            <DataGridComboBoxColumn Header="Publish" SelectedItemBinding="{Binding PublishMode}" ItemsSource="{Binding Source={StaticResource PublishModeOptionsResource}}" Width="170" ElementStyle="{StaticResource GridEditingComboBoxStyle}" EditingElementStyle="{StaticResource GridEditingComboBoxStyle}" />
+                            <DataGridTextColumn Header="Bg" Binding="{Binding BackgroundEnabled}" IsReadOnly="True" Width="50" />
+                            <DataGridTextColumn Header="Spont" Binding="{Binding SpontaneousEnabled}" IsReadOnly="True" Width="70" />
+                            <DataGridTextColumn Header="Default Value" Binding="{Binding DefaultValue}" Width="110" />
+                            <DataGridTextColumn Header="Quality" Binding="{Binding Quality}" Width="90" />
+                            <DataGridCheckBoxColumn Header="TS" Binding="{Binding UseTimestamp}" Width="45" />
+
+                            <DataGridTemplateColumn Header="Linked Status IOA" Width="110">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding LinkedStatusIoa}" Style="{StaticResource CommandOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding LinkedStatusIoa, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CommandOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Cmd Semantic" Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding CommandSemantic}" Style="{StaticResource CommandOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource CommandSemanticOptionsResource}}" SelectedItem="{Binding CommandSemantic}" Style="{StaticResource CommandOnlyComboBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            
+                            <DataGridTemplateColumn Header="Cmd Mode" Width="145">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding CommandOperateModeLabel}" Style="{StaticResource CommandOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource CommandOperateModeOptionsResource}}" SelectedItem="{Binding CommandOperateMode}" Style="{StaticResource CommandOnlyComboBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Cmd Delay(ms)" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding CommandDelayMs}" Style="{StaticResource CommandOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding CommandDelayMs, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CommandOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Analog Anim" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AnalogAnimation}" Style="{StaticResource AnalogOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource AnalogAnimationOptionsResource}}" SelectedItem="{Binding AnalogAnimation}" Style="{StaticResource AnalogOnlyComboBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="From" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AnalogFrom}" Style="{StaticResource AnalogOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding AnalogFrom, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AnalogOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="To" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AnalogTo}" Style="{StaticResource AnalogOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding AnalogTo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AnalogOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Step" Width="70">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AnalogStep}" Style="{StaticResource AnalogOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding AnalogStep, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AnalogOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Anim(ms)" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding AnimationIntervalMs}" Style="{StaticResource AnalogOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding AnimationIntervalMs, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource AnalogOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Discrete Anim" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DiscreteAnimation}" Style="{StaticResource DiscreteOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox ItemsSource="{Binding Source={StaticResource DiscreteAnimationOptionsResource}}" SelectedItem="{Binding DiscreteAnimation}" Style="{StaticResource DiscreteOnlyComboBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Toggle(s)" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding ToggleIntervalSeconds}" Style="{StaticResource DiscreteOnlyDisplayTextStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding ToggleIntervalSeconds, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource DiscreteOnlyTextBoxStyle}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="220" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+
+                <Grid Visibility="{Binding IsRuntime, Converter={StaticResource GridBoolToVisibility}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Padding="10" CornerRadius="10" Background="#12261F" BorderBrush="#10B981" BorderThickness="1">
+                        <WrapPanel>
+                            <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#A7F3D0" Text="Compact runtime mode: only operational columns are shown." />
+                            <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Foreground="#A7F3D0" Text="Select a command row, then use Sim OPEN/CLOSE/ON/OFF above." />
+                        </WrapPanel>
+                    </Border>
+                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding RuntimeSignals}" SelectedItem="{Binding SelectedRuntimeSignal}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="False" HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="All" AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}" Background="{StaticResource PopupSurfaceBrush}" MouseDoubleClick="RuntimeSignalsGrid_MouseDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="On" Binding="{Binding IsEnabled}" IsReadOnly="True" Width="50" />
+                            <DataGridTextColumn Header="IOA" Binding="{Binding Ioa}" IsReadOnly="True" Width="70" />
+                            <DataGridTextColumn Header="Label" Binding="{Binding Label}" IsReadOnly="True" Width="180" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding TypeLabel}" IsReadOnly="True" Width="150" />
+                            <DataGridTemplateColumn Header="Value" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="RuntimeValueBadge" CornerRadius="4" Padding="8,2" Background="#1F2937" BorderBrush="#334155" BorderThickness="1">
+                                            <TextBlock Text="{Binding RuntimeValue}" Style="{StaticResource RuntimeValueTextStyle}" />
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding RuntimeValue}" Value="ON">
+                                                <Setter TargetName="RuntimeValueBadge" Property="Background" Value="#172033" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="BorderBrush" Value="#7DD3FC" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="TextElement.Foreground" Value="#7DD3FC" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="TextElement.FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RuntimeValue}" Value="OFF">
+                                                <Setter TargetName="RuntimeValueBadge" Property="Background" Value="#14211B" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="BorderBrush" Value="#4ADE80" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="TextElement.Foreground" Value="#4ADE80" />
+                                                <Setter TargetName="RuntimeValueBadge" Property="TextElement.FontWeight" Value="Bold" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridComboBoxColumn Header="Live COT" SelectedItemBinding="{Binding LiveCot}" ItemsSource="{Binding Source={StaticResource LiveCotOptionsResource}}" Width="100" ElementStyle="{StaticResource GridEditingComboBoxStyle}" EditingElementStyle="{StaticResource GridEditingComboBoxStyle}" />
+                            <DataGridTextColumn Header="Quality" Binding="{Binding Quality, UpdateSourceTrigger=PropertyChanged}" Width="90" />
+                            <DataGridTextColumn Header="Class" Binding="{Binding SignalClass}" IsReadOnly="True" Width="80" />
+                            <DataGridTextColumn Header="Publish" Binding="{Binding PublishSummary}" IsReadOnly="True" Width="115" />
+                            <DataGridTextColumn Header="Bind IOA" Binding="{Binding LinkedStatusIoa}" IsReadOnly="True" Width="90" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="12,12,12,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="659*" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="824*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Padding="12" CornerRadius="10" Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1" >
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource TextMainBrush}" Text="Status History" />
+                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding StatusHistory}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" RowHeaderWidth="0" HeadersVisibility="Column" GridLinesVisibility="All" AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}" Background="{StaticResource PopupSurfaceBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="180" />
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="90" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="#CBD5E1" />
+            <Border Grid.Column="2" Padding="12" CornerRadius="10" Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" FontWeight="SemiBold" FontSize="15" Foreground="{StaticResource TextMainBrush}" Text="Link Activity" />
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" Margin="30,0,12,0">
+                                <Ellipse Width="10" Height="10" Margin="0,0,4,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#CBD5E1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsTxActive}" Value="True">
+                                                    <Setter Property="Fill" Value="#F59E0B" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="TX" VerticalAlignment="Center" Foreground="{StaticResource TextSubBrush}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="10" Height="10" Margin="0,0,4,0">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="#CBD5E1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRxActive}" Value="True">
+                                                    <Setter Property="Fill" Value="#10B981" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="RX" VerticalAlignment="Center" Foreground="{StaticResource TextSubBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DockPanel>
+                    <DataGrid Grid.Row="1" Margin="0,10,0,0" ItemsSource="{Binding LinkActivity}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" RowHeaderWidth="0" HeadersVisibility="Column" GridLinesVisibility="All" AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}" Background="{StaticResource PopupSurfaceBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="180" />
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="90" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

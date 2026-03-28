@@ -1,0 +1,37 @@
+<UserControl x:Class="IEC101MasterTester.Controls.SemiCircleGauge"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <Grid>
+        <Viewbox Stretch="Uniform">
+            <Grid Width="220" Height="160">
+                <Canvas Width="220" Height="140">
+                    <Path x:Name="TrackPath"
+                          Stroke="{Binding TrackBrush, ElementName=Root}"
+                          StrokeThickness="16"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round"
+                          Data="M 20,125 A 90,90 0 0 1 200,125" />
+                    <Path x:Name="ValuePath"
+                          Stroke="{Binding GaugeBrush, ElementName=Root}"
+                          StrokeThickness="16"
+                          StrokeStartLineCap="Round"
+                          StrokeEndLineCap="Round" />
+                </Canvas>
+
+                <StackPanel VerticalAlignment="Center" Margin="0,70,0,0">
+                    <TextBlock Text="{Binding DisplayText, ElementName=Root}"
+                               HorizontalAlignment="Center"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="{Binding ValueTextBrush, ElementName=Root}" />
+                    <TextBlock Text="{Binding StateText, ElementName=Root}"
+                               HorizontalAlignment="Center"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="{Binding GaugeBrush, ElementName=Root}" />
+                </StackPanel>
+            </Grid>
+        </Viewbox>
+    </Grid>
+</UserControl>

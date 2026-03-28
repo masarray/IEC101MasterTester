@@ -1,0 +1,289 @@
+<Window x:Class="IecSlaveSimulator.Views.NucSlaveWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IEC-101 NUC Slave Test"
+        Width="1320"
+        Height="860"
+        MinWidth="1080"
+        MinHeight="720"
+        Background="#0F172A">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="112" />
+                <Setter Property="Height" Value="72" />
+                <Setter Property="Margin" Value="0,0,10,0" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                <Setter Property="Background" Value="{StaticResource HeaderAltBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PopupBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="ToolbarIconStyle" TargetType="TextBlock">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                <Setter Property="Margin" Value="0,0,0,6" />
+            </Style>
+
+            <Style x:Key="ToolbarTextStyle" TargetType="TextBlock">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+            </Style>
+
+            <Style x:Key="DarkLinkActionButtonStyle" TargetType="Button">
+                <Setter Property="MinWidth" Value="138" />
+                <Setter Property="Height" Value="30" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="Foreground" Value="{StaticResource TextMainBrush}" />
+                <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource PopupInputBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Cursor" Value="Hand" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="260" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Padding="16"
+                CornerRadius="14"
+                Background="{StaticResource HeaderBrush}"
+                BorderBrush="{StaticResource PopupBorderBrush}"
+                BorderThickness="1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="NUC Slave Test" FontSize="28" FontWeight="SemiBold" Foreground="White" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="Dedicated dual-link slave workspace for Link A / Link B observability."
+                               Foreground="{StaticResource TextSubBrush}" />
+                    <TextBlock Margin="0,10,0,0"
+                               Text="{Binding NucRuntimeSummary}"
+                               Foreground="{StaticResource TextMainBrush}"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,4,0,0"
+                               Text="{Binding NucBufferStatusText}"
+                               Foreground="{StaticResource TextSubBrush}" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,10,0" Click="OpenDatabaseEditor_Click">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="DB" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Database Editor" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Click="ConnectionSetup_Click">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="CFG" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Configure Links" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RunCommand}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="RUN" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Start Runtime" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding StopCommand}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="STOP" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Stop Runtime" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Command="{Binding InjectBufferBurstCommand}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="BUF" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Inject 600+" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource ToolbarButtonStyle}" Margin="10,0,0,0" Click="RuntimeSignalControl_Click">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource ToolbarIconStyle}" Text="SIG" />
+                            <TextBlock Style="{StaticResource ToolbarTextStyle}" Text="Signal Control" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Margin="0,0,8,0"
+                    Padding="14"
+                    CornerRadius="12"
+                    Background="{StaticResource PopupSurfaceAltBrush}"
+                    BorderBrush="{StaticResource PopupBorderBrush}"
+                    BorderThickness="1">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="LINK A" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                        <Button DockPanel.Dock="Right"
+                                Margin="12,0,0,0"
+                                Style="{StaticResource DarkLinkActionButtonStyle}"
+                                Command="{Binding ToggleNucLinkACommand}"
+                                Content="{Binding NucLinkAActionText}" />
+                    </DockPanel>
+                    <TextBlock Margin="0,8,0,0" Text="{Binding NucLink1StatusText}" Foreground="{StaticResource TextMainBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Margin="8,0,0,0"
+                    Padding="14"
+                    CornerRadius="12"
+                    Background="{StaticResource PopupSurfaceAltBrush}"
+                    BorderBrush="{StaticResource PopupBorderBrush}"
+                    BorderThickness="1">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Left" Text="LINK B" FontSize="22" FontWeight="SemiBold" Foreground="#38BDF8" />
+                        <Button DockPanel.Dock="Right"
+                                Margin="12,0,0,0"
+                                Style="{StaticResource DarkLinkActionButtonStyle}"
+                                Command="{Binding ToggleNucLinkBCommand}"
+                                Content="{Binding NucLinkBActionText}" />
+                    </DockPanel>
+                    <TextBlock Margin="0,8,0,0" Text="{Binding NucLink2StatusText}" Foreground="{StaticResource TextMainBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Margin="0,0,8,0" Padding="12" CornerRadius="12"
+                    Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Status History" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
+                    <DataGrid Grid.Row="1"
+                              Margin="0,10,0,0"
+                              ItemsSource="{Binding StatusHistory}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              RowHeaderWidth="0"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="All"
+                              AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}"
+                              Background="{StaticResource PopupSurfaceBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="180" />
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Margin="8,0,0,0" Padding="12" CornerRadius="12"
+                    Background="{StaticResource PopupSurfaceAltBrush}" BorderBrush="{StaticResource PopupBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Link Activity" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
+                    <DataGrid Grid.Row="1"
+                              Margin="0,10,0,0"
+                              ItemsSource="{Binding LinkActivity}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              RowHeaderWidth="0"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="All"
+                              AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}"
+                              Background="{StaticResource PopupSurfaceBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="180" />
+                            <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="120" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="3"
+                Margin="0,12,0,0"
+                Padding="12"
+                CornerRadius="12"
+                Background="{StaticResource PopupSurfaceAltBrush}"
+                BorderBrush="{StaticResource PopupBorderBrush}"
+                BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Runtime Signals Snapshot" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextMainBrush}" />
+                <DataGrid Grid.Row="1"
+                          x:Name="NucRuntimeSignalsGrid"
+                          Margin="0,10,0,0"
+                          ItemsSource="{Binding RuntimeSignals}"
+                          SelectedItem="{Binding SelectedRuntimeSignal}"
+                          MouseDoubleClick="RuntimeSignalsGrid_MouseDoubleClick"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
+                          RowHeaderWidth="0"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="All"
+                          AlternatingRowBackground="{StaticResource PopupSurfaceAltBrush}"
+                          Background="{StaticResource PopupSurfaceBrush}">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="On" Binding="{Binding IsEnabled}" Width="44" />
+                        <DataGridTextColumn Header="IOA" Binding="{Binding Ioa}" Width="82" />
+                        <DataGridTextColumn Header="Label" Binding="{Binding Label}" Width="*" />
+                        <DataGridTextColumn Header="Type" Binding="{Binding SignalType}" Width="140" />
+                        <DataGridTextColumn Header="Value" Binding="{Binding RuntimeValue}" Width="120" />
+                        <DataGridTextColumn Header="COT" Binding="{Binding LiveCot}" Width="90" />
+                        <DataGridTextColumn Header="Class" Binding="{Binding SignalClass}" Width="90" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+
+

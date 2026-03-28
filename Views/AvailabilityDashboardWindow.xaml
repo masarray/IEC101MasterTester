@@ -1,0 +1,869 @@
+<Window x:Class="IEC101MasterTester.Views.AvailabilityDashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:IEC101MasterTester.Controls"
+        Title="IEC-101 Availability Dashboard"
+        Height="765"
+        Width="1320"
+        MinHeight="620"
+        MinWidth="1080"
+        WindowStartupLocation="Manual"
+        Background="#0B1220"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        SizeChanged="Window_SizeChanged">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <SolidColorBrush x:Key="DashPageBrush" Color="#0B1220" />
+            <SolidColorBrush x:Key="DashCardBrush" Color="#111A2B" />
+            <SolidColorBrush x:Key="DashCardStrongBrush" Color="#162338" />
+            <SolidColorBrush x:Key="DashInnerBrush" Color="#0E1625" />
+            <SolidColorBrush x:Key="DashStrokeBrush" Color="#22314A" />
+            <SolidColorBrush x:Key="DashTextBrush" Color="#E6EEF8" />
+            <SolidColorBrush x:Key="DashMutedBrush" Color="#95A6C2" />
+            <SolidColorBrush x:Key="DashGoodBrush" Color="#22C55E" />
+            <SolidColorBrush x:Key="DashWarnBrush" Color="#F59E0B" />
+            <SolidColorBrush x:Key="DashBadBrush" Color="#EF4444" />
+            <SolidColorBrush x:Key="DashAccentBrush" Color="#38BDF8" />
+
+            <Style x:Key="DashCardBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource DashCardBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DashStrokeBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="18" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+            </Style>
+
+            <Style x:Key="DashTitleStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashMutedBrush}" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="DashSectionHeaderStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="DashHeroValueStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="FontSize" Value="34" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+
+            <Style x:Key="DashMiniHeroStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <Style x:Key="DashMetricTitleStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashMutedBrush}" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="DashMetricValueStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="FontSize" Value="17" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <Style x:Key="DashInfoValueStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
+                <Setter Property="LineHeight" Value="18" />
+            </Style>
+
+            <Style x:Key="DashDataGridStyle" TargetType="DataGrid">
+                <Setter Property="Background" Value="{StaticResource DashInnerBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource DashStrokeBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="GridLinesVisibility" Value="Horizontal" />
+                <Setter Property="HorizontalGridLinesBrush" Value="#1C2A40" />
+                <Setter Property="VerticalGridLinesBrush" Value="#1C2A40" />
+                <Setter Property="RowBackground" Value="{StaticResource DashInnerBrush}" />
+                <Setter Property="AlternatingRowBackground" Value="#101C2F" />
+                <Setter Property="HeadersVisibility" Value="Column" />
+                <Setter Property="RowHeaderWidth" Value="0" />
+                <Setter Property="CanUserAddRows" Value="False" />
+                <Setter Property="CanUserDeleteRows" Value="False" />
+                <Setter Property="CanUserResizeRows" Value="False" />
+                <Setter Property="CanUserReorderColumns" Value="False" />
+                <Setter Property="CanUserSortColumns" Value="False" />
+                <Setter Property="IsReadOnly" Value="True" />
+                <Setter Property="SelectionMode" Value="Single" />
+                <Setter Property="SelectionUnit" Value="FullRow" />
+                <Setter Property="AutoGenerateColumns" Value="False" />
+                <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+            </Style>
+
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="#142033" />
+                <Setter Property="Foreground" Value="#C8D5E8" />
+                <Setter Property="BorderBrush" Value="{StaticResource DashStrokeBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Padding" Value="8,6" />
+            </Style>
+
+            <Style TargetType="DataGridCell">
+                <Setter Property="BorderBrush" Value="#1C2A40" />
+                <Setter Property="Foreground" Value="{StaticResource DashTextBrush}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="8,5" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource DashPageBrush}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Background="{StaticResource DashPageBrush}">
+            <Grid HorizontalAlignment="Center"
+                  Width="1240"
+                  Margin="16,16,16,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="100*" />
+                    <RowDefinition Height="240" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- HERO -->
+                <Border Grid.Row="0"
+                        Style="{StaticResource DashCardBorderStyle}"
+                        Background="{StaticResource DashCardStrongBrush}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="360" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center" Margin="28,0,0,0">
+                            <TextBlock Text="Availability Dashboard"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource DashTextBrush}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource DashMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="Communication health, uptime, redundancy, and anomaly telemetry for long-run IEC-101 sessions." />
+                        </StackPanel>
+
+                        <Grid Grid.Column="1">
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Foreground="#D7E1EF"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding AvailabilitySessionStartedText}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding AvailabilitySummaryText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- TOP KPI ROW -->
+                <Grid Grid.Row="1" Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.1*" />
+                        <ColumnDefinition Width="1.05*" />
+                        <ColumnDefinition Width="1.05*" />
+                        <ColumnDefinition Width="1.05*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Reliability -->
+                    <Border Grid.Column="0"
+                            Margin="0,0,14,0"
+                            Style="{StaticResource DashCardBorderStyle}"
+                            Background="{StaticResource DashCardStrongBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="220" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Margin="15,0,0,0"
+                                        VerticalAlignment="Top" Height="217">
+                                <TextBlock Text="Reliability Score"
+                                           Style="{StaticResource DashTitleStyle}" />
+                                <TextBlock x:Name="ReliabilityScoreTextBlock" FontSize="28"
+                                           Margin="0,12,0,0"
+                                           Text="{Binding ReliabilityScoreText}"
+                                           Style="{StaticResource DashHeroValueStyle}" />
+                                <TextBlock x:Name="ReliabilityStateTextBlock"
+                                           Margin="0,6,0,0"
+                                           Text="{Binding ReliabilityStateText}"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource DashGoodBrush}"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Margin="0,12,0,0"
+                                           Foreground="{StaticResource DashTextBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding AvailabilityFindingsTrendText}" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           TextWrapping="Wrap"
+                                           Text="This score is an analyzer health indicator, not a hardcoded SPLN pass/fail verdict." />
+                            </StackPanel>
+
+                            <Grid Grid.Column="1"
+                                  VerticalAlignment="Top"
+                                  HorizontalAlignment="Center" Height="165" Width="220">
+                                <controls:SemiCircleGauge x:Name="ReliabilityGauge"
+                                                          Width="220"
+                                                          Height="160"
+                                                          Minimum="0"
+                                                          Maximum="100"
+                                                          Value="0"
+                                                          DisplayText="0"
+                                                          StateText="Reliable"
+                                                          GaugeBrush="{StaticResource DashGoodBrush}"
+                                                          TrackBrush="#1E293B"
+                                                          ValueTextBrush="{StaticResource DashTextBrush}" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Availability -->
+                    <Border Grid.Column="1"
+        Margin="0,0,14,0"
+        Style="{StaticResource DashCardBorderStyle}"
+        MinHeight="250">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="130" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Availability"
+                   Style="{StaticResource DashTitleStyle}" />
+
+                            <controls:SemiCircleGauge x:Name="AvailabilityGauge"
+                                  Grid.Row="1"
+                                  Width="190"
+                                  Height="130"
+                                  Margin="0,4,0,0"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  Value="0"
+                                  DisplayText="0.0%"
+                                  StateText="Healthy"
+                                  GaugeBrush="{StaticResource DashAccentBrush}"
+                                  TrackBrush="#1E293B"
+                                  ValueTextBrush="{StaticResource DashTextBrush}" />
+
+                            <StackPanel Grid.Row="2"
+                    Margin="0,10,0,0"
+                    HorizontalAlignment="Stretch">
+                                <TextBlock HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource DashTextBrush}"
+                       Text="{Binding AvailabilityUptimeText}" />
+                                <TextBlock Margin="0,4,0,0"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource DashMutedBrush}"
+                       Text="{Binding AvailabilitySlaveDowntimeText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Link State -->
+                    <Border Grid.Column="2"
+                            Margin="0,0,14,0"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Link State"
+                                       Style="{StaticResource DashTitleStyle}" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding SlaveAvailabilityStateText}"
+                                       Style="{StaticResource DashMiniHeroStyle}" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Style="{StaticResource DashInfoValueStyle}"
+                                       Text="{Binding SlaveAvailabilityDetailText}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource DashMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding AvailabilityLinkSwitchoverCountText}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource DashMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding RedundancyActiveLinkText}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource DashMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding RedundancyGiObservationText}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Open Findings -->
+                    <Border Grid.Column="3"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Open Findings"
+                                       Style="{StaticResource DashTitleStyle}" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Text="{Binding AvailabilityFindingsTrendText}"
+                                       Style="{StaticResource DashMiniHeroStyle}" />
+                            <TextBlock Margin="0,12,0,0"
+                                       Style="{StaticResource DashInfoValueStyle}"
+                                       Text="{Binding AvailabilityProtocolErrorCountText}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Foreground="{StaticResource DashMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding AvailabilityAcdAssertCountText}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- METRICS ROW -->
+                <UniformGrid Grid.Row="2"
+                             Columns="10"
+                             Margin="0,14,0,0">
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="ReconnectIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#F59E0B"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Reconnect Count" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityReconnectCountText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="SlaveRecoveryIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#F59E0B"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Slave Recovery" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilitySlaveRecoveryCountText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="RtuRestartIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="RTU Restart" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityRtuRestartCountText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="TransportDowntimeIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Transport Downtime" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityDowntimeText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="LongestTransportIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Longest Transport" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityLongestDowntimeText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="SlaveUnavailableIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Slave Unavailable" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilitySlaveDowntimeText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="LongestSlaveIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Longest Slave Outage" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilitySlaveLongestDowntimeText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="ThroughputIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#38BDF8"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Throughput" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityEventThroughputText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Margin="0,0,12,0"
+                            Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="ProtocolErrorsIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#EF4444"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="Protocol Errors" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityProtocolErrorCountText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Padding="14"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Ellipse x:Name="AcdIndicator"
+                                     Width="9"
+                                     Height="9"
+                                     HorizontalAlignment="Right"
+                                     VerticalAlignment="Top"
+                                     Fill="#38BDF8"
+                                     Visibility="Collapsed" />
+                            <StackPanel>
+                                <TextBlock Text="ACD Assertions" FontSize="10"
+                                           Style="{StaticResource DashMetricTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0" FontSize="10"
+                                           Text="{Binding AvailabilityAcdAssertCountText}"
+                                           Style="{StaticResource DashMetricValueStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </UniformGrid>
+
+                <!-- TIMELINE -->
+                <Border Grid.Row="3"
+                        Margin="0,14,0,0"
+                        Style="{StaticResource DashCardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="200" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Communication Timeline"
+                                           Style="{StaticResource DashSectionHeaderStyle}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           Text="Blue line = activity intensity. Dots mark notable events by time; top lane = incident/finding, middle = recovery/switchover, bottom = connection/slave state." />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top">
+                                <Border Width="14"
+                                        Height="4"
+                                        CornerRadius="2"
+                                        Background="{StaticResource DashAccentBrush}"
+                                        Margin="0,8,6,0" />
+                                <TextBlock Text="Traffic"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           Margin="0,0,12,0" />
+                                <Border Width="14"
+                                        Height="4"
+                                        CornerRadius="2"
+                                        Background="{StaticResource DashWarnBrush}"
+                                        Margin="0,8,6,0" />
+                                <TextBlock Text="Recovery"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           Margin="0,0,12,0" />
+                                <Border Width="14"
+                                        Height="4"
+                                        CornerRadius="2"
+                                        Background="{StaticResource DashGoodBrush}"
+                                        Margin="0,8,6,0" />
+                                <TextBlock Text="Link/Slave"
+                                           Foreground="{StaticResource DashMutedBrush}"
+                                           Margin="0,0,12,0" />
+                                <Border Width="14"
+                                        Height="4"
+                                        CornerRadius="2"
+                                        Background="{StaticResource DashBadBrush}"
+                                        Margin="0,8,6,0" />
+                                <TextBlock Text="Incident"
+                                           Foreground="{StaticResource DashMutedBrush}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                CornerRadius="14"
+                                Background="{StaticResource DashInnerBrush}"
+                                BorderBrush="{StaticResource DashStrokeBrush}"
+                                BorderThickness="1"
+                                Padding="16">
+                            <Grid ClipToBounds="True">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Canvas x:Name="TimelineCanvas" Grid.Row="0" ClipToBounds="True">
+                                    <TextBlock Canvas.Left="24"
+                                               Canvas.Top="12"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               FontSize="10"
+                                               Text="Incident / finding" />
+                                    <TextBlock Canvas.Left="24"
+                                               Canvas.Top="50"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               FontSize="10"
+                                               Text="Recovery / switchover" />
+                                    <TextBlock Canvas.Left="24"
+                                               Canvas.Top="88"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               FontSize="10"
+                                               Text="Connection / slave state" />
+                                    <Line X1="20" Y1="12" X2="20" Y2="140" Stroke="#26364D" StrokeThickness="1" />
+                                    <Line X1="20" Y1="140" X2="1120" Y2="140" Stroke="#26364D" StrokeThickness="1" />
+                                    <Line X1="20" Y1="40" X2="1120" Y2="40" Stroke="#1E2A3F" StrokeThickness="1" />
+                                    <Line X1="20" Y1="72" X2="1120" Y2="72" Stroke="#1E2A3F" StrokeThickness="1" />
+                                    <Line X1="20" Y1="104" X2="1120" Y2="104" Stroke="#1E2A3F" StrokeThickness="1" />
+                                    <Polyline x:Name="TimelinePolyline"
+                                              Stroke="{StaticResource DashAccentBrush}"
+                                              StrokeThickness="3"
+                                              StrokeLineJoin="Round"
+                                              Points="" />
+                                    <Canvas x:Name="TimelineMarkerLayer"
+                                            Width="1140"
+                                            Height="150" />
+                                </Canvas>
+
+                                <UniformGrid Grid.Row="1"
+                                             Columns="5"
+                                             Margin="0,12,0,0">
+                                    <TextBlock x:Name="TimelineLabel1"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               Text="T-40m" />
+                                    <TextBlock x:Name="TimelineLabel2"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               Text="T-30m" />
+                                    <TextBlock x:Name="TimelineLabel3"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               Text="T-20m" />
+                                    <TextBlock x:Name="TimelineLabel4"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               Text="T-10m" />
+                                    <TextBlock x:Name="TimelineLabel5"
+                                               HorizontalAlignment="Center"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               Text="Now" />
+                                </UniformGrid>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- BOTTOM ROW -->
+                <Grid Grid.Row="4"
+                      Margin="0,14,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.55*" />
+                        <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="1*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Recent Incidents -->
+                    <Border Grid.Column="0"
+                            Margin="0,0,14,0"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="260" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Recent Incidents"
+                                       Style="{StaticResource DashSectionHeaderStyle}" />
+
+                            <DataGrid Grid.Row="1"
+                                      Margin="0,12,0,0"
+                                      Style="{StaticResource DashDataGridStyle}"
+                                      ItemsSource="{Binding AvailabilityTimeline}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Time"
+                                                        Binding="{Binding Time}"
+                                                        Width="150" />
+                                    <DataGridTextColumn Header="Category"
+                                                        Binding="{Binding Category}"
+                                                        Width="120" />
+                                    <DataGridTextColumn Header="Event"
+                                                        Binding="{Binding Event}"
+                                                        Width="150" />
+                                    <DataGridTextColumn Header="Detail"
+                                                        Binding="{Binding Detail}"
+                                                        Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Health Breakdown -->
+                    <Border Grid.Column="1"
+                            Margin="0,0,14,0"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Health Breakdown"
+                                       Style="{StaticResource DashSectionHeaderStyle}" />
+
+                            <Border Margin="0,14,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Communication stability"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityHealthBreakdownText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                    </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,0,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Downtime impact"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityDowntimeImpactText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                    </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,0,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Redundancy impact"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityRedundancyImpactText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                    </StackPanel>
+                            </Border>
+
+                            <Border CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Anomaly pressure"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityAnomalyPressureText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                    </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Findings Summary -->
+                    <Border Grid.Column="2"
+                            Style="{StaticResource DashCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Findings Summary"
+                                       Style="{StaticResource DashSectionHeaderStyle}" />
+
+                            <Border Margin="0,14,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="Overall findings trend"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityFindingsTrendText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,0,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="Replay health"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding BufferReplaySummaryText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,0,0,10"
+                                    CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="Controller view"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding RedundancyControllerStatusText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="{Binding RedundancyControllerDetailText}"
+                                               Foreground="{StaticResource DashMutedBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border CornerRadius="12"
+                                    Background="{StaticResource DashInnerBrush}"
+                                    Padding="12">
+                                <StackPanel>
+                                    <TextBlock Text="ACD pressure"
+                                               Foreground="{StaticResource DashMutedBrush}" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding AvailabilityAcdAssertCountText}"
+                                               Foreground="{StaticResource DashTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <LangVersion>7.3</LangVersion>
+    <RootNamespace>IecSlaveSimulator</RootNamespace>
+    <AssemblyName>IecSlaveSimulator</AssemblyName>
+    <Platforms>AnyCPU;x64</Platforms>
+    <StartupObject>IecSlaveSimulator.App</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Ports" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="..\SharedUi\AboutWindow.xaml" Link="SharedUi\AboutWindow.xaml" />
+    <Page Include="..\SharedUi\ModernTheme.xaml" Link="SharedUi\ModernTheme.xaml" />
+    <Compile Include="..\SharedUi\AboutWindow.xaml.cs" Link="SharedUi\AboutWindow.xaml.cs">
+      <DependentUpon>AboutWindow.xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Vendor\lib60870\**\*.cs" Exclude="..\Vendor\lib60870\Properties\AssemblyInfo.cs;..\Vendor\lib60870\obj\**\*.cs;..\Vendor\lib60870\bin\**\*.cs" Link="Vendor\lib60870\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\SharedUi\Assets\Icons\iec60870-icon.png" Link="SharedUi\Assets\Icons\iec60870-icon.png" />
+    <Resource Include="..\SharedUi\Assets\Profile\ari-profile.jpg" Link="SharedUi\Assets\Profile\ari-profile.jpg" />
+  </ItemGroup>
+</Project>
+
+
+
+

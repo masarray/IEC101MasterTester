@@ -1,0 +1,138 @@
+<Window x:Class="IecSlaveSimulator.Views.RuntimeSignalControlWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:model="clr-namespace:IecSlaveSimulator.Models"
+        Title="Runtime Signal Control"
+        Width="560"
+        Height="600"
+        MinWidth="520"
+        MinHeight="540"
+        WindowStartupLocation="CenterOwner"
+        Background="#0F172A">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        <x:Array x:Key="LiveCotOptions" Type="{x:Type sys:String}">
+            <sys:String>BgScan</sys:String>
+            <sys:String>Spont</sys:String>
+            <sys:String>GI</sys:String>
+            <sys:String>CmdFb</sys:String>
+        </x:Array>
+        <x:Array x:Key="QualityOptions" Type="{x:Type sys:String}">
+            <sys:String>Good</sys:String>
+            <sys:String>Invalid</sys:String>
+            <sys:String>Blocked</sys:String>
+            <sys:String>Substituted</sys:String>
+            <sys:String>NotTopical</sys:String>
+        </x:Array>
+        <x:Array x:Key="DiscreteValueOptions" Type="{x:Type sys:String}">
+            <sys:String>OFF</sys:String>
+            <sys:String>ON</sys:String>
+        </x:Array>
+        <ObjectDataProvider x:Key="AnalogAnimationOptions" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:AnalogAnimationKind" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ObjectDataProvider x:Key="DiscreteAnimationOptions" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="model:DiscreteAnimationKind" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="14" Background="#0F172A">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="12">
+            <StackPanel>
+                <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="#F8FAFC" Text="Runtime Signal Control" />
+                <TextBlock Margin="0,6,0,0" Foreground="#94A3B8" Text="Edit live signal value, COT, quality, and animation without stopping runtime." />
+                <TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Foreground="#CBD5E1" Text="{Binding Label}" />
+                <TextBlock Foreground="#94A3B8" Text="{Binding Ioa, StringFormat=IOA {0}}" />
+            </StackPanel>
+        </Border>
+        <ScrollViewer Grid.Row="1" Margin="0,12,0,12" VerticalScrollBarVisibility="Auto" Background="#0F172A">
+            <StackPanel>
+                <GroupBox Header="Live" Margin="0,0,0,12" Style="{StaticResource DarkPopupGroupBoxStyle}">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="160" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource DarkPopupTextBlockStyle}" Text="Enabled" />
+                        <CheckBox Grid.Column="1" Style="{StaticResource DarkPopupCheckBoxStyle}" IsChecked="{Binding IsEnabled}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Value" Margin="0,10,0,0" />
+                        <Grid Grid.Row="1" Grid.Column="1" Margin="0,10,0,0">
+                            <TextBox Text="{Binding RuntimeValue, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox" BasedOn="{StaticResource DarkPopupTextBoxStyle}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SupportsDiscreteFields}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                            <ComboBox SelectedItem="{Binding RuntimeValue}" ItemsSource="{Binding Source={StaticResource DiscreteValueOptions}}">
+                                <ComboBox.Style>
+                                    <Style TargetType="ComboBox" BasedOn="{StaticResource DarkPopupComboBoxStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SupportsDiscreteFields}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Style>
+                            </ComboBox>
+                        </Grid>
+                        <TextBlock Grid.Row="2" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Live COT" Margin="0,10,0,0" />
+                        <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupComboBoxStyle}" SelectedItem="{Binding LiveCot}" ItemsSource="{Binding Source={StaticResource LiveCotOptions}}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Quality" Margin="0,10,0,0" />
+                        <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupComboBoxStyle}" SelectedItem="{Binding Quality}" ItemsSource="{Binding Source={StaticResource QualityOptions}}" />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Analog Animation" Margin="0,0,0,12" Style="{StaticResource DarkPopupGroupBoxStyle}" Visibility="{Binding SupportsAnalogFields, Converter={StaticResource BoolToVisibility}}">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="160" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource DarkPopupTextBlockStyle}" Text="Mode" />
+                        <ComboBox Grid.Column="1" Style="{StaticResource DarkPopupComboBoxStyle}" SelectedItem="{Binding AnalogAnimation}" ItemsSource="{Binding Source={StaticResource AnalogAnimationOptions}}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource DarkPopupTextBlockStyle}" Text="From" Margin="0,10,0,0" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupTextBoxStyle}" Text="{Binding AnalogFrom, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource DarkPopupTextBlockStyle}" Text="To" Margin="0,10,0,0" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupTextBoxStyle}" Text="{Binding AnalogTo, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Step" Margin="0,10,0,0" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupTextBoxStyle}" Text="{Binding AnalogStep, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Grid.Row="4" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Interval (ms)" Margin="0,10,0,0" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupTextBoxStyle}" Text="{Binding AnimationIntervalMs, UpdateSourceTrigger=PropertyChanged}" />
+                        <CheckBox Grid.Row="5" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupCheckBoxStyle}" Content="PingPong" IsChecked="{Binding AnalogPingPong}" />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Discrete Animation" Style="{StaticResource DarkPopupGroupBoxStyle}" Visibility="{Binding SupportsDiscreteFields, Converter={StaticResource BoolToVisibility}}">
+                    <Grid Margin="10">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="160" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                        <TextBlock Style="{StaticResource DarkPopupTextBlockStyle}" Text="Mode" />
+                        <ComboBox Grid.Column="1" Style="{StaticResource DarkPopupComboBoxStyle}" SelectedItem="{Binding DiscreteAnimation}" ItemsSource="{Binding Source={StaticResource DiscreteAnimationOptions}}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource DarkPopupTextBlockStyle}" Text="Toggle Seconds" Margin="0,10,0,0" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" Style="{StaticResource DarkPopupTextBoxStyle}" Text="{Binding ToggleIntervalSeconds, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="110" Height="32" Margin="0,0,8,0" Style="{StaticResource TactilePrimaryButtonStyle}" Content="Apply" IsDefault="True" Click="Apply_Click" />
+            <Button Width="110" Height="32" Style="{StaticResource TactileSecondaryButtonStyle}" Content="Close" IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>
+

@@ -1,0 +1,127 @@
+<Window x:Class="IEC101MasterTester.Views.NucSoeAuditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IEC-101 NUC SOE Audit"
+        Height="720"
+        Width="1280"
+        MinHeight="520"
+        MinWidth="960"
+        WindowStartupLocation="CenterOwner"
+        Background="#0F172A">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Margin="12" Background="#0F172A">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="NUC SOE Audit"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="#F8FAFC" />
+                    <TextBlock Margin="0,6,0,0"
+                               Foreground="#94A3B8"
+                               Text="Detailed NUC event audit for switchover, buffer replay, and channel continuity verification." />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <TextBlock Foreground="#CBD5E1"
+                               FontWeight="SemiBold"
+                               Text="{Binding RedundancyActiveLinkText}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Foreground="#94A3B8"
+                               Text="{Binding RedundancyGiObservationText}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Margin="0,10,0,10"
+                Background="#111827"
+                BorderBrush="#334155"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="10">
+            <UniformGrid Columns="4">
+                <StackPanel Margin="6,0">
+                    <TextBlock Foreground="#94A3B8" Text="Switchover Count" />
+                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancySwitchSummaryText}" />
+                </StackPanel>
+                <StackPanel Margin="6,0">
+                    <TextBlock Foreground="#94A3B8" Text="Continuity" />
+                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyContinuityText}" />
+                </StackPanel>
+                <StackPanel Margin="6,0">
+                    <TextBlock Foreground="#94A3B8" Text="L1FT" />
+                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyMainLinkText}" />
+                </StackPanel>
+                <StackPanel Margin="6,0">
+                    <TextBlock Foreground="#94A3B8" Text="L2FT" />
+                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyBackupLinkText}" />
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <Border Grid.Row="2" Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="8">
+            <DataGrid ItemsSource="{Binding NucSoeAuditLog}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeRows="False"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      GridLinesVisibility="Horizontal"
+                      Background="#111827"
+                      Foreground="#F8FAFC"
+                      BorderBrush="#334155"
+                      HorizontalGridLinesBrush="#1F2937"
+                      VerticalGridLinesBrush="#1F2937"
+                      RowBackground="#111827"
+                      AlternatingRowBackground="#0F172A"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#17202B" />
+                        <Setter Property="Foreground" Value="#CBD5E1" />
+                        <Setter Property="BorderBrush" Value="#334155" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="BorderBrush" Value="#1F2937" />
+                        <Setter Property="Foreground" Value="#E2E8F0" />
+                        <Setter Property="Background" Value="Transparent" />
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Recv Time" Binding="{Binding Time}" Width="175" />
+                    <DataGridTextColumn Header="Channel" Binding="{Binding Source}" Width="90" />
+                    <DataGridTextColumn Header="Signal Name" Binding="{Binding Name}" Width="*" />
+                    <DataGridTextColumn Header="IOA" Binding="{Binding IOA}" Width="90" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="110" />
+                    <DataGridTextColumn Header="Event" Binding="{Binding Event}" Width="170" />
+                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="150" />
+                    <DataGridTextColumn Header="COT" Binding="{Binding Cot}" Width="110" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</Window>

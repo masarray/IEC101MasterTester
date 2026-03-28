@@ -1,0 +1,474 @@
+<Window x:Class="IEC101MasterTester.SharedUi.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="About"
+        Height="503"
+        Width="832"
+        MinWidth="760"
+        MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        Background="#0F172A">
+    <Window.Resources>
+        <SolidColorBrush x:Key="BgMain" Color="#0F172A"/>
+        <SolidColorBrush x:Key="CardBg" Color="#111827"/>
+        <SolidColorBrush x:Key="Accent" Color="#14B8A6"/>
+        <SolidColorBrush x:Key="TextMain" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="TextSub" Color="#CBD5E1"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="BorderSoft" Color="#334155"/>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBg}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+
+        <Style x:Key="BodyTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextSub}"/>
+            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="22"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,8,8,0"/>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,8,8,0"/>
+        </Style>
+
+        <SolidColorBrush x:Key="ScrollTrackBrush" Color="#0B1220"/>
+        <SolidColorBrush x:Key="ScrollThumbBrush" Color="#334155"/>
+        <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#14B8A6"/>
+        <SolidColorBrush x:Key="ScrollThumbPressedBrush" Color="#0F9F94"/>
+
+        <Style x:Key="MinimalScrollBarThumbStyle" TargetType="Thumb">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border x:Name="ThumbBorder"
+                                Background="{StaticResource ScrollThumbBrush}"
+                                CornerRadius="5"
+                                Margin="2"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource ScrollThumbHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsDragging" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource ScrollThumbPressedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <ControlTemplate x:Key="VerticalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Background="{StaticResource ScrollTrackBrush}" Width="12">
+                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageUpCommand"
+                                      Opacity="0"
+                                      IsTabStop="False"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}"/>
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageDownCommand"
+                                      Opacity="0"
+                                      IsTabStop="False"/>
+                    </Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="HorizontalScrollBarTemplate" TargetType="ScrollBar">
+            <Grid Background="{StaticResource ScrollTrackBrush}" Height="12">
+                <Track x:Name="PART_Track">
+                    <Track.DecreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageLeftCommand"
+                                      Opacity="0"
+                                      IsTabStop="False"/>
+                    </Track.DecreaseRepeatButton>
+                    <Track.Thumb>
+                        <Thumb Style="{StaticResource MinimalScrollBarThumbStyle}"/>
+                    </Track.Thumb>
+                    <Track.IncreaseRepeatButton>
+                        <RepeatButton Command="ScrollBar.PageRightCommand"
+                                      Opacity="0"
+                                      IsTabStop="False"/>
+                    </Track.IncreaseRepeatButton>
+                </Track>
+            </Grid>
+        </ControlTemplate>
+
+        <Style TargetType="ScrollBar">
+            <Setter Property="Background" Value="{StaticResource ScrollTrackBrush}"/>
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Template" Value="{StaticResource VerticalScrollBarTemplate}"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="12"/>
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="Template" Value="{StaticResource HorizontalScrollBarTemplate}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="TactileButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#14B8A6"/>
+            <Setter Property="BorderBrush" Value="#14B8A6"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+
+                            <Border x:Name="BtnBorder"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="8"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1">
+
+                                <Border.Effect>
+                                    <DropShadowEffect ShadowDepth="2"
+                                              BlurRadius="6"
+                                              Opacity="0.4"/>
+                                </Border.Effect>
+
+                                <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="4"/>
+                            </Border>
+
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+
+                            <!-- Hover -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder"
+                                Property="Background"
+                                Value="#0EA5A0"/>
+                            </Trigger>
+
+                            <!-- Pressed -->
+                            <Trigger Property="IsPressed" Value="True">
+
+                                <Setter TargetName="BtnBorder"
+                                Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1"/>
+                                    </Setter.Value>
+                                </Setter>
+
+                                <Setter TargetName="BtnBorder"
+                                Property="Background"
+                                Value="#0F766E"/>
+
+                                <Setter TargetName="BtnBorder"
+                                Property="Effect"
+                                Value="{x:Null}"/>
+
+                            </Trigger>
+
+                            <!-- Disabled -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="BtnBorder"
+                                Property="Opacity"
+                                Value="0.5"/>
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BgMain}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="110"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="70"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#111827" BorderBrush="#1F2937" BorderThickness="0,0,0,1">
+            <Grid Margin="24,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="72"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="223"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Height="70" CornerRadius="12" Background="Transparent" VerticalAlignment="Center" Margin="1,0,1,0">
+                    <Image Source="/SharedUi/Assets/Icons/iec60870-icon.png"
+                           Stretch="Uniform"
+                           Margin="4"/>
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Height="70">
+                    <TextBlock Text="IEC 60870 Protocol Analyzer"
+                               Foreground="{StaticResource TextMain}"
+                               FontSize="24"
+                               FontWeight="Bold"/>
+                    <TextBlock TextWrapping="Wrap"
+                               Text="Engineering Tool for FAT, SAT, Commissioning, Interoperability, Troubleshooting, and Protocol Visibility"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="12.5"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Left" Height="31" Margin="143,0,0,0" Width="71">
+                    <TextBlock Text="Version 1.0.0"
+                               Foreground="{StaticResource TextMain}"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Right"/>
+                    <TextBlock Text="Build 2026.03"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="12"
+                               HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="24,20,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2.6*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,27,0">
+                <StackPanel Margin="0,0,18,0">
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="About This Software" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">
+This software is designed to support engineers during Factory Acceptance Testing (FAT), commissioning, and troubleshooting of industrial communication protocols. It provides practical visibility into protocol behavior, event activity, and anomaly clues to help reduce trial-and-error during testing and diagnosis.
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Main Purpose" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}" Margin="0,0,0,8"
+                                       Text="Improve protocol visibility during testing and troubleshooting"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}" Margin="0,0,0,8"
+                                       Text="Help engineers identify communication anomalies faster"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}" Margin="0,0,0,8"
+                                       Text="Reduce time spent on parameter trial-and-error"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}"
+                                       Text="Support practical engineering workflow in FAT and commissioning"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Why It Matters" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">
+In real FAT and troubleshooting environments, communication issues often consume significant time because the clue is not visible early enough. This tool is built to give engineers a faster and clearer indication of what is happening in the protocol flow, so corrective action can be taken more efficiently.
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="License and Access" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">
+Free Edition is available with a maximum runtime of 30 minutes per session.
+
+For full version access, update support, new feature requests, or maintenance discussion, please contact:
+                            </TextBlock>
+
+                            <Border Margin="0,14,0,0"
+                                    Background="#0B1220"
+                                    BorderBrush="{StaticResource BorderSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="14">
+                                <TextBlock Text="admin@arisulistiono.com"
+                                           Foreground="{StaticResource TextMain}"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="509,0,-27,0">
+                <StackPanel>
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel HorizontalAlignment="Center">
+                            <Ellipse Width="150" Height="150" Margin="0,0,0,14">
+                                <Ellipse.Fill>
+                                    <ImageBrush ImageSource="/SharedUi/Assets/Profile/ari-profile.jpg"
+                                                Stretch="UniformToFill"/>
+                                </Ellipse.Fill>
+                            </Ellipse>
+
+                            <TextBlock Text="Ari Sulistiono"
+                                       Foreground="{StaticResource TextMain}"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       HorizontalAlignment="Center"/>
+
+                            <TextBlock Text="Substation Automation Engineer" TextWrapping="Wrap"
+                                       Foreground="{StaticResource Accent}"
+                                       FontSize="12" FontWeight="Bold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,4,0,0"/>
+
+                            <TextBlock Text="Industrial Communication and Protocol Analyzer Developer"
+                                       Foreground="{StaticResource TextMuted}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       HorizontalAlignment="Center"
+                                       TextAlignment="Center"
+                                       Margin="0,4,0,12"/>
+
+                            <Separator Margin="0,8,0,12" Background="{StaticResource BorderSoft}"/>
+
+                            <TextBlock Style="{StaticResource BodyTextStyle}" FontSize="12" TextWrapping="Wrap" TextAlignment="Center">
+Developed with practical field experience in substation automation, industrial communication, FAT workflow, and troubleshooting.
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Full Version and Support" TextWrapping="Wrap" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Style="{StaticResource BodyTextStyle}" FontSize="12" TextWrapping="Wrap">
+For full version access, update support, new feature requests, or maintenance discussion, please contact:
+                            </TextBlock>
+
+                            <Border Margin="0,14,0,0"
+                                    Background="#0B1220"
+                                    BorderBrush="{StaticResource BorderSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="14">
+                                <TextBlock Text="admin@arisulistiono.com" FontSize="12"
+                                           Foreground="{StaticResource TextMain}"
+                                           FontWeight="SemiBold"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Content="Copy Email" Width="90" Style="{StaticResource PrimaryButtonStyle}"/>
+                                <Button Content="Send Email" Width="90" Style="{StaticResource SecondaryButtonStyle}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="2" Background="#111827" BorderBrush="#1F2937" BorderThickness="1,1,0,0">
+            <Grid Margin="24,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="525"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center"
+                           Foreground="{StaticResource TextMuted}"
+                           FontSize="12.5"
+                           Text="Built for engineers who need faster clues, clearer visibility, and less trial-and-error."/>
+
+                <Button Grid.Column="1"
+        Content="Close"
+        Width="220"
+        Height="34"
+        VerticalAlignment="Center"
+        IsDefault="True"
+        Click="Close_Click"
+        Cursor="Hand"
+        Foreground="White"
+        Background="#14B8A6"
+        BorderBrush="#14B8A6"
+        BorderThickness="1"
+        FontWeight="SemiBold"
+        RenderTransformOrigin="0.5,0.5">
+
+                    <Button.RenderTransform>
+                        <TranslateTransform/>
+                    </Button.RenderTransform>
+
+                    <Button.Effect>
+                        <DropShadowEffect ShadowDepth="2"
+                          BlurRadius="6"
+                          Opacity="0.4"/>
+                    </Button.Effect>
+
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="BtnBorder"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                            </Border>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="BtnBorder" Property="Background" Value="#0EA5A0"/>
+                                    <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#0EA5A0"/>
+                                </Trigger>
+
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="BtnBorder" Property="Background" Value="#0F766E"/>
+                                    <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#0F766E"/>
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <TranslateTransform Y="1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Effect" Value="{x:Null}"/>
+                                </Trigger>
+
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="BtnBorder" Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
