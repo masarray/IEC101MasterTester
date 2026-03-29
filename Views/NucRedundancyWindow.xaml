@@ -203,10 +203,10 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid x:Name="ZoomRootHost" Margin="14">
-        <Grid.LayoutTransform>
+    <Grid x:Name="ZoomRootHost" Margin="14" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
             <ScaleTransform x:Name="WindowZoomTransform" ScaleX="1" ScaleY="1" />
-        </Grid.LayoutTransform>
+        </Grid.RenderTransform>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />

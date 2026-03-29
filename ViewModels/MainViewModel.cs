@@ -2323,7 +2323,7 @@ namespace IEC101MasterTester.ViewModels
                 }
                 existing.UpdateSource = channel;
                 existing.Cot = source.Cot;
-                ReorderNucValuesNewestFirst();
+                MoveNucValueToSortedPosition(existing);
                 return;
             }
 
@@ -2339,9 +2339,10 @@ namespace IEC101MasterTester.ViewModels
                 Cot = source.Cot
             };
 
-            NucValues.Add(row);
+            int insertIndex = GetNucValueInsertIndex(row);
+            NucValues.Insert(insertIndex, row);
             _nucValueIndex[source.IOA] = row;
-            ReorderNucValuesNewestFirst();
+            RenumberNucValues(Math.Max(0, insertIndex - 1));
 
             while (NucValues.Count > MaxNucValueRows)
             {
@@ -2363,17 +2364,78 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
-            List<ValueViewerRow> ordered = NucValues
-                .OrderByDescending(GetNucValueSortTimestampUtc)
-                .ThenByDescending(row => row.IOA)
-                .ToList();
-
-            NucValues.Clear();
-            for (int index = 0; index < ordered.Count; index++)
+            for (int index = 0; index < NucValues.Count; index++)
             {
-                ValueViewerRow row = ordered[index];
-                row.No = index + 1;
-                NucValues.Add(row);
+                MoveNucValueToSortedPosition(NucValues[index]);
+            }
+        }
+
+        private void MoveNucValueToSortedPosition(ValueViewerRow row)
+        {
+            if (row == null || NucValues.Count <= 1)
+            {
+                if (NucValues.Count == 1 && NucValues[0] != null)
+                {
+                    NucValues[0].No = 1;
+                }
+
+                return;
+            }
+
+            int oldIndex = NucValues.IndexOf(row);
+            if (oldIndex < 0)
+            {
+                return;
+            }
+
+            int newIndex = GetNucValueInsertIndex(row, row);
+            if (newIndex != oldIndex)
+            {
+                NucValues.Move(oldIndex, newIndex);
+                RenumberNucValues(Math.Min(oldIndex, newIndex));
+                return;
+            }
+
+            row.No = oldIndex + 1;
+        }
+
+        private int GetNucValueInsertIndex(ValueViewerRow candidate, ValueViewerRow ignore = null)
+        {
+            DateTime candidateTime = GetNucValueSortTimestampUtc(candidate);
+
+            for (int index = 0; index < NucValues.Count; index++)
+            {
+                ValueViewerRow current = NucValues[index];
+                if (ReferenceEquals(current, ignore))
+                {
+                    continue;
+                }
+
+                DateTime currentTime = GetNucValueSortTimestampUtc(current);
+                if (candidateTime > currentTime)
+                {
+                    return index;
+                }
+
+                if (candidateTime == currentTime && candidate.IOA > current.IOA)
+                {
+                    return index;
+                }
+            }
+
+            return ignore == null ? NucValues.Count : Math.Max(0, NucValues.Count - 1);
+        }
+
+        private void RenumberNucValues(int startIndex = 0)
+        {
+            int safeStart = Math.Max(0, startIndex);
+            for (int index = safeStart; index < NucValues.Count; index++)
+            {
+                ValueViewerRow row = NucValues[index];
+                if (row != null)
+                {
+                    row.No = index + 1;
+                }
             }
         }
 
