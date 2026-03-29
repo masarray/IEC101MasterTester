@@ -134,6 +134,7 @@ namespace IEC101MasterTester.ViewModels
         private bool _nucMainConnected;
         private bool _nucBackupConnected;
         private bool _nucSessionActive;
+        private bool _isNucValuesInitialized;
         private bool _nucMainFlowHealthy;
         private bool _nucBackupFlowHealthy;
         private bool _nucMainFaultLatched;
@@ -860,6 +861,7 @@ namespace IEC101MasterTester.ViewModels
             NucLineMonitor.Clear();
             _nucValueIndex.Clear();
             _nucLastDiscreteStates.Clear();
+            _isNucValuesInitialized = false;
             _lastNucEventLogKey = null;
             _lastNucSoeAuditKey = null;
             _lastNucLineMonitorKey = null;
@@ -2336,7 +2338,10 @@ namespace IEC101MasterTester.ViewModels
                 }
                 existing.UpdateSource = channel;
                 existing.Cot = source.Cot;
-                MoveNucValueToSortedPosition(existing);
+                if (!isGi)
+                {
+                    _isNucValuesInitialized = true;
+                }
                 return;
             }
 
@@ -2352,10 +2357,15 @@ namespace IEC101MasterTester.ViewModels
                 Cot = source.Cot
             };
 
-            int insertIndex = GetNucValueInsertIndex(row);
-            NucValues.Insert(insertIndex, row);
+            int orderedInsertIndex = GetNucValueInsertIndex(row);
+            NucValues.Insert(orderedInsertIndex, row);
+            RenumberNucValues(Math.Max(0, orderedInsertIndex));
+
             _nucValueIndex[source.IOA] = row;
-            RenumberNucValues(Math.Max(0, insertIndex - 1));
+            if (!isGi)
+            {
+                _isNucValuesInitialized = true;
+            }
 
             while (NucValues.Count > MaxNucValueRows)
             {
@@ -2369,74 +2379,41 @@ namespace IEC101MasterTester.ViewModels
         {
             if (NucValues.Count <= 1)
             {
-                if (NucValues.Count == 1)
+                RenumberNucValues();
+                return;
+            }
+
+            List<ValueViewerRow> ordered = NucValues
+                .OrderBy(row => row.IOA)
+                .ToList();
+
+            for (int index = 0; index < ordered.Count; index++)
+            {
+                ValueViewerRow row = ordered[index];
+                int oldIndex = NucValues.IndexOf(row);
+                if (oldIndex >= 0 && oldIndex != index)
                 {
-                    NucValues[0].No = 1;
+                    NucValues.Move(oldIndex, index);
                 }
 
-                return;
+                row.No = index + 1;
             }
 
-            for (int index = 0; index < NucValues.Count; index++)
-            {
-                MoveNucValueToSortedPosition(NucValues[index]);
-            }
+            _isNucValuesInitialized = true;
         }
 
-        private void MoveNucValueToSortedPosition(ValueViewerRow row)
+        private int GetNucValueInsertIndex(ValueViewerRow candidate)
         {
-            if (row == null || NucValues.Count <= 1)
-            {
-                if (NucValues.Count == 1 && NucValues[0] != null)
-                {
-                    NucValues[0].No = 1;
-                }
-
-                return;
-            }
-
-            int oldIndex = NucValues.IndexOf(row);
-            if (oldIndex < 0)
-            {
-                return;
-            }
-
-            int newIndex = GetNucValueInsertIndex(row, row);
-            if (newIndex != oldIndex)
-            {
-                NucValues.Move(oldIndex, newIndex);
-                RenumberNucValues(Math.Min(oldIndex, newIndex));
-                return;
-            }
-
-            row.No = oldIndex + 1;
-        }
-
-        private int GetNucValueInsertIndex(ValueViewerRow candidate, ValueViewerRow ignore = null)
-        {
-            DateTime candidateTime = GetNucValueSortTimestampUtc(candidate);
-
             for (int index = 0; index < NucValues.Count; index++)
             {
                 ValueViewerRow current = NucValues[index];
-                if (ReferenceEquals(current, ignore))
-                {
-                    continue;
-                }
-
-                DateTime currentTime = GetNucValueSortTimestampUtc(current);
-                if (candidateTime > currentTime)
-                {
-                    return index;
-                }
-
-                if (candidateTime == currentTime && candidate.IOA > current.IOA)
+                if (candidate.IOA < current.IOA)
                 {
                     return index;
                 }
             }
 
-            return ignore == null ? NucValues.Count : Math.Max(0, NucValues.Count - 1);
+            return NucValues.Count;
         }
 
         private void RenumberNucValues(int startIndex = 0)
@@ -3666,8 +3643,7 @@ namespace IEC101MasterTester.ViewModels
         {
             bool isTx = string.Equals(row.Direction, "TX", StringComparison.OrdinalIgnoreCase);
             bool isRx = string.Equals(row.Direction, "RX", StringComparison.OrdinalIgnoreCase);
-            bool isTimeout = (row.Summary ?? string.Empty).IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || (row.Detail ?? string.Empty).IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isTimeout = IsNucTransportTimeoutEvidence(row);
 
             RegisterNucLinkActivity(channelName, isTx, isRx);
             ObserveNucRecentTraffic(channelName, row.DataClass, row.Summary, row.Detail, null);
@@ -3705,6 +3681,8 @@ namespace IEC101MasterTester.ViewModels
                     _nucMainRxCount++;
                     _nucMainLastRxUtc = nowUtc;
                     _nucMainLastResponseUtc = nowUtc;
+                    _nucMainLastTimeoutUtc = null;
+                    _nucMainFaultLatched = false;
                 }
             }
             else if (string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase))
@@ -3721,6 +3699,8 @@ namespace IEC101MasterTester.ViewModels
                     _nucBackupRxCount++;
                     _nucBackupLastRxUtc = nowUtc;
                     _nucBackupLastResponseUtc = nowUtc;
+                    _nucBackupLastTimeoutUtc = null;
+                    _nucBackupFaultLatched = false;
                 }
             }
 
@@ -4059,44 +4039,8 @@ namespace IEC101MasterTester.ViewModels
 
         private void EvaluateNucActiveLinkCommit()
         {
-            string currentActive = NormalizeNucChannelName(_redundancyActiveLink);
-            if (string.IsNullOrWhiteSpace(currentActive))
-            {
-                currentActive = _nucBackupLinkState == NucLinkHealthState.Responsive
-                    ? "Backup"
-                    : "Main";
-                _redundancyActiveLink = currentActive;
-            }
-
-            string otherChannel = string.Equals(currentActive, "Backup", StringComparison.OrdinalIgnoreCase) ? "Main" : "Backup";
-            NucLinkHealthState currentState = GetNucLinkState(currentActive);
-            NucLinkHealthState otherState = GetNucLinkState(otherChannel);
-
-            bool currentHealthy = currentState == NucLinkHealthState.Responsive;
-            bool otherResponsive = otherState == NucLinkHealthState.Responsive;
-            if (currentHealthy || !otherResponsive)
-            {
-                return;
-            }
-
-            _redundancyActiveLink = otherChannel;
-            _lastRedundancySwitchUtc = DateTime.UtcNow;
-            _redundancySwitchoverCount++;
-            RedundancySwitchSummaryText = "Switchover count: " + _redundancySwitchoverCount.ToString(CultureInfo.InvariantCulture);
-            RedundancyActiveLinkText = "Active link: " + otherChannel;
-            ObserveNucAvailabilitySwitchover(currentActive, otherChannel, "Commit due to active link no longer healthy.", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
-            AddRedundancyTimeline(
-                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                "Controller",
-                "Switchover committed",
-                currentActive + " -> " + otherChannel,
-                "Previous active link is no longer healthy; backup responsive path committed.",
-                _giObservedAfterRedundancySwitch ? "Observed" : "-");
-            AddRedundancyJournal(
-                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                "Controller",
-                "Switchover committed",
-                currentActive + " -> " + otherChannel);
+            // Active-link ownership is committed only by the redundancy controller/service.
+            // The ViewModel is display-only and must not promote/demote links based on local heuristics.
         }
 
         private NucLinkHealthState GetNucLinkState(string channelName)
@@ -4692,8 +4636,7 @@ namespace IEC101MasterTester.ViewModels
             bool isTx = string.Equals(row.Direction, "TX", StringComparison.OrdinalIgnoreCase);
             bool isRx = string.Equals(row.Direction, "RX", StringComparison.OrdinalIgnoreCase);
             bool isError = string.Equals(row.FrameType, "Error", StringComparison.OrdinalIgnoreCase);
-            bool isTimeout = (row.Summary ?? string.Empty).IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || (row.Detail ?? string.Empty).IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isTimeout = IsNucTransportTimeoutEvidence(row);
             bool isGi = (row.Summary ?? string.Empty).IndexOf("GI", StringComparison.OrdinalIgnoreCase) >= 0
                 || (row.Detail ?? string.Empty).IndexOf("GI", StringComparison.OrdinalIgnoreCase) >= 0;
 
@@ -4730,6 +4673,57 @@ namespace IEC101MasterTester.ViewModels
             }
 
             RefreshAvailabilityTelemetry();
+        }
+
+        private static bool IsNucTransportTimeoutEvidence(LineMonitorRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            string summary = row.Summary ?? string.Empty;
+            string detail = row.Detail ?? string.Empty;
+            string frameType = row.FrameType ?? string.Empty;
+
+            bool isCommandOrApplicationOnly =
+                summary.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isCommandOrApplicationOnly)
+            {
+                return false;
+            }
+
+            return summary.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
+                || (string.Equals(frameType, "Error", StringComparison.OrdinalIgnoreCase)
+                    && (summary.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
         private void ObserveNucAvailabilitySwitchover(string previousOwner, string newOwner, string reason, string timestampText)

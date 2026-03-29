@@ -186,14 +186,17 @@ namespace IEC101MasterTester.Services.Redundancy
             {
                 snapshot.StatusText = e == null ? "Unknown" : e.DisplayText;
                 snapshot.DetailText = e == null ? string.Empty : e.Detail;
-                snapshot.Connected = false;
-                if (e == null || !string.Equals(e.DisplayText, ConnectionStatusInfo.Connected.DisplayText, StringComparison.OrdinalIgnoreCase))
+                bool isConnected = e != null
+                    && string.Equals(e.DisplayText, ConnectionStatusInfo.Connected.DisplayText, StringComparison.OrdinalIgnoreCase);
+                snapshot.Connected = isConnected;
+                if (!isConnected)
                 {
                     snapshot.State = NucChannelState.FaultLatched;
                     _faultLatched = true;
                 }
                 else if (snapshot.Role == NucChannelRole.Standby)
                 {
+                    snapshot.LastTimeoutUtc = null;
                     if (!snapshot.LastActivityUtc.HasValue)
                     {
                         snapshot.LastActivityUtc = DateTime.UtcNow;
@@ -202,6 +205,7 @@ namespace IEC101MasterTester.Services.Redundancy
                 }
                 else if (!_faultLatched)
                 {
+                    snapshot.LastTimeoutUtc = null;
                     snapshot.State = NucChannelState.ConnectedNoResponse;
                 }
             });
@@ -222,10 +226,7 @@ namespace IEC101MasterTester.Services.Redundancy
             string detail = e.Detail ?? string.Empty;
             bool isLinkTestTxObserved = summary.IndexOf("link test sent", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("link test sent", StringComparison.OrdinalIgnoreCase) >= 0;
-            bool isTimeout = summary.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isTransportHealthFailure = IsTransportHealthFailureEvidence(e);
 
             UpdateSnapshot(snapshot =>
             {
@@ -245,6 +246,7 @@ namespace IEC101MasterTester.Services.Redundancy
                 {
                     snapshot.RxCount++;
                     snapshot.LastResponseUtc = DateTime.UtcNow;
+                    snapshot.LastTimeoutUtc = null;
                     snapshot.Connected = true;
                     _faultLatched = false;
                     if (snapshot.Role == NucChannelRole.Standby)
@@ -257,7 +259,7 @@ namespace IEC101MasterTester.Services.Redundancy
                         : NucChannelState.StandbySupervision;
                 }
 
-                if (isTimeout)
+                if (isTransportHealthFailure)
                 {
                     snapshot.LastTimeoutUtc = DateTime.UtcNow;
                     snapshot.Connected = false;
@@ -270,6 +272,60 @@ namespace IEC101MasterTester.Services.Redundancy
             });
         }
 
+        private static bool IsTransportHealthFailureEvidence(LineMonitorRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            string summary = row.Summary ?? string.Empty;
+            string detail = row.Detail ?? string.Empty;
+            string frameType = row.FrameType ?? string.Empty;
+
+            bool isCommandOrApplicationOnly =
+                summary.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            if (isCommandOrApplicationOnly)
+            {
+                return false;
+            }
+
+            bool explicitTransportFailure =
+                summary.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
+                || (string.Equals(frameType, "Error", StringComparison.OrdinalIgnoreCase)
+                    && (summary.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
+
+            return explicitTransportFailure;
+        }
+
         private void Service_ValueReceived(object sender, ValueViewerRow e)
         {
             ValueReceived?.Invoke(this, e);
@@ -278,6 +334,8 @@ namespace IEC101MasterTester.Services.Redundancy
             {
                 snapshot.LastActivityUtc = DateTime.UtcNow;
                 snapshot.LastResponseUtc = DateTime.UtcNow;
+                snapshot.LastTimeoutUtc = null;
+                snapshot.Connected = true;
                 _faultLatched = false;
                 if (snapshot.Role == NucChannelRole.Active)
                 {

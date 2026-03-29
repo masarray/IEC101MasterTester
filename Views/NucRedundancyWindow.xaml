@@ -973,6 +973,7 @@
                               ItemsSource="{Binding NucEventLog}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
+                              CanUserSortColumns="False"
                               SelectionMode="Extended"
                               SelectionUnit="CellOrRowHeader"
                               ClipboardCopyMode="IncludeHeader"

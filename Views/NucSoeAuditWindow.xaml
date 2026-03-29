@@ -82,6 +82,7 @@
             <DataGrid ItemsSource="{Binding NucSoeAuditLog}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
+                      CanUserSortColumns="False"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       CanUserReorderColumns="False"
