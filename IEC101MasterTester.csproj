@@ -158,6 +158,8 @@
     <Compile Include="Models\BufferReplaySession.cs" />
     <Compile Include="Models\CommandLifeMonitorRow.cs" />
     <Compile Include="Models\EventLogRow.cs" />
+    <Compile Include="Models\Export\EventLogExportMetadata.cs" />
+    <Compile Include="Models\Export\EventLogExportRequest.cs" />
     <Compile Include="Models\FindingRow.cs" />
     <Compile Include="Models\Iec101ChannelOperationMode.cs" />
     <Compile Include="Models\LineMonitorRow.cs" />
@@ -182,6 +184,7 @@
     <Compile Include="Models\SlaveAvailabilityState.cs" />
     <Compile Include="Models\ValueViewerRow.cs" />
     <Compile Include="Services\Iec101\Iec101DataMapper.cs" />
+    <Compile Include="Services\Export\EventLogExportService.cs" />
     <Compile Include="Services\Iec101\Iec101MasterService.cs" />
     <Compile Include="Services\Iec101\IIec101MasterService.cs" />
     <Compile Include="Services\Iec101\LineMonitorFormatter.cs" />

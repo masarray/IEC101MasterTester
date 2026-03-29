@@ -13,11 +13,20 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="SoeToolbarCaptionTextStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,4,0,0" />
+                <Setter Property="Foreground" Value="#E2E8F0" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
     <Grid Margin="12" Background="#0F172A">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -78,8 +87,116 @@
             </UniformGrid>
         </Border>
 
-        <Border Grid.Row="2" Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="8">
-            <DataGrid ItemsSource="{Binding NucSoeAuditLog}"
+        <Border Grid.Row="2"
+                Margin="0,0,0,10"
+                Background="#111827"
+                BorderBrush="#334155"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="10">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Top">
+                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
+        Click="ClearFilters_Click"
+        Margin="0,0,8,0"
+        ToolTip="Clear all filters">
+                        <StackPanel>
+                            <Grid Width="18" Height="18" HorizontalAlignment="Center">
+                                <!-- Funnel -->
+                                <Path Stroke="#E2E8F0"
+                  StrokeThickness="1.8"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  StrokeLineJoin="Round"
+                  Data="M3 4H15L10 10V14L8 15V10L3 4" />
+
+                                <!-- X mark -->
+                                <Path Stroke="#E2E8F0"
+                  StrokeThickness="1.8"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Data="M11.8 11.8L15.8 15.8M15.8 11.8L11.8 15.8" />
+                            </Grid>
+
+                            <TextBlock Text="Clear Filter"
+                   Style="{StaticResource SoeToolbarCaptionTextStyle}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource PrimaryActionButtonStyle}"
+                            Click="ExportExcel_Click"
+                            Margin="0,0,8,0"
+                            ToolTip="Export filtered rows to Excel">
+                        <StackPanel>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#F8FAFC" StrokeThickness="1.8" Data="M14 3H6a2 2 0 0 0-2 2v14l4-3 4 3 4-3 4 3V9zM8 7h8M8 11h6" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Export Excel" Style="{StaticResource SoeToolbarCaptionTextStyle}"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                            IsEnabled="False"
+                            ToolTip="PDF export planned for phase 2">
+                        <StackPanel>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#CBD5E1" StrokeThickness="1.8" Data="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm7 0v5h5M9 13h6M9 17h6" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Export PDF" Style="{StaticResource SoeToolbarCaptionTextStyle}"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Right">
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="IOA" />
+                            <TextBox x:Name="IoaFilterTextBox" Width="90" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="Signal" />
+                            <TextBox x:Name="SignalFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="Channel" />
+                            <TextBox x:Name="ChannelFilterTextBox" Width="90" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="Event" />
+                            <TextBox x:Name="EventFilterTextBox" Width="130" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="Value" />
+                            <TextBox x:Name="ValueFilterTextBox" Width="100" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="From" />
+                            <TextBox x:Name="FromFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" ToolTip="yyyy-MM-dd HH:mm:ss" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,10,0">
+                            <TextBlock Foreground="#94A3B8" Text="To" />
+                            <TextBox x:Name="ToFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" ToolTip="yyyy-MM-dd HH:mm:ss" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Foreground="#94A3B8" Text="Search" />
+                            <TextBox x:Name="SearchFilterTextBox" Width="180" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="3" Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="FilterSummaryTextBlock"
+                           Margin="4,0,0,8"
+                           Foreground="#94A3B8"
+                           Text="Showing all rows." />
+                <DataGrid x:Name="AuditGrid"
+                      Grid.Row="1"
+                      ItemsSource="{Binding NucSoeAuditLog}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserSortColumns="False"
@@ -122,7 +239,8 @@
                     <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="150" />
                     <DataGridTextColumn Header="COT" Binding="{Binding Cot}" Width="110" />
                 </DataGrid.Columns>
-            </DataGrid>
+                </DataGrid>
+            </Grid>
         </Border>
     </Grid>
 </Window>
