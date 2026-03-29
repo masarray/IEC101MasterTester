@@ -1031,11 +1031,11 @@
                                                     <Setter TargetName="ValueText" Property="Foreground" Value="#4ADE80" />
                                                     <Setter TargetName="ValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Value}" Value="Open">
+                                                <DataTrigger Binding="{Binding Value}" Value="OPEN">
                                                     <Setter TargetName="ValueText" Property="Foreground" Value="#4ADE80" />
                                                     <Setter TargetName="ValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Value}" Value="Close">
+                                                <DataTrigger Binding="{Binding Value}" Value="CLOSE">
                                                     <Setter TargetName="ValueText" Property="Foreground" Value="#F87171" />
                                                     <Setter TargetName="ValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>
@@ -1185,11 +1185,11 @@
                                                     <Setter TargetName="EventValueText" Property="Foreground" Value="#4ADE80" />
                                                     <Setter TargetName="EventValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Value}" Value="Open">
+                                                <DataTrigger Binding="{Binding Value}" Value="OPEN">
                                                     <Setter TargetName="EventValueText" Property="Foreground" Value="#4ADE80" />
                                                     <Setter TargetName="EventValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Value}" Value="Close">
+                                                <DataTrigger Binding="{Binding Value}" Value="CLOSE">
                                                     <Setter TargetName="EventValueText" Property="Foreground" Value="#F87171" />
                                                     <Setter TargetName="EventValueText" Property="FontWeight" Value="Bold" />
                                                 </DataTrigger>

@@ -83,15 +83,9 @@
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
 
-            <Style x:Key="ActionButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#233247" />
-                <Setter Property="Foreground" Value="#F8FAFC" />
-                <Setter Property="BorderBrush" Value="#334155" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="14,8" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Cursor" Value="Hand" />
-            </Style>
+            <Style x:Key="ActionButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryActionButtonStyle}" />
+            <Style x:Key="ActionPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}" />
+            <Style x:Key="ActionDangerButtonStyle" TargetType="Button" BasedOn="{StaticResource DangerActionButtonStyle}" />
 
             <Style x:Key="LineMonitorToggleButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="30" />
@@ -236,49 +230,93 @@
                                TextWrapping="Wrap" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Top">
-                    <Button Width="132"
+                <WrapPanel Grid.Column="1"
+                           VerticalAlignment="Top"
+                           HorizontalAlignment="Right"
+                           Margin="12,0,0,0">
+                    <Button Width="108"
                             Margin="0,0,10,0"
                             Style="{StaticResource ActionButtonStyle}"
                             Click="ConfigureLinks_Click"
-                            Content="Configure Links" />
-                    <Button Width="132"
+                            ToolTip="Configure Links">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M12 2 L20 6.5 L20 17.5 L12 22 L4 17.5 L4 6.5 Z M9 12 H15 M12 9 V15"/>
+                            <TextBlock Margin="0,4,0,0" Text="Configure" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="108"
                             Margin="0,0,10,0"
-                            Style="{StaticResource ActionButtonStyle}"
+                            Style="{StaticResource ActionPrimaryButtonStyle}"
+                            IsEnabled="{Binding CanStartNucRedundancySessionButton}"
                             Click="StartSession_Click"
-                            Content="Start Session" />
-                    <Button Width="132"
+                            ToolTip="Start Session">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#F8FAFC" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M12 17 V21 M8 21 H16 M15 9.5 L10.5 12.2 V6.8 L15 9.5 M4 3 H20 A2 2 0 0 1 22 5 V15 A2 2 0 0 1 20 17 H4 A2 2 0 0 1 2 15 V5 A2 2 0 0 1 4 3 Z"/>
+                            <TextBlock Margin="0,4,0,0" Text="Start Session" FontSize="10.5" FontWeight="SemiBold" Foreground="#F8FAFC" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="108"
                             Margin="0,0,10,0"
-                            Style="{StaticResource ActionButtonStyle}"
+                            Style="{StaticResource ActionDangerButtonStyle}"
+                            IsEnabled="{Binding CanStopNucRedundancySessionButton}"
                             Click="StopSession_Click"
-                            Content="Stop Session" />
-                    <Button Width="124"
+                            ToolTip="Stop Session">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#FEE2E2" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M14.5 12.5 L9.5 7.5 M9.5 12.5 L14.5 7.5 M12 17 V21 M8 21 H16 M4 3 H20 A2 2 0 0 1 22 5 V15 A2 2 0 0 1 20 17 H4 A2 2 0 0 1 2 15 V5 A2 2 0 0 1 4 3 Z"/>
+                            <TextBlock Margin="0,4,0,0" Text="Stop Session" FontSize="10.5" FontWeight="SemiBold" Foreground="#FEE2E2" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="94"
                             Margin="0,0,10,0"
                             Style="{StaticResource ActionButtonStyle}"
+                            IsEnabled="{Binding CanStopNucRedundancySessionButton}"
                             Click="SendGi_Click"
-                            Content="Send GI" />
-                    <Button Width="124"
+                            ToolTip="Send General Interrogation">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M6 4 H18 M6 9 H18 M6 14 H12 M14 18 L17 21 L22 15"/>
+                            <TextBlock Margin="0,4,0,0" Text="Send GI" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="94"
                             Margin="0,0,10,0"
                             Style="{StaticResource ActionButtonStyle}"
                             Click="OpenAvailabilityDashboard_Click"
-                            Content="Availability" />
-                    <Button Width="170"
-                            Margin="0,0,10,0"
-                            Style="{StaticResource ActionButtonStyle}"
-                            Click="ClearBufferEventStatistic_Click"
-                            Content="Clear Buffer/Event/Statistic" />
+                            ToolTip="Open Availability Dashboard">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M4 18 H20 M7 16 V11 M12 16 V7 M17 16 V4"/>
+                            <TextBlock Margin="0,4,0,0" Text="Availability" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                     <Button Width="124"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource ActionDangerButtonStyle}"
+                            Click="ClearBufferEventStatistic_Click"
+                            ToolTip="Clear Buffer, Event, and Statistic">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#FEE2E2" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M5 7 H19 M9 7 V5 H15 V7 M8 10 V17 M12 10 V17 M16 10 V17 M7 7 L8 20 H16 L17 7"/>
+                            <TextBlock Margin="0,4,0,0" Text="Clear Runtime" FontSize="10.5" FontWeight="SemiBold" Foreground="#FEE2E2" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="98"
                             Style="{StaticResource ActionButtonStyle}"
                             Margin="0,0,10,0"
                             Click="OpenMainWindow_Click"
-                            Content="Main Window" />
-                    <Button Width="124"
+                            ToolTip="Open Main Window">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M4 5 H20 V19 H4 Z M8 9 H16 M8 13 H16"/>
+                            <TextBlock Margin="0,4,0,0" Text="Main Window" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="90"
                             Style="{StaticResource ActionButtonStyle}"
                             Click="OpenSoeAudit_Click"
-                            Content="SOE Audit" />
-                </StackPanel>
+                            ToolTip="Open SOE Audit">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M7 4 H17 M7 8 H17 M7 12 H13 M5 3 H19 V21 H5 Z"/>
+                            <TextBlock Margin="0,4,0,0" Text="SOE Audit" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
             </Grid>
         </Border>
 

@@ -102,6 +102,100 @@
         <Setter Property="BorderBrush" Value="{StaticResource PopupBorderBrush}"/>
     </Style>
 
+    <Style x:Key="IndustrialButtonBaseStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+        <Setter Property="Background" Value="{StaticResource HeaderAltBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource PopupBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            SnapsToDevicePixels="True">
+                        <Border.RenderTransform>
+                            <TranslateTransform/>
+                        </Border.RenderTransform>
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#27364C"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#5B7089"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Chrome" Property="Background" Value="#162236"/>
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="#3A4A60"/>
+                            <Setter TargetName="Chrome" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform Y="1"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Chrome" Property="Opacity" Value="0.46"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ToolbarActionButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource IndustrialButtonBaseStyle}">
+        <Setter Property="Height" Value="60"/>
+        <Setter Property="MinWidth" Value="90"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
+
+    <Style x:Key="PrimaryActionButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource ToolbarActionButtonStyle}">
+        <Setter Property="Foreground" Value="#F8FAFC"/>
+        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AccentDarkBrush}"/>
+    </Style>
+
+    <Style x:Key="SecondaryActionButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource ToolbarActionButtonStyle}">
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+        <Setter Property="Background" Value="#1A273A"/>
+        <Setter Property="BorderBrush" Value="#314257"/>
+    </Style>
+
+    <Style x:Key="DangerActionButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource ToolbarActionButtonStyle}">
+        <Setter Property="Foreground" Value="#FEE2E2"/>
+        <Setter Property="Background" Value="#341A21"/>
+        <Setter Property="BorderBrush" Value="#7F1D1D"/>
+    </Style>
+
+    <Style x:Key="CompactInlineButtonStyle"
+           TargetType="Button"
+           BasedOn="{StaticResource IndustrialButtonBaseStyle}">
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="MinWidth" Value="88"/>
+        <Setter Property="Padding" Value="10,4"/>
+    </Style>
+
     <Style x:Key="HeaderChipBorderStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource HeaderAltBrush}"/>
         <Setter Property="CornerRadius" Value="14"/>

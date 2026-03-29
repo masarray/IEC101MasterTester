@@ -14,6 +14,10 @@
         Background="#0F172A">
 
     <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
         <SolidColorBrush x:Key="BgMain" Color="#0F172A"/>
         <SolidColorBrush x:Key="CardBg" Color="#111827"/>
         <SolidColorBrush x:Key="Accent" Color="#14B8A6"/>
@@ -57,87 +61,19 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="{StaticResource Accent}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="16,9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="38"/>
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryActionButtonStyle}">
             <Setter Property="MinWidth" Value="150"/>
-            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="6,0"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="{StaticResource AccentHover}"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="{StaticResource AccentHover}"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="{StaticResource AccentDark}"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="{StaticResource AccentDark}"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Height" Value="38"/>
         </Style>
 
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="16,9"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="38"/>
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryActionButtonStyle}">
             <Setter Property="MinWidth" Value="150"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="BtnBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              Margin="6,0"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#162033"/>
-                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#475569"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BtnBorder" Property="Background" Value="#0B1220"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="BtnBorder" Property="Opacity" Value="0.45"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Setter Property="Height" Value="38"/>
         </Style>
 
-        <Style x:Key="OutlineWarningButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+        <Style x:Key="OutlineWarningButtonStyle" TargetType="Button" BasedOn="{StaticResource DangerActionButtonStyle}">
+            <Setter Property="MinWidth" Value="150"/>
+            <Setter Property="Height" Value="38"/>
             <Setter Property="BorderBrush" Value="{StaticResource WarningAccent}"/>
             <Setter Property="Foreground" Value="#FCD34D"/>
         </Style>
@@ -256,6 +192,7 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid Background="{StaticResource BgMain}">
@@ -418,7 +355,7 @@ This software is currently running in evaluation mode. Core protocol visibility 
                                             HorizontalAlignment="Right"
                                             DockPanel.Dock="Right"
                                             Margin="12,0,0,0"
-                                            Style="{StaticResource SecondaryButtonStyle}"/>
+                                            Style="{StaticResource CompactInlineButtonStyle}"/>
                                 </DockPanel>
                             </Border>
 
@@ -580,7 +517,7 @@ For activation, update support, maintenance, or feature discussion, please conta
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
                     <Button Content="Copy HWID"
-                            Style="{StaticResource SecondaryButtonStyle}"
+                            Style="{StaticResource CompactInlineButtonStyle}"
                             Margin="0,0,10,0"/>
 
                     <Button Content="Continue in Demo (10)"

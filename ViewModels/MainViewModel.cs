@@ -644,6 +644,10 @@ namespace IEC101MasterTester.ViewModels
             return _nucRedundancyService.IsSessionActive;
         }
 
+        public bool IsNucRedundancySessionActive => _nucSessionActive || _nucRedundancyService.IsSessionActive;
+        public bool CanStartNucRedundancySessionButton => !IsNucRedundancySessionActive;
+        public bool CanStopNucRedundancySessionButton => IsNucRedundancySessionActive;
+
         public bool TryStartNucRedundancySession(out string validationMessage)
         {
             validationMessage = string.Empty;
@@ -662,6 +666,9 @@ namespace IEC101MasterTester.ViewModels
             ClearNucValues();
             ResetAvailabilityState();
             _nucRedundancyService.StartSession();
+            OnPropertyChanged(nameof(IsNucRedundancySessionActive));
+            OnPropertyChanged(nameof(CanStartNucRedundancySessionButton));
+            OnPropertyChanged(nameof(CanStopNucRedundancySessionButton));
             return true;
         }
 
@@ -669,12 +676,18 @@ namespace IEC101MasterTester.ViewModels
         {
             _nucRedundancyService.StopSession();
             ClearNucRecentTrafficBadges();
+            OnPropertyChanged(nameof(IsNucRedundancySessionActive));
+            OnPropertyChanged(nameof(CanStartNucRedundancySessionButton));
+            OnPropertyChanged(nameof(CanStopNucRedundancySessionButton));
         }
 
         public async Task StopNucRedundancySessionAsync()
         {
             await _nucRedundancyService.StopSessionAsync();
             ClearNucRecentTrafficBadges();
+            OnPropertyChanged(nameof(IsNucRedundancySessionActive));
+            OnPropertyChanged(nameof(CanStartNucRedundancySessionButton));
+            OnPropertyChanged(nameof(CanStopNucRedundancySessionButton));
         }
 
         public async Task SendNucRedundancyGiAsync()
@@ -2881,6 +2894,9 @@ namespace IEC101MasterTester.ViewModels
                 }
 
                   _nucSessionActive = e.IsActive;
+                  OnPropertyChanged(nameof(IsNucRedundancySessionActive));
+                  OnPropertyChanged(nameof(CanStartNucRedundancySessionButton));
+                  OnPropertyChanged(nameof(CanStopNucRedundancySessionButton));
                   RedundancyControllerStatusText = "Controller: " + (e.StatusText ?? "Unknown");
                   RedundancyControllerDetailText = e.DetailText ?? string.Empty;
                   if (e.IsActive && !string.IsNullOrWhiteSpace(e.ActiveChannel))

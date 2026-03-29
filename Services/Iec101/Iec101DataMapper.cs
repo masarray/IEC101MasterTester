@@ -263,15 +263,15 @@ namespace IEC101MasterTester.Services.Iec101
             switch (value)
             {
                 case DoublePointValue.INTERMEDIATE:
-                    return "Invalid 0";
+                    return "INVALID 0";
                 case DoublePointValue.OFF:
-                    return "Open";
+                    return "OPEN";
                 case DoublePointValue.ON:
-                    return "Close";
+                    return "CLOSE";
                 case DoublePointValue.INDETERMINATE:
-                    return "Invalid 1";
+                    return "INVALID 1";
                 default:
-                    return value.ToString();
+                    return value.ToString().ToUpperInvariant();
             }
         }
 
