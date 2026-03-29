@@ -167,6 +167,7 @@
     <Compile Include="Models\Licensing\LicenseSnapshot.cs" />
     <Compile Include="Models\Licensing\LicenseState.cs" />
     <Compile Include="Models\Licensing\PersistedLicensePayload.cs" />
+    <Compile Include="Models\Soe\SoeForensicRow.cs" />
     <Compile Include="Models\NucChannelRole.cs" />
     <Compile Include="Models\NucChannelSnapshot.cs" />
     <Compile Include="Models\NucChannelState.cs" />
@@ -204,6 +205,7 @@
     <Compile Include="Services\Settings\INucRedundancySettingsStore.cs" />
     <Compile Include="Services\Settings\JsonNucRedundancySettingsStore.cs" />
     <Compile Include="Services\Settings\JsonSettingsStore.cs" />
+    <Compile Include="Services\Soe\NucSoeForensicJournal.cs" />
     <Compile Include="SharedUi\DemoModeAlert.xaml.cs">
       <DependentUpon>DemoModeAlert.xaml</DependentUpon>
     </Compile>

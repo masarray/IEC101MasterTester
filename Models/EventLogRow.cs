@@ -4,9 +4,14 @@ namespace IEC101MasterTester.Models
     {
         public int No { get; set; }
         public string Time { get; set; }
+        public string RecvTime { get; set; }
+        public string SourceTime { get; set; }
+        public string DeltaMs { get; set; }
         public string Name { get; set; }
         public string IOA { get; set; }
         public string Type { get; set; }
+        public string TypeId { get; set; }
+        public string Casdu { get; set; }
         public string Event { get; set; }
         public string Value { get; set; }
         public string Quality { get; set; }

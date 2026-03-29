@@ -458,11 +458,84 @@
     </Style>
 
     <Style TargetType="DataGridCell">
-        <Setter Property="BorderBrush" Value="#1C2A40"/>
         <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Padding" Value="8,5"/>
+        <Setter Property="BorderBrush" Value="#1C2A40"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Padding" Value="10,0,10,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border x:Name="CellBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="CellBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="#F8FAFC"/>
+                            <Setter Property="Background" Value="#172A3D"/>
+                            <Setter TargetName="CellBorder" Property="BorderBrush" Value="{StaticResource AccentDarkBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="CellBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="DataGridRow">
+        <Setter Property="Background" Value="{StaticResource PopupSurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextMainBrush}"/>
+        <Setter Property="BorderBrush" Value="#1C2A40"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRow">
+                    <Border x:Name="RowBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <SelectiveScrollingGrid>
+                            <SelectiveScrollingGrid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </SelectiveScrollingGrid.ColumnDefinitions>
+                            <SelectiveScrollingGrid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </SelectiveScrollingGrid.RowDefinitions>
+                            <DataGridCellsPresenter Grid.Column="1"/>
+                            <DataGridDetailsPresenter Grid.Column="1"
+                                                      Grid.Row="1"
+                                                      Visibility="{TemplateBinding DetailsVisibility}"/>
+                        </SelectiveScrollingGrid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#132033"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#172A3D"/>
+                <Setter Property="Foreground" Value="#F8FAFC"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentDarkBrush}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- Popup CheckBox -->

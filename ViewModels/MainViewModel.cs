@@ -3,6 +3,8 @@ using IEC101MasterTester.Services.Iec101;
 using IEC101MasterTester.Services.Profiles;
 using IEC101MasterTester.Services.Redundancy;
 using IEC101MasterTester.Services.Settings;
+using IEC101MasterTester.Services.Soe;
+using IEC101MasterTester.Models.Soe;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using lib60870.CS101;
 
 namespace IEC101MasterTester.ViewModels
 {
@@ -30,6 +33,7 @@ namespace IEC101MasterTester.ViewModels
         private const int MaxRedundancyJournalRows = 24;
         private const int MaxNucEventLogRows = 1000;
         private const int MaxNucSoeAuditRows = 1000;
+        private const int NucSoeForensicCapacity = 8000;
         private const int MaxNucLineMonitorRows = 120;
         private const int MaxNucValueRows = 400;
         private const int MaxAvailabilityTimelineRows = 120;
@@ -38,6 +42,7 @@ namespace IEC101MasterTester.ViewModels
         private readonly ISettingsStore _settingsStore;
         private readonly INucRedundancySettingsStore _nucRedundancySettingsStore;
         private readonly INucRedundancyService _nucRedundancyService;
+        private readonly NucSoeForensicJournal _nucSoeForensicJournal;
         private readonly Dictionary<int, ValueViewerRow> _valueIndex;
         private readonly Dictionary<int, ValueViewerRow> _nucValueIndex;
         private readonly ConcurrentDictionary<string, CommandTransaction> _nucFastCommandCache;
@@ -93,6 +98,7 @@ namespace IEC101MasterTester.ViewModels
         private string _redundancySwitchSummaryText;
         private string _redundancyGiObservationText;
         private string _redundancyContinuityText;
+        private string _lastRedundancySwitchText;
         private string _redundancyFindingSummaryText;
         private string _redundancyFindingDetailsText;
         private string _availabilitySessionStartedText;
@@ -134,7 +140,6 @@ namespace IEC101MasterTester.ViewModels
         private bool _nucMainConnected;
         private bool _nucBackupConnected;
         private bool _nucSessionActive;
-        private bool _isNucValuesInitialized;
         private bool _nucMainFlowHealthy;
         private bool _nucBackupFlowHealthy;
         private bool _nucMainFaultLatched;
@@ -274,6 +279,7 @@ namespace IEC101MasterTester.ViewModels
             _settingsStore = settingsStore;
             _nucRedundancySettingsStore = new JsonNucRedundancySettingsStore();
             _nucRedundancyService = new NucRedundancyService();
+            _nucSoeForensicJournal = new NucSoeForensicJournal(NucSoeForensicCapacity);
             _valueIndex = new Dictionary<int, ValueViewerRow>();
             _nucValueIndex = new Dictionary<int, ValueViewerRow>();
             _nucFastCommandCache = new ConcurrentDictionary<string, CommandTransaction>(StringComparer.OrdinalIgnoreCase);
@@ -350,6 +356,7 @@ namespace IEC101MasterTester.ViewModels
             RedundancySwitchSummaryText = "Switchover count: 0";
             RedundancyGiObservationText = "GI after switchover: Not observed";
             RedundancyContinuityText = "Continuity gap: -";
+            LastRedundancySwitchText = "Last switchover: -";
             RedundancyFindingSummaryText = "Redundancy findings: pending observation.";
             RedundancyFindingDetailsText = "No redundancy finding recorded yet.";
             ResetAvailabilityState();
@@ -374,6 +381,7 @@ namespace IEC101MasterTester.ViewModels
         public ObservableCollection<EventLogRow> EventLog { get; }
         public ObservableCollection<EventLogRow> NucEventLog { get; }
         public ObservableCollection<EventLogRow> NucSoeAuditLog { get; }
+        public NucSoeForensicJournal NucSoeForensicJournal => _nucSoeForensicJournal;
         public ObservableCollection<StatusHistoryRow> StatusHistory { get; }
         public ObservableCollection<FindingRow> Findings { get; }
         public bool HasUnreadFindings { get => _hasUnreadFindings; private set => SetProperty(ref _hasUnreadFindings, value); }
@@ -488,8 +496,12 @@ namespace IEC101MasterTester.ViewModels
         public string RedundancySwitchSummaryText { get => _redundancySwitchSummaryText; private set => SetProperty(ref _redundancySwitchSummaryText, value); }
         public string RedundancyGiObservationText { get => _redundancyGiObservationText; private set => SetProperty(ref _redundancyGiObservationText, value); }
         public string RedundancyContinuityText { get => _redundancyContinuityText; private set => SetProperty(ref _redundancyContinuityText, value); }
+        public string LastRedundancySwitchText { get => _lastRedundancySwitchText; private set => SetProperty(ref _lastRedundancySwitchText, value); }
         public string RedundancyFindingSummaryText { get => _redundancyFindingSummaryText; private set => SetProperty(ref _redundancyFindingSummaryText, value); }
         public string RedundancyFindingDetailsText { get => _redundancyFindingDetailsText; private set => SetProperty(ref _redundancyFindingDetailsText, value); }
+        public int RedundancySwitchoverCountValue => _redundancySwitchoverCount;
+        public bool IsGiObservedAfterRedundancySwitch => _giObservedAfterRedundancySwitch;
+        public int NucAvailabilityAcdAssertCountValue => _nucAvailabilityAcdAssertCount;
         public string AvailabilitySessionStartedText { get => _availabilitySessionStartedText; private set => SetProperty(ref _availabilitySessionStartedText, value); }
         public string AvailabilitySummaryText { get => _availabilitySummaryText; private set => SetProperty(ref _availabilitySummaryText, value); }
         public string AvailabilityUptimeText { get => _availabilityUptimeText; private set => SetProperty(ref _availabilityUptimeText, value); }
@@ -858,10 +870,10 @@ namespace IEC101MasterTester.ViewModels
             NucValues.Clear();
             NucEventLog.Clear();
             NucSoeAuditLog.Clear();
+            _nucSoeForensicJournal.Clear();
             NucLineMonitor.Clear();
             _nucValueIndex.Clear();
             _nucLastDiscreteStates.Clear();
-            _isNucValuesInitialized = false;
             _lastNucEventLogKey = null;
             _lastNucSoeAuditKey = null;
             _lastNucLineMonitorKey = null;
@@ -958,6 +970,7 @@ namespace IEC101MasterTester.ViewModels
             RedundancySwitchSummaryText = "Switchover count: 0";
             RedundancyGiObservationText = "GI after switchover: Not observed";
             RedundancyContinuityText = "Continuity gap: -";
+            LastRedundancySwitchText = "Last switchover: -";
             RedundancyFindingSummaryText = "Redundancy findings: pending observation.";
             RedundancyFindingDetailsText = "No redundancy finding recorded yet.";
             ClearNucRecentTrafficBadges();
@@ -2125,6 +2138,113 @@ namespace IEC101MasterTester.ViewModels
             }
         }
 
+        private void AppendNucSoeForensicRow(SoeForensicRow row)
+        {
+            _nucSoeForensicJournal.Append(row);
+        }
+
+        private void AppendDecodedNucSoeForensicRow(ValueViewerRow value, string channelName)
+        {
+            if (value == null)
+            {
+                return;
+            }
+
+            AppendNucSoeForensicRow(new SoeForensicRow
+            {
+                RecvTimeUtc = value.ReceiveTimestampUtc == default(DateTime) ? DateTime.UtcNow : value.ReceiveTimestampUtc,
+                SourceTimeUtc = value.EventTimestampUtc,
+                DeltaMs = value.EventTimestampUtc.HasValue
+                    ? (int?)Math.Round((value.ReceiveTimestampUtc - value.EventTimestampUtc.Value).TotalMilliseconds, MidpointRounding.AwayFromZero)
+                    : null,
+                Channel = string.IsNullOrWhiteSpace(channelName) ? "Main" : channelName,
+                CA = ParseIntOrDefault(value.Casdu),
+                IOA = value.IOA,
+                TypeId = value.TypeIdRaw,
+                TypeIdText = value.TypeId,
+                CotText = value.Cot,
+                CotRaw = value.CotRaw,
+                SignalName = value.Name,
+                ValueText = value.Value,
+                QualityText = value.Quality,
+                Origin = "Value"
+            });
+        }
+
+        private void AppendCommandNucSoeForensicRow(string eventTimeText, string channelName, string ioa, string commandType, string asduType, string casdu, string cot, string operation, string eventText)
+        {
+            DateTime recvUtc;
+            if (!TryParseEventTimestampUtc(eventTimeText, out recvUtc))
+            {
+                recvUtc = DateTime.UtcNow;
+            }
+
+            int parsedIoa;
+            int.TryParse(ioa ?? string.Empty, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsedIoa);
+            AppendNucSoeForensicRow(new SoeForensicRow
+            {
+                RecvTimeUtc = recvUtc,
+                SourceTimeUtc = null,
+                DeltaMs = null,
+                Channel = string.IsNullOrWhiteSpace(channelName) ? "Main" : channelName,
+                CA = ParseIntOrDefault(casdu),
+                IOA = parsedIoa,
+                TypeId = ParseTypeIdOrDefault(asduType),
+                TypeIdText = string.IsNullOrWhiteSpace(asduType) ? commandType : asduType,
+                CotText = string.IsNullOrWhiteSpace(cot) ? "-" : cot,
+                CotRaw = ParseCotOrDefault(cot),
+                SignalName = "Command",
+                ValueText = operation ?? "-",
+                QualityText = "-",
+                Origin = "Command"
+            });
+        }
+
+        private void AppendRedundancyNucSoeForensicRow(string timestampText, string channelName, int ioa, string signalName, string type, string cot, string valueText)
+        {
+            DateTime recvUtc;
+            if (!TryParseEventTimestampUtc(timestampText, out recvUtc))
+            {
+                recvUtc = DateTime.UtcNow;
+            }
+
+            AppendNucSoeForensicRow(new SoeForensicRow
+            {
+                RecvTimeUtc = recvUtc,
+                SourceTimeUtc = recvUtc,
+                DeltaMs = 0,
+                Channel = channelName,
+                CA = 0,
+                IOA = ioa,
+                TypeId = ParseTypeIdOrDefault(type),
+                TypeIdText = type ?? "-",
+                CotText = string.IsNullOrWhiteSpace(cot) ? "-" : cot,
+                CotRaw = ParseCotOrDefault(cot),
+                SignalName = signalName,
+                ValueText = valueText,
+                QualityText = "-",
+                Origin = "Redundancy"
+            });
+        }
+
+        private static int ParseIntOrDefault(string text)
+        {
+            int parsed;
+            return int.TryParse(text ?? string.Empty, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed) ? parsed : 0;
+        }
+
+        private static int ParseTypeIdOrDefault(string text)
+        {
+            TypeID parsed;
+            return Enum.TryParse(text ?? string.Empty, true, out parsed) ? (int)parsed : 0;
+        }
+
+        private static int ParseCotOrDefault(string text)
+        {
+            CauseOfTransmission parsed;
+            return Enum.TryParse((text ?? string.Empty).Replace(" ", "_"), true, out parsed) ? (int)parsed : 0;
+        }
+
         private void AddNucLineMonitorRow(LineMonitorRow row, string channelName)
         {
             if (row == null)
@@ -2338,10 +2458,6 @@ namespace IEC101MasterTester.ViewModels
                 }
                 existing.UpdateSource = channel;
                 existing.Cot = source.Cot;
-                if (!isGi)
-                {
-                    _isNucValuesInitialized = true;
-                }
                 return;
             }
 
@@ -2362,10 +2478,6 @@ namespace IEC101MasterTester.ViewModels
             RenumberNucValues(Math.Max(0, orderedInsertIndex));
 
             _nucValueIndex[source.IOA] = row;
-            if (!isGi)
-            {
-                _isNucValuesInitialized = true;
-            }
 
             while (NucValues.Count > MaxNucValueRows)
             {
@@ -2399,7 +2511,6 @@ namespace IEC101MasterTester.ViewModels
                 row.No = index + 1;
             }
 
-            _isNucValuesInitialized = true;
         }
 
         private int GetNucValueInsertIndex(ValueViewerRow candidate)
@@ -2740,6 +2851,7 @@ namespace IEC101MasterTester.ViewModels
             RedundancySwitchSummaryText = "Switchover count: 0";
             RedundancyGiObservationText = "GI after switchover: Not observed";
             RedundancyContinuityText = "Continuity gap: -";
+            LastRedundancySwitchText = "Last switchover: -";
             RedundancyConfigSummaryText = "Link 1: - | Link 2: - | Mode: - | GI Policy: -";
             RedundancyValidationText = "Configuration not evaluated yet.";
             RedundancyControllerStatusText = "Controller: Inactive";
@@ -3119,17 +3231,16 @@ namespace IEC101MasterTester.ViewModels
                         Value = operation
                     });
 
-                    AddNucSoeAuditRow(new EventLogRow
-                    {
-                        Time = eventTimeText,
-                        Source = channelName,
-                        Name = "Command",
-                        IOA = ioa,
-                        Type = commandType,
-                        Event = isNegative ? (commandMode + " rejected") : (commandMode + " confirmed"),
-                        Value = operation,
-                        Cot = row.COT
-                    });
+                    AppendCommandNucSoeForensicRow(
+                        eventTimeText,
+                        channelName,
+                        ioa,
+                        commandType,
+                        row.AsduType,
+                        row.CASDU,
+                        row.COT,
+                        operation,
+                        isNegative ? (commandMode + " rejected") : (commandMode + " confirmed"));
 
                     if (transaction != null && !transaction.ResponsePublishedAtUtc.HasValue)
                     {
@@ -3178,16 +3289,23 @@ namespace IEC101MasterTester.ViewModels
                     EventLogRow row = new EventLogRow
                     {
                         Time = string.IsNullOrWhiteSpace(value.Timestamp) ? "-" : value.Timestamp,
+                        RecvTime = string.IsNullOrWhiteSpace(value.ReceiveTimestampText) ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture) : value.ReceiveTimestampText,
+                        SourceTime = string.IsNullOrWhiteSpace(value.Timestamp) ? "-" : value.Timestamp,
+                        DeltaMs = FormatSoeDeltaMs(value.ReceiveTimestampUtc, value.EventTimestampUtc),
                         Source = channelName,
                         Name = value.Name,
                         IOA = value.IOA.ToString(CultureInfo.InvariantCulture),
                         Type = value.Type,
+                        TypeId = value.TypeId,
+                        Casdu = value.Casdu,
                         Event = string.IsNullOrWhiteSpace(value.Cot) ? "Value update" : value.Cot,
-                        Value = value.Value
+                        Value = value.Value,
+                        Quality = value.Quality,
+                        Cot = string.IsNullOrWhiteSpace(value.Cot) ? "-" : value.Cot
                     };
                     AddNucEventLog(row);
-                    AddNucSoeAuditRow(row);
                 }
+                AppendDecodedNucSoeForensicRow(value, channelName);
                 ObserveRedundancyDiscreteEvent(
                     value.IOA,
                     value.Name,
@@ -3378,15 +3496,22 @@ namespace IEC101MasterTester.ViewModels
                     EventLogRow row = new EventLogRow
                     {
                         Time = timeText,
+                        RecvTime = timeText,
+                        SourceTime = timeText,
+                        DeltaMs = "0",
                         Source = "Main",
                         Name = point.DisplayName,
                         IOA = ioa.ToString(CultureInfo.InvariantCulture),
                         Type = type,
+                        TypeId = type,
+                        Casdu = "-",
                         Event = string.IsNullOrWhiteSpace(cot) ? "Spont" : cot,
-                        Value = newValue
+                        Value = newValue,
+                        Quality = "-",
+                        Cot = string.IsNullOrWhiteSpace(cot) ? "-" : cot
                     };
                     AddNucEventLog(row);
-                    AddNucSoeAuditRow(row);
+                    AppendRedundancyNucSoeForensicRow(timeText, "Main", ioa, point.DisplayName, type, cot, newValue);
                 }
                 AddRedundancyTimeline(timeText, "Main", "Link fault point", stateText, detail, "-");
                 return;
@@ -3402,15 +3527,22 @@ namespace IEC101MasterTester.ViewModels
                     EventLogRow row = new EventLogRow
                     {
                         Time = timeText,
+                        RecvTime = timeText,
+                        SourceTime = timeText,
+                        DeltaMs = "0",
                         Source = "Backup",
                         Name = point.DisplayName,
                         IOA = ioa.ToString(CultureInfo.InvariantCulture),
                         Type = type,
+                        TypeId = type,
+                        Casdu = "-",
                         Event = string.IsNullOrWhiteSpace(cot) ? "Spont" : cot,
-                        Value = newValue
+                        Value = newValue,
+                        Quality = "-",
+                        Cot = string.IsNullOrWhiteSpace(cot) ? "-" : cot
                     };
                     AddNucEventLog(row);
-                    AddNucSoeAuditRow(row);
+                    AppendRedundancyNucSoeForensicRow(timeText, "Backup", ioa, point.DisplayName, type, cot, newValue);
                 }
                 AddRedundancyTimeline(timeText, "Backup", "Link fault point", stateText, detail, "-");
                 return;
@@ -3426,15 +3558,22 @@ namespace IEC101MasterTester.ViewModels
                     EventLogRow row = new EventLogRow
                     {
                         Time = timeText,
+                        RecvTime = timeText,
+                        SourceTime = timeText,
+                        DeltaMs = "0",
                         Source = "IED",
                         Name = point.DisplayName,
                         IOA = ioa.ToString(CultureInfo.InvariantCulture),
                         Type = type,
+                        TypeId = type,
+                        Casdu = "-",
                         Event = string.IsNullOrWhiteSpace(cot) ? "Spont" : cot,
-                        Value = newValue
+                        Value = newValue,
+                        Quality = "-",
+                        Cot = string.IsNullOrWhiteSpace(cot) ? "-" : cot
                     };
                     AddNucEventLog(row);
-                    AddNucSoeAuditRow(row);
+                    AppendRedundancyNucSoeForensicRow(timeText, "IED", ioa, point.DisplayName, type, cot, newValue);
                 }
                 AddRedundancyTimeline(timeText, "IED", "IED fault point", stateText, detail, "-");
             }
@@ -3487,6 +3626,7 @@ namespace IEC101MasterTester.ViewModels
             _giObservedAfterRedundancySwitch = true;
             RedundancyGiObservationText = "GI after switchover: Observed";
             RedundancyFindingSummaryText = "Redundancy findings: switchover observed with GI.";
+            OnPropertyChanged(nameof(IsGiObservedAfterRedundancySwitch));
             AddRedundancyTimeline(
                 NormalizeTimestamp(timestampText),
                 "Session",
@@ -3500,6 +3640,23 @@ namespace IEC101MasterTester.ViewModels
                 "GiObservedAfterSwitchover",
                 "GI activity recorded after switchover.",
                 giEvent);
+            AppendNucSoeForensicRow(new SoeForensicRow
+            {
+                RecvTimeUtc = giTimestampUtc,
+                SourceTimeUtc = null,
+                DeltaMs = null,
+                Channel = _redundancyActiveLink,
+                CA = 0,
+                IOA = 0,
+                TypeId = 0,
+                TypeIdText = "C_IC_NA_1",
+                CotText = "GI",
+                CotRaw = 20,
+                SignalName = "Redundancy",
+                ValueText = giEvent,
+                QualityText = "-",
+                Origin = "Redundancy"
+            });
             UpdateNucRedundancyVisuals();
         }
 
@@ -3543,6 +3700,10 @@ namespace IEC101MasterTester.ViewModels
                 + " | Last switch: " + previousActiveLink + " -> " + inferredActiveLink;
             RedundancyGiObservationText = "GI after switchover: "
                 + (_giObservedAfterRedundancySwitch ? "Observed" : "Not observed");
+            LastRedundancySwitchText = "Last switchover: " + previousActiveLink + " -> " + inferredActiveLink
+                + " @ " + NormalizeTimestamp(timestampText);
+            OnPropertyChanged(nameof(RedundancySwitchoverCountValue));
+            OnPropertyChanged(nameof(IsGiObservedAfterRedundancySwitch));
             AvailabilityLinkSwitchoverCountText = "Link switchover count: " + _redundancySwitchoverCount.ToString(CultureInfo.InvariantCulture);
             ObserveNucAvailabilitySwitchover(previousActiveLink, inferredActiveLink, reason, NormalizeTimestamp(timestampText));
 
@@ -3554,6 +3715,23 @@ namespace IEC101MasterTester.ViewModels
                 reason,
                 "Pending");
             AddRedundancyJournal(NormalizeTimestamp(timestampText), "Session", "Switchover", previousActiveLink + " -> " + inferredActiveLink + " | " + reason);
+            AppendNucSoeForensicRow(new SoeForensicRow
+            {
+                RecvTimeUtc = _lastRedundancySwitchUtc.Value,
+                SourceTimeUtc = null,
+                DeltaMs = null,
+                Channel = inferredActiveLink,
+                CA = 0,
+                IOA = 0,
+                TypeId = 0,
+                TypeIdText = "Switch",
+                CotText = "-",
+                CotRaw = 0,
+                SignalName = "Switchover",
+                ValueText = previousActiveLink + " -> " + inferredActiveLink,
+                QualityText = reason,
+                Origin = "Redundancy"
+            });
             ScheduleRedundancyGiObservationCheck(_redundancySwitchoverCount);
             UpdateNucRedundancyVisuals();
         }
@@ -4403,6 +4581,7 @@ namespace IEC101MasterTester.ViewModels
                     });
                     RedundancyGiObservationText = "GI after switchover: Not observed";
                     RedundancyFindingSummaryText = "Redundancy findings: switchover observed without GI.";
+                    OnPropertyChanged(nameof(IsGiObservedAfterRedundancySwitch));
                 }
             }));
         }
@@ -4483,6 +4662,7 @@ namespace IEC101MasterTester.ViewModels
             AvailabilityEventThroughputText = "0.0 events/min";
             AvailabilityProtocolErrorCountText = "Protocol errors: 0";
             AvailabilityAcdAssertCountText = "ACD asserted: 0";
+            OnPropertyChanged(nameof(NucAvailabilityAcdAssertCountValue));
             AvailabilityFindingsTrendText = "Findings: 0 total | 0 unread";
             AvailabilityLinkSwitchoverCountText = "Link switchover count: 0";
             AvailabilityPercentValue = 100d;
@@ -4631,6 +4811,7 @@ namespace IEC101MasterTester.ViewModels
             if (string.Equals(row.ACD, "1", StringComparison.OrdinalIgnoreCase))
             {
                 _nucAvailabilityAcdAssertCount++;
+                OnPropertyChanged(nameof(NucAvailabilityAcdAssertCountValue));
             }
 
             bool isTx = string.Equals(row.Direction, "TX", StringComparison.OrdinalIgnoreCase);
@@ -4686,21 +4867,7 @@ namespace IEC101MasterTester.ViewModels
             string detail = row.Detail ?? string.Empty;
             string frameType = row.FrameType ?? string.Empty;
 
-            bool isCommandOrApplicationOnly =
-                summary.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0;
-
-            if (isCommandOrApplicationOnly)
+            if (IsNucCommandLifecycleEvidence(summary, detail))
             {
                 return false;
             }
@@ -4724,6 +4891,32 @@ namespace IEC101MasterTester.ViewModels
                         || detail.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
                         || summary.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0
                         || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
+        }
+
+        private static bool IsNucCommandLifecycleEvidence(string summary, string detail)
+        {
+            return ContainsAnyIgnoreCase(summary, detail,
+                "command",
+                "sbo",
+                "select rejected",
+                "execute rejected",
+                "rejected",
+                "follow-up timeout");
+        }
+
+        private static bool ContainsAnyIgnoreCase(string summary, string detail, params string[] needles)
+        {
+            for (int i = 0; i < needles.Length; i++)
+            {
+                string needle = needles[i];
+                if (summary.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0
+                    || detail.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void ObserveNucAvailabilitySwitchover(string previousOwner, string newOwner, string reason, string timestampText)
@@ -5412,6 +5605,17 @@ namespace IEC101MasterTester.ViewModels
 
             parsedUtc = parsed.ToUniversalTime();
             return true;
+        }
+
+        private static string FormatSoeDeltaMs(DateTime receiveUtc, DateTime? sourceUtc)
+        {
+            if (!sourceUtc.HasValue)
+            {
+                return "-";
+            }
+
+            return Math.Round((receiveUtc - sourceUtc.Value).TotalMilliseconds, 0, MidpointRounding.AwayFromZero)
+                .ToString(CultureInfo.InvariantCulture);
         }
 
         private static string BuildCompactClass1BurstSummary(int binaryCount, int analogCount, int commandCount, int otherCount, double durationMs)

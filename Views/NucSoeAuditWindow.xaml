@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="IEC-101 NUC SOE Audit"
-        Height="720"
-        Width="1280"
-        MinHeight="520"
-        MinWidth="960"
+        Height="860"
+        Width="1480"
+        MinHeight="620"
+        MinWidth="1160"
         WindowStartupLocation="CenterOwner"
         Background="#0F172A">
     <Window.Resources>
@@ -21,6 +21,35 @@
                 <Setter Property="HorizontalAlignment" Value="Center" />
                 <Setter Property="TextAlignment" Value="Center" />
             </Style>
+            <Style x:Key="SoeMetricTitleStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="FontSize" Value="11.5" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+            <Style x:Key="SoeMetricValueStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#F8FAFC" />
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+            <Style x:Key="SoeLabelStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#94A3B8" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+            </Style>
+            <Style x:Key="SoeComboStyle" TargetType="ComboBox">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Foreground" Value="#E2E8F0" />
+                <Setter Property="Background" Value="#111827" />
+                <Setter Property="BorderBrush" Value="#334155" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="6,4" />
+            </Style>
+            <Style x:Key="SoeDatePickerStyle" TargetType="DatePicker">
+                <Setter Property="Foreground" Value="#E2E8F0" />
+                <Setter Property="Background" Value="#111827" />
+                <Setter Property="BorderBrush" Value="#334155" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
@@ -32,7 +61,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="14">
+        <Border Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -41,21 +70,23 @@
 
                 <StackPanel>
                     <TextBlock Text="NUC SOE Audit"
-                               FontSize="20"
+                               FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="#F8FAFC" />
                     <TextBlock Margin="0,6,0,0"
                                Foreground="#94A3B8"
-                               Text="Detailed NUC event audit for switchover, buffer replay, and channel continuity verification." />
+                               Text="Evidence-focused IEC-101 audit for SOE replay, switchover, command, and link certification checks." />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <TextBlock Foreground="#CBD5E1"
+                    <TextBlock x:Name="ActiveLinkSummaryText"
+                               Foreground="#CBD5E1"
                                FontWeight="SemiBold"
-                               Text="{Binding RedundancyActiveLinkText}" />
-                    <TextBlock Margin="0,6,0,0"
+                               Text="Active link: Unknown" />
+                    <TextBlock x:Name="GiObservationSummaryText"
+                               Margin="0,6,0,0"
                                Foreground="#94A3B8"
-                               Text="{Binding RedundancyGiObservationText}" />
+                               Text="GI after switchover: Not observed" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -65,24 +96,33 @@
                 Background="#111827"
                 BorderBrush="#334155"
                 BorderThickness="1"
-                CornerRadius="10"
-                Padding="10">
-            <UniformGrid Columns="4">
+                CornerRadius="12"
+                Padding="12">
+            <UniformGrid Columns="5">
                 <StackPanel Margin="6,0">
-                    <TextBlock Foreground="#94A3B8" Text="Switchover Count" />
-                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancySwitchSummaryText}" />
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Switchover" />
+                    <TextBlock x:Name="SwitchoverSummaryValueText" Style="{StaticResource SoeMetricValueStyle}" Text="0" />
+                    <TextBlock x:Name="LastSwitchoverValueText" Foreground="#94A3B8" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Margin="6,0">
-                    <TextBlock Foreground="#94A3B8" Text="Continuity" />
-                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyContinuityText}" />
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Continuity / GI" />
+                    <TextBlock x:Name="ContinuitySummaryValueText" Style="{StaticResource SoeMetricValueStyle}" Text="Continuity gap: -" />
+                    <TextBlock x:Name="GiSummaryValueText" Foreground="#94A3B8" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Margin="6,0">
-                    <TextBlock Foreground="#94A3B8" Text="L1FT" />
-                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyMainLinkText}" />
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Replay" />
+                    <TextBlock x:Name="ReplaySummaryValueText" Style="{StaticResource SoeMetricValueStyle}" Text="Replay: 0" />
+                    <TextBlock x:Name="ReplaySampleStatusText" Foreground="#94A3B8" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Margin="6,0">
-                    <TextBlock Foreground="#94A3B8" Text="L2FT" />
-                    <TextBlock Foreground="#F8FAFC" FontSize="16" FontWeight="SemiBold" Text="{Binding RedundancyBackupLinkText}" />
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Integrity" />
+                    <TextBlock x:Name="DuplicateSummaryValueText" Style="{StaticResource SoeMetricValueStyle}" Text="Duplicate: 0" />
+                    <TextBlock x:Name="FifoSummaryValueText" Foreground="#94A3B8" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Margin="6,0">
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="ACD / Rows" />
+                    <TextBlock x:Name="AcdSummaryValueText" Style="{StaticResource SoeMetricValueStyle}" Text="ACD: No" />
+                    <TextBlock x:Name="FilteredRowsSummaryText" Foreground="#94A3B8" TextWrapping="Wrap" />
                 </StackPanel>
             </UniformGrid>
         </Border>
@@ -92,155 +132,168 @@
                 Background="#111827"
                 BorderBrush="#334155"
                 BorderThickness="1"
-                CornerRadius="10"
-                Padding="10">
-            <DockPanel LastChildFill="True">
-                <StackPanel DockPanel.Dock="Left"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Top">
-                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
-        Click="ClearFilters_Click"
-        Margin="0,0,8,0"
-        ToolTip="Clear all filters">
+                CornerRadius="12"
+                Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="AllDataButton"
+                            Style="{StaticResource SecondaryActionButtonStyle}"
+                            Click="AllData_Click"
+                            Margin="0,0,8,0">
                         <StackPanel>
-                            <Grid Width="18" Height="18" HorizontalAlignment="Center">
-                                <!-- Funnel -->
-                                <Path Stroke="#E2E8F0"
-                  StrokeThickness="1.8"
-                  StrokeStartLineCap="Round"
-                  StrokeEndLineCap="Round"
-                  StrokeLineJoin="Round"
-                  Data="M3 4H15L10 10V14L8 15V10L3 4" />
-
-                                <!-- X mark -->
-                                <Path Stroke="#E2E8F0"
-                  StrokeThickness="1.8"
-                  StrokeStartLineCap="Round"
-                  StrokeEndLineCap="Round"
-                  Data="M11.8 11.8L15.8 15.8M15.8 11.8L11.8 15.8" />
-                            </Grid>
-
-                            <TextBlock Text="Clear Filter"
-                   Style="{StaticResource SoeToolbarCaptionTextStyle}" />
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#E2E8F0" StrokeThickness="1.8" Data="M4 6h16M4 12h16M4 18h16" HorizontalAlignment="Center"/>
+                            <TextBlock Text="All Data" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource PrimaryActionButtonStyle}"
-                            Click="ExportExcel_Click"
-                            Margin="0,0,8,0"
-                            ToolTip="Export filtered rows to Excel">
+                    <Button x:Name="BinaryDataButton"
+                            Style="{StaticResource PrimaryActionButtonStyle}"
+                            Click="BinaryData_Click"
+                            Margin="0,0,8,0">
                         <StackPanel>
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#F8FAFC" StrokeThickness="1.8" Data="M14 3H6a2 2 0 0 0-2 2v14l4-3 4 3 4-3 4 3V9zM8 7h8M8 11h6" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Export Excel" Style="{StaticResource SoeToolbarCaptionTextStyle}"/>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#F8FAFC" StrokeThickness="1.8" Data="M6 6h12v12H6zM10 10h4v4h-4z" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Binary" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
-                            IsEnabled="False"
-                            ToolTip="PDF export planned for phase 2">
+                    <Button x:Name="AnalogDataButton"
+                            Style="{StaticResource SecondaryActionButtonStyle}"
+                            Click="AnalogData_Click"
+                            Margin="0,0,8,0">
                         <StackPanel>
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#CBD5E1" StrokeThickness="1.8" Data="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm7 0v5h5M9 13h6M9 17h6" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Export PDF" Style="{StaticResource SoeToolbarCaptionTextStyle}"/>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#E2E8F0" StrokeThickness="1.8" Data="M4 16l4-4 3 2 5-6 4 3" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Analog" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
 
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Disabled">
-                    <StackPanel Orientation="Horizontal"
-                                HorizontalAlignment="Right">
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="IOA" />
-                            <TextBox x:Name="IoaFilterTextBox" Width="90" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="Signal" />
-                            <TextBox x:Name="SignalFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="Channel" />
-                            <TextBox x:Name="ChannelFilterTextBox" Width="90" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="Event" />
-                            <TextBox x:Name="EventFilterTextBox" Width="130" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="Value" />
-                            <TextBox x:Name="ValueFilterTextBox" Width="100" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="From" />
-                            <TextBox x:Name="FromFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" ToolTip="yyyy-MM-dd HH:mm:ss" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,10,0">
-                            <TextBlock Foreground="#94A3B8" Text="To" />
-                            <TextBox x:Name="ToFilterTextBox" Width="150" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" ToolTip="yyyy-MM-dd HH:mm:ss" />
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Foreground="#94A3B8" Text="Search" />
-                            <TextBox x:Name="SearchFilterTextBox" Width="180" Style="{StaticResource DarkPopupTextBoxStyle}" TextChanged="FilterControl_Changed" />
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
+                <StackPanel Grid.Column="1" Margin="14,0" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource SoeLabelStyle}" Text="Search" />
+                    <TextBox x:Name="SearchFilterTextBox"
+                             Style="{StaticResource DarkPopupTextBoxStyle}"
+                             KeyDown="FilterInput_KeyDown"
+                             TextChanged="SearchFilterTextBox_TextChanged" />
+                </StackPanel>
 
-        <Border Grid.Row="3" Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="8">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <TextBlock x:Name="FilterSummaryTextBlock"
-                           Margin="4,0,0,8"
-                           Foreground="#94A3B8"
-                           Text="Showing all rows." />
-                <DataGrid x:Name="AuditGrid"
-                      Grid.Row="1"
-                      ItemsSource="{Binding NucSoeAuditLog}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserSortColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      CanUserReorderColumns="False"
-                      CanUserResizeRows="False"
-                      HeadersVisibility="Column"
-                      RowHeaderWidth="0"
-                      GridLinesVisibility="Horizontal"
-                      Background="#111827"
-                      Foreground="#F8FAFC"
-                      BorderBrush="#334155"
-                      HorizontalGridLinesBrush="#1F2937"
-                      VerticalGridLinesBrush="#1F2937"
-                      RowBackground="#111827"
-                      AlternatingRowBackground="#0F172A"
-                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                <DataGrid.Resources>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#17202B" />
-                        <Setter Property="Foreground" Value="#CBD5E1" />
-                        <Setter Property="BorderBrush" Value="#334155" />
-                        <Setter Property="FontWeight" Value="SemiBold" />
-                    </Style>
-                    <Style TargetType="DataGridCell">
-                        <Setter Property="BorderBrush" Value="#1F2937" />
-                        <Setter Property="Foreground" Value="#E2E8F0" />
-                        <Setter Property="Background" Value="Transparent" />
-                    </Style>
-                </DataGrid.Resources>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Recv Time" Binding="{Binding Time}" Width="175" />
-                    <DataGridTextColumn Header="Channel" Binding="{Binding Source}" Width="90" />
-                    <DataGridTextColumn Header="Signal Name" Binding="{Binding Name}" Width="*" />
-                    <DataGridTextColumn Header="IOA" Binding="{Binding IOA}" Width="90" />
-                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="110" />
-                    <DataGridTextColumn Header="Event" Binding="{Binding Event}" Width="170" />
-                    <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="150" />
-                    <DataGridTextColumn Header="COT" Binding="{Binding Cot}" Width="110" />
-                </DataGrid.Columns>
-                </DataGrid>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                            Click="ClearFilters_Click"
+                            Margin="0,0,8,0">
+                        <StackPanel>
+                            <Grid Width="18" Height="18" HorizontalAlignment="Center">
+                                <Path Stroke="#E2E8F0" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M3 4H15L10 10V14L8 15V10L3 4" />
+                                <Path Stroke="#E2E8F0" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M11.8 11.8L15.8 15.8M15.8 11.8L11.8 15.8" />
+                            </Grid>
+                            <TextBlock Text="Clear Filter" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource PrimaryActionButtonStyle}"
+                            Click="ExportCsv_Click"
+                            Margin="0,0,8,0">
+                        <StackPanel>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#F8FAFC" StrokeThickness="1.8" Data="M14 3H6a2 2 0 0 0-2 2v14l4-3 4 3 4-3 4 3V9zM8 7h8M8 11h6" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Export Visible" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource SecondaryActionButtonStyle}"
+                            Click="ExportSelectedCsv_Click">
+                        <StackPanel>
+                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="#E2E8F0" StrokeThickness="1.8" Data="M5 12l4 4 10-10" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Export Selected" Style="{StaticResource SoeToolbarCaptionTextStyle}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="300" />
+            </Grid.ColumnDefinitions>
+
+            <Border Background="#111827" BorderBrush="#334155" BorderThickness="1" CornerRadius="12" Padding="8">
+                <DataGrid x:Name="AuditGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="False"
+                          SelectionMode="Extended"
+                          SelectionUnit="FullRow"
+                          SelectionChanged="AuditGrid_SelectionChanged"
+                          CanUserSortColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserResizeRows="False"
+                          HeadersVisibility="Column"
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="Horizontal"
+                          Background="#111827"
+                          Foreground="#F8FAFC"
+                          BorderBrush="#334155"
+                          HorizontalGridLinesBrush="#1F2937"
+                          VerticalGridLinesBrush="#1F2937"
+                          RowBackground="#111827"
+                          AlternatingRowBackground="#0F172A"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Recv Time" Binding="{Binding RecvTime}" Width="165" />
+                        <DataGridTextColumn Header="Source Time" Binding="{Binding SourceTime}" Width="165" />
+                        <DataGridTextColumn Header="Delta ms" Binding="{Binding DeltaMs}" Width="80" />
+                        <DataGridTextColumn Header="IOA" Binding="{Binding IOA}" Width="90" />
+                        <DataGridTextColumn Header="Signal Name" Binding="{Binding Name}" Width="220" />
+                        <DataGridTextColumn Header="Channel" Binding="{Binding Source}" Width="80" />
+                        <DataGridTextColumn Header="Type ID" Binding="{Binding TypeId}" Width="105" />
+                        <DataGridTextColumn Header="COT" Binding="{Binding Cot}" Width="90" />
+                        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="120" />
+                        <DataGridTextColumn Header="Quality" Binding="{Binding Quality}" Width="90" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Margin="10,0,0,0"
+                    Background="#111827"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="12">
+                <StackPanel>
+                    <TextBlock Text="Filtered Analysis"
+                               Foreground="#F8FAFC"
+                               FontSize="16"
+                               FontWeight="SemiBold" />
+                    <TextBlock x:Name="FilterSummaryTextBlock"
+                               Margin="0,6,0,12"
+                               Foreground="#94A3B8"
+                               Text="Filtered rows: 0 / 0 | No filter applied" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Row Count" />
+                    <TextBlock x:Name="AnalysisRowCountText" Style="{StaticResource SoeMetricValueStyle}" Text="0" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Time Span" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisTimeRangeText" Foreground="#F8FAFC" TextWrapping="Wrap" Text="-" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Unique IOA" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisUniqueIoaText" Style="{StaticResource SoeMetricValueStyle}" Text="0" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Replay" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisReplayText" Foreground="#F8FAFC" TextWrapping="Wrap" Text="Replay: 0" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="TypeID / Integrity" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisDuplicateFifoText" Foreground="#F8FAFC" TextWrapping="Wrap" Text="TypeID: - | Duplicate: 0 | FIFO: 0" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Selected Rows" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisSelectedRowsText" Foreground="#F8FAFC" TextWrapping="Wrap" Text="0" />
+
+                    <TextBlock Style="{StaticResource SoeMetricTitleStyle}" Text="Source Time / Delta" Margin="0,10,0,0" />
+                    <TextBlock x:Name="AnalysisDeltaText" Foreground="#F8FAFC" TextWrapping="Wrap" Text="Source time missing: 0 | Delta: -" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

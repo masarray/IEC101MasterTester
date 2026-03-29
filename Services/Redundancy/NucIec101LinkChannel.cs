@@ -283,21 +283,7 @@ namespace IEC101MasterTester.Services.Redundancy
             string detail = row.Detail ?? string.Empty;
             string frameType = row.FrameType ?? string.Empty;
 
-            bool isCommandOrApplicationOnly =
-                summary.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("command", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("sbo", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("select rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("execute rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("rejected", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("follow-up timeout", StringComparison.OrdinalIgnoreCase) >= 0;
-
-            if (isCommandOrApplicationOnly)
+            if (IsCommandLifecycleEvidence(summary, detail))
             {
                 return false;
             }
@@ -324,6 +310,32 @@ namespace IEC101MasterTester.Services.Redundancy
                         || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
 
             return explicitTransportFailure;
+        }
+
+        private static bool IsCommandLifecycleEvidence(string summary, string detail)
+        {
+            return ContainsAny(summary, detail,
+                "command",
+                "sbo",
+                "select rejected",
+                "execute rejected",
+                "rejected",
+                "follow-up timeout");
+        }
+
+        private static bool ContainsAny(string summary, string detail, params string[] needles)
+        {
+            for (int i = 0; i < needles.Length; i++)
+            {
+                string needle = needles[i];
+                if (summary.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0
+                    || detail.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void Service_ValueReceived(object sender, ValueViewerRow e)

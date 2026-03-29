@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace IEC101MasterTester.Models.Export
 {
     public sealed class EventLogExportMetadata
@@ -9,5 +11,6 @@ namespace IEC101MasterTester.Models.Export
         public string ContextSummary { get; set; }
         public string FilterSummary { get; set; }
         public string ExportedAtText { get; set; }
+        public IList<KeyValuePair<string, string>> SummaryRows { get; set; }
     }
 }

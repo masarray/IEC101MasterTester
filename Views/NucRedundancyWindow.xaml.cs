@@ -649,7 +649,7 @@ namespace IEC101MasterTester.Views
             }
 
             _allowClose = true;
-            Dispatcher.BeginInvoke(new Action(() =>
+            _ = Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (_nucSoeAuditWindow != null)
                 {
