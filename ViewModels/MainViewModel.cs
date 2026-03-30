@@ -5277,6 +5277,7 @@ namespace IEC101MasterTester.ViewModels
             DateTime nowUtc = DateTime.UtcNow;
             bool isConnected = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase) ? _nucBackupConnected : _nucMainConnected;
             DateTime? lastTimeoutUtc = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase) ? _nucBackupLastTimeoutUtc : _nucMainLastTimeoutUtc;
+            bool isStandby = IsNucStandbyChannel(channelName);
 
             if (!isConnected)
             {
@@ -5293,12 +5294,27 @@ namespace IEC101MasterTester.ViewModels
                 return "RESPONSIVE";
             }
 
+            if (isStandby && HasNucRecentTraffic(channelName, "SUPERVISION"))
+            {
+                return "RESPONSIVE";
+            }
+
             if (HasNucRecentTraffic(channelName, "SUPERVISION") || string.Equals(channelName, GetPreferredNucActiveChannel(), StringComparison.OrdinalIgnoreCase))
             {
                 return "RECOVERING";
             }
 
             return "NO RESPONSE";
+        }
+
+        private bool IsNucStandbyChannel(string channelName)
+        {
+            if (string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase))
+            {
+                return _nucBackupRole == NucChannelRole.Standby;
+            }
+
+            return _nucMainRole == NucChannelRole.Standby;
         }
 
         private bool IsNucChannelApplicationResponsive(string channelName, DateTime nowUtc)
