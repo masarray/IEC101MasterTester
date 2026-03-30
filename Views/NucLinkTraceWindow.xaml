@@ -63,14 +63,29 @@
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
+            <Style x:Key="ToolbarButtonStyle" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource ActionButtonStyle}">
+                <Setter Property="Padding" Value="10,6" />
+                <Setter Property="MinWidth" Value="88" />
+                <Setter Property="Height" Value="42" />
+                <Setter Property="Background" Value="#122131" />
+                <Setter Property="BorderBrush" Value="#29445D" />
+            </Style>
             <Style x:Key="AnalyzerComboBoxStyle" TargetType="ComboBox">
                 <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
                 <Setter Property="Background" Value="#132133" />
                 <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="8,4" />
-                <Setter Property="Height" Value="32" />
+                <Setter Property="Padding" Value="10,4" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="FontSize" Value="12" />
             </Style>
+            <Style TargetType="ComboBoxItem">
+                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
+                <Setter Property="Background" Value="#132133" />
+                <Setter Property="Padding" Value="8,5" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+            <SolidColorBrush x:Key="StatusAccentBrush" Color="#7DB7FF" />
             <Style x:Key="AnalyzerDataGridStyle" TargetType="DataGrid">
                 <Setter Property="Background" Value="{StaticResource PanelAltBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
@@ -86,59 +101,73 @@
             </Style>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid Margin="14">
+        <Grid Margin="14">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Border Style="{StaticResource CardBorderStyle}" Padding="16,14">
+        <Border Style="{StaticResource CardBorderStyle}" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="NUC Link Trace" FontSize="27" FontWeight="SemiBold" />
-                    <TextBlock Text="Industrial moving tape for 60-second live dual-link activity with click-to-inspect."
-                               Margin="0,4,0,0"
-                               Foreground="{StaticResource SecondaryTextBrush}" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="NUC Link Trace" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <Border Background="#0E1A28" BorderBrush="#223449" BorderThickness="1" CornerRadius="5" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="Live 60 s tape" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" />
+                    </Border>
+                    <TextBlock Text="Click burst area to inspect linked traffic." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" />
                 </StackPanel>
-                <Border Grid.Column="1" Background="#0E1A28" BorderBrush="#223449" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <StackPanel>
+                <Border Grid.Column="1" Background="#0E1A28" BorderBrush="#223449" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="16,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
                         <TextBlock Text="Read Position" Style="{StaticResource MetricCaptionStyle}" />
-                        <TextBlock x:Name="SelectedTimeTextBlock" Text="--:--:--.---" FontFamily="Consolas" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock x:Name="SelectedTimeTextBlock" Text="--:--:--.---" Margin="10,0,0,0" FontFamily="Consolas" FontSize="15" FontWeight="SemiBold" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
-        <Grid Grid.Row="1" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Style="{StaticResource MetricCardStyle}"><StackPanel><TextBlock Text="Active Link" Style="{StaticResource MetricCaptionStyle}" /><TextBlock Text="{Binding RedundancyActiveLinkText}" Style="{StaticResource MetricValueStyle}" /></StackPanel></Border>
-            <Border Grid.Column="1" Style="{StaticResource MetricCardStyle}"><StackPanel><TextBlock Text="Link A" Style="{StaticResource MetricCaptionStyle}" /><TextBlock Text="{Binding NucMainCommStateText}" Style="{StaticResource MetricValueStyle}" /></StackPanel></Border>
-            <Border Grid.Column="2" Style="{StaticResource MetricCardStyle}"><StackPanel><TextBlock Text="Link B" Style="{StaticResource MetricCaptionStyle}" /><TextBlock Text="{Binding NucBackupCommStateText}" Style="{StaticResource MetricValueStyle}" /></StackPanel></Border>
-            <Border Grid.Column="3" Style="{StaticResource MetricCardStyle}"><StackPanel><TextBlock Text="Last Switchover" Style="{StaticResource MetricCaptionStyle}" /><TextBlock Text="{Binding LastRedundancySwitchText}" Style="{StaticResource MetricValueStyle}" /></StackPanel></Border>
-            <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}" Padding="12,10"><StackPanel><TextBlock Text="Continuity" Style="{StaticResource MetricCaptionStyle}" /><TextBlock Text="{Binding RedundancyContinuityText}" Style="{StaticResource MetricValueStyle}" /></StackPanel></Border>
-        </Grid>
-        <Border Grid.Row="2" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="12,10">
-            <DockPanel LastChildFill="False">
+        <Border Grid.Row="1" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
+            <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                    <ToggleButton x:Name="PauseViewButton" Content="Pause" Margin="0,0,8,0" Style="{StaticResource ActionButtonStyle}" Click="PauseViewButton_Click" />
-                    <Button x:Name="LiveButton" Content="Live" Margin="0,0,8,0" Style="{StaticResource ActionButtonStyle}" Click="LiveButton_Click" />
-                    <Button x:Name="ClearViewButton" Content="Clear" Margin="0,0,8,0" Style="{StaticResource ActionButtonStyle}" Click="ClearViewButton_Click" />
-                    <Button x:Name="ExportCsvButton" Content="Export CSV" Margin="0,0,8,0" Style="{StaticResource ActionButtonStyle}" Click="ExportCsvButton_Click" />
-                    <ToggleButton x:Name="AutoScrollButton" Content="Live Tape" Style="{StaticResource ActionButtonStyle}" IsChecked="True" Click="AutoScrollButton_Click" />
+                    <ToggleButton x:Name="PauseViewButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="PauseViewButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="Pause" HorizontalAlignment="Center" />
+                            <TextBlock Text="Freeze inspect" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <Button x:Name="LiveButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="LiveButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="Live" HorizontalAlignment="Center" />
+                            <TextBlock Text="Follow newest" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ClearViewButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="ClearViewButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="Clear" HorizontalAlignment="Center" />
+                            <TextBlock Text="Reset tape" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ExportCsvButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="ExportCsvButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="Export" HorizontalAlignment="Center" />
+                            <TextBlock Text="CSV snapshot" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <ToggleButton x:Name="AutoScrollButton" Style="{StaticResource ToolbarButtonStyle}" IsChecked="True" Click="AutoScrollButton_Click">
+                        <StackPanel>
+                            <TextBlock Text="Live Tape" HorizontalAlignment="Center" />
+                            <TextBlock Text="Auto scroll" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Row Limit" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" />
-                    <ComboBox x:Name="RowLimitComboBox" Width="74" Style="{StaticResource AnalyzerComboBoxStyle}" SelectionChanged="RowLimitComboBox_SelectionChanged">
+                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
+                        <TextBlock Text="Row Limit" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" HorizontalAlignment="Right" />
+                        <TextBlock Text="Per link panel" Foreground="{StaticResource MutedTextBrush}" FontSize="10" HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <ComboBox x:Name="RowLimitComboBox" Width="92" Style="{StaticResource AnalyzerComboBoxStyle}" SelectionChanged="RowLimitComboBox_SelectionChanged">
                         <ComboBoxItem Content="50" IsSelected="True" />
                         <ComboBoxItem Content="100" />
                         <ComboBoxItem Content="200" />
@@ -146,7 +175,7 @@
                 </StackPanel>
             </DockPanel>
         </Border>
-        <Border Grid.Row="3" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="12">
+        <Border Grid.Row="2" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -154,6 +183,7 @@
                     <RowDefinition Height="92" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <DockPanel LastChildFill="False">
                     <TextBlock Text="Activity Timeline" Style="{StaticResource SectionTitleStyle}" />
@@ -204,6 +234,41 @@
                         </DataGrid>
                     </Border>
                 </Grid>
+                <Border Grid.Row="5" Margin="0,10,0,0" Background="#0D1623" BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1" CornerRadius="8" Padding="10,8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Active" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding RedundancyActiveLinkText}" Margin="8,0,0,0" Foreground="{StaticResource StatusAccentBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <TextBlock Text="Link A" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding NucMainCommStateText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Orientation="Horizontal">
+                            <TextBlock Text="Link B" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding NucBackupCommStateText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="6" Orientation="Horizontal">
+                            <TextBlock Text="Switch" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding LastRedundancySwitchText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="8" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="Continuity" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding RedundancyContinuityText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
         </Border>
     </Grid>
