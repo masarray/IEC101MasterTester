@@ -35,6 +35,7 @@ namespace IEC101MasterTester.ViewModels
         private const int MaxNucSoeAuditRows = 1000;
         private const int NucSoeForensicCapacity = 8000;
         private const int MaxNucLineMonitorRows = 120;
+        private const int MaxNucTraceRows = 5000;
         private const int MaxNucValueRows = 400;
         private const int MaxAvailabilityTimelineRows = 120;
 
@@ -306,6 +307,8 @@ namespace IEC101MasterTester.ViewModels
             CommandSignals = new ObservableCollection<ValueViewerRow>();
             LineMonitor = new ObservableCollection<LineMonitorRow>();
             NucLineMonitor = new ObservableCollection<LineMonitorRow>();
+            NucTraceLinkA = new ObservableCollection<LineMonitorRow>();
+            NucTraceLinkB = new ObservableCollection<LineMonitorRow>();
             EventLog = new ObservableCollection<EventLogRow>();
             NucEventLog = new ObservableCollection<EventLogRow>();
             NucSoeAuditLog = new ObservableCollection<EventLogRow>();
@@ -378,6 +381,8 @@ namespace IEC101MasterTester.ViewModels
         public ObservableCollection<ValueViewerRow> CommandSignals { get; }
         public ObservableCollection<LineMonitorRow> LineMonitor { get; }
         public ObservableCollection<LineMonitorRow> NucLineMonitor { get; }
+        public ObservableCollection<LineMonitorRow> NucTraceLinkA { get; }
+        public ObservableCollection<LineMonitorRow> NucTraceLinkB { get; }
         public ObservableCollection<EventLogRow> EventLog { get; }
         public ObservableCollection<EventLogRow> NucEventLog { get; }
         public ObservableCollection<EventLogRow> NucSoeAuditLog { get; }
@@ -872,6 +877,8 @@ namespace IEC101MasterTester.ViewModels
             NucSoeAuditLog.Clear();
             _nucSoeForensicJournal.Clear();
             NucLineMonitor.Clear();
+            NucTraceLinkA.Clear();
+            NucTraceLinkB.Clear();
             _nucValueIndex.Clear();
             _nucLastDiscreteStates.Clear();
             _lastNucEventLogKey = null;
@@ -2293,6 +2300,42 @@ namespace IEC101MasterTester.ViewModels
             }
         }
 
+        private void AddNucTraceRow(LineMonitorRow row, string channelName)
+        {
+            if (row == null)
+            {
+                return;
+            }
+
+            ObservableCollection<LineMonitorRow> target = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase)
+                ? NucTraceLinkB
+                : NucTraceLinkA;
+
+            target.Insert(0, new LineMonitorRow
+            {
+                Time = row.Time,
+                Channel = channelName,
+                Direction = row.Direction,
+                FrameType = row.FrameType,
+                Summary = row.Summary,
+                ControlFc = row.ControlFc,
+                ACD = row.ACD,
+                DFC = row.DFC,
+                AsduType = row.AsduType,
+                COT = row.COT,
+                CASDU = row.CASDU,
+                IOA = row.IOA,
+                RawHex = row.RawHex,
+                Detail = row.Detail,
+                DataClass = row.DataClass
+            });
+
+            while (target.Count > MaxNucTraceRows)
+            {
+                target.RemoveAt(target.Count - 1);
+            }
+        }
+
         private bool ShouldCoalesceNucStandbyLineMonitorRow(LineMonitorRow row, string channelName)
         {
             if (row == null)
@@ -3157,6 +3200,7 @@ namespace IEC101MasterTester.ViewModels
                 {
                     AddNucLineMonitorRow(row, channelName);
                 }
+                AddNucTraceRow(row, channelName);
 
                 if (string.Equals(row.ACD, "1", StringComparison.OrdinalIgnoreCase)
                     || string.Equals(row.ACD, "0", StringComparison.OrdinalIgnoreCase))

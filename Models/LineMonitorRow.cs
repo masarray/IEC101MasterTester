@@ -3,6 +3,7 @@ namespace IEC101MasterTester.Models
     public sealed class LineMonitorRow
     {
         public string Time { get; set; }
+        public string Channel { get; set; }
         public string Direction { get; set; }
         public string FrameType { get; set; }
         public string Summary { get; set; }

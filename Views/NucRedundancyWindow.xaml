@@ -1026,12 +1026,27 @@
                         <TextBlock Text="NUC Line Monitor"
                                    Style="{StaticResource SectionTitleStyle}"
                                    VerticalAlignment="Center" />
-                        <Button x:Name="LineMonitorDockToggleButton"
-                                DockPanel.Dock="Right"
-                                Style="{StaticResource LineMonitorToggleButtonStyle}"
-                                Click="ToggleLineMonitorPane_Click"
-                                ToolTip="Collapse line monitor">
-                        </Button>
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <Button x:Name="OpenLinkTraceButton"
+                                    Width="108"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource ActionButtonStyle}"
+                                    Click="OpenLinkTrace_Click"
+                                    ToolTip="Open Link Trace">
+                                <TextBlock Text="Link Trace"
+                                           FontSize="10.5"
+                                           FontWeight="SemiBold"
+                                           Foreground="#E2E8F0"
+                                           HorizontalAlignment="Center" />
+                            </Button>
+                            <Button x:Name="LineMonitorDockToggleButton"
+                                    Style="{StaticResource LineMonitorToggleButtonStyle}"
+                                    Click="ToggleLineMonitorPane_Click"
+                                    ToolTip="Collapse line monitor">
+                            </Button>
+                        </StackPanel>
                     </DockPanel>
                     <DataGrid x:Name="LineMonitorContentGrid"
                               Grid.Row="1"

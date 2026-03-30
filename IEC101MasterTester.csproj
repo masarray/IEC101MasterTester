@@ -116,6 +116,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\NucLinkTraceWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\NucSoeAuditWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -234,6 +238,9 @@
     <Compile Include="Views\LineMonitorWindow.xaml.cs">
       <DependentUpon>LineMonitorWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\NucLinkTraceWindow.xaml.cs">
+      <DependentUpon>NucLinkTraceWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\NucSoeAuditWindow.xaml.cs">
       <DependentUpon>NucSoeAuditWindow.xaml</DependentUpon>

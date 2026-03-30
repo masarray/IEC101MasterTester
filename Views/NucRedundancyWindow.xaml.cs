@@ -20,6 +20,7 @@ namespace IEC101MasterTester.Views
         private bool _closeInProgress;
         private NucSoeAuditWindow _nucSoeAuditWindow;
         private AvailabilityDashboardWindow _availabilityDashboardWindow;
+        private NucLinkTraceWindow _nucLinkTraceWindow;
         private MainWindow _legacyMainWindow;
         private MainViewModel _viewModel;
         private DispatcherTimer _flowAnimationTimer;
@@ -462,6 +463,32 @@ namespace IEC101MasterTester.Views
 
             _isLineMonitorCollapsed = !_isLineMonitorCollapsed;
             ApplyLineMonitorDockState();
+        }
+
+        private void OpenLinkTrace_Click(object sender, RoutedEventArgs e)
+        {
+            MainViewModel viewModel = DataContext as MainViewModel;
+            if (viewModel == null)
+            {
+                return;
+            }
+
+            if (_nucLinkTraceWindow == null)
+            {
+                _nucLinkTraceWindow = new NucLinkTraceWindow
+                {
+                    Owner = this,
+                    DataContext = viewModel
+                };
+                _nucLinkTraceWindow.Closed += (o, args) => _nucLinkTraceWindow = null;
+            }
+
+            if (!_nucLinkTraceWindow.IsVisible)
+            {
+                _nucLinkTraceWindow.Show();
+            }
+
+            _nucLinkTraceWindow.Activate();
         }
 
         private void LineMonitorDockSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
