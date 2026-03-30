@@ -28,7 +28,10 @@ namespace IEC101MasterTester.Views
         private bool _autoScroll = true;
         private bool _isDraggingTimeline;
         private int _rowLimit = 50;
-        private DateTime? _cursorTime;
+        private bool _isUpdatingSlider;
+        private DateTime? _viewportStartTime;
+        private DateTime? _captureStartTime;
+        private DateTime? _captureEndTime;
 
         public NucLinkTraceWindow()
         {
@@ -75,20 +78,29 @@ namespace IEC101MasterTester.Views
             List<LineMonitorRow> bRows = vm.NucTraceLinkB.ToList();
 
             DateTime latest = MaxTimestamp(aRows, bRows) ?? DateTime.Now;
+            DateTime earliest = MinTimestamp(aRows, bRows) ?? latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
+            _captureStartTime = earliest;
+            _captureEndTime = latest;
 
-            if (_autoScroll || !_cursorTime.HasValue || force)
+            if (_autoScroll || !_viewportStartTime.HasValue || force)
             {
-                _cursorTime = latest;
+                _viewportStartTime = latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
+                if (_viewportStartTime.Value < earliest)
+                {
+                    _viewportStartTime = earliest;
+                }
             }
 
-            DateTime center = _cursorTime ?? latest;
+            DateTime viewportStart = _viewportStartTime ?? earliest;
+            DateTime viewportEnd = viewportStart.AddSeconds(TimelineBucketCount * BucketSizeSeconds);
 
-            ReplaceRows(_linkAViewRows, TakeWindow(aRows, center, _rowLimit));
-            ReplaceRows(_linkBViewRows, TakeWindow(bRows, center, _rowLimit));
+            ReplaceRows(_linkAViewRows, TakeWindow(aRows, viewportStart, _rowLimit));
+            ReplaceRows(_linkBViewRows, TakeWindow(bRows, viewportStart, _rowLimit));
 
             List<TimelineEvent> linkAEvents = BuildTimelineEvents(aRows);
             List<TimelineEvent> linkBEvents = BuildTimelineEvents(bRows);
-            DrawTimeline(linkAEvents, linkBEvents, latest);
+            DrawTimeline(linkAEvents, linkBEvents, viewportStart, viewportEnd);
+            UpdateViewportSlider(earliest, latest, viewportStart);
         }
 
         private static void ReplaceRows(ObservableCollection<LineMonitorRow> target, List<LineMonitorRow> rows)
@@ -100,12 +112,12 @@ namespace IEC101MasterTester.Views
             }
         }
 
-        private static List<LineMonitorRow> TakeWindow(List<LineMonitorRow> rows, DateTime center, int rowLimit)
+        private static List<LineMonitorRow> TakeWindow(List<LineMonitorRow> rows, DateTime viewportStart, int rowLimit)
         {
             List<RowWithTime> parsed = rows
                 .Select(r => new RowWithTime(r, ParseTime(r.Time)))
                 .Where(r => r.Time.HasValue)
-                .OrderByDescending(r => r.Time.Value)
+                .OrderBy(r => r.Time.Value)
                 .ToList();
 
             if (parsed.Count == 0)
@@ -114,14 +126,14 @@ namespace IEC101MasterTester.Views
             }
 
             List<LineMonitorRow> window = parsed
-                .Where(r => r.Time.Value >= center.AddSeconds(-20) && r.Time.Value <= center.AddSeconds(20))
+                .Where(r => r.Time.Value >= viewportStart)
                 .Select(r => r.Row)
                 .Take(rowLimit)
                 .ToList();
 
             if (window.Count == 0)
             {
-                window = parsed.Take(rowLimit).Select(r => r.Row).ToList();
+                window = parsed.OrderByDescending(r => r.Time.Value).Take(rowLimit).Select(r => r.Row).ToList();
             }
 
             return window;
@@ -136,7 +148,7 @@ namespace IEC101MasterTester.Views
                 .ToList();
         }
 
-        private void DrawTimeline(List<TimelineEvent> aRows, List<TimelineEvent> bRows, DateTime latest)
+        private void DrawTimeline(List<TimelineEvent> aRows, List<TimelineEvent> bRows, DateTime start, DateTime end)
         {
             double width = TimelineCanvas.ActualWidth;
             double height = TimelineCanvas.ActualHeight;
@@ -146,9 +158,6 @@ namespace IEC101MasterTester.Views
             }
 
             TimelineCanvas.Children.Clear();
-
-            DateTime start = latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
-            DateTime end = latest;
             double laneTop = 16;
             double laneBottom = height - 10;
             double laneHeight = Math.Max(18, (laneBottom - laneTop) / 2.0);
@@ -164,19 +173,16 @@ namespace IEC101MasterTester.Views
             DrawTraceRows(aRows, start, end, width, aBaseY);
             DrawTraceRows(bRows, start, end, width, bBaseY);
 
-            if (_cursorTime.HasValue)
+            double cursorX = TimeToX(start, start, end, width);
+            TimelineCanvas.Children.Add(new Line
             {
-                double x = TimeToX(_cursorTime.Value, start, end, width);
-                TimelineCanvas.Children.Add(new Line
-                {
-                    X1 = x,
-                    X2 = x,
-                    Y1 = 2,
-                    Y2 = height - 2,
-                    Stroke = new SolidColorBrush(Color.FromRgb(255, 191, 0)),
-                    StrokeThickness = 1.5
-                });
-            }
+                X1 = cursorX,
+                X2 = cursorX,
+                Y1 = 2,
+                Y2 = height - 2,
+                Stroke = new SolidColorBrush(Color.FromRgb(255, 191, 0)),
+                StrokeThickness = 1.5
+            });
         }
 
         private void DrawLaneLabel(string text, double top)
@@ -259,6 +265,16 @@ namespace IEC101MasterTester.Views
                 .FirstOrDefault();
         }
 
+        private static DateTime? MinTimestamp(List<LineMonitorRow> aRows, List<LineMonitorRow> bRows)
+        {
+            return aRows.Concat(bRows)
+                .Select(r => ParseTime(r.Time))
+                .Where(t => t.HasValue)
+                .Select(t => t.Value)
+                .OrderBy(t => t)
+                .FirstOrDefault();
+        }
+
         private static DateTime? ParseTime(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -306,7 +322,7 @@ namespace IEC101MasterTester.Views
             _autoScroll = true;
             PauseViewButton.IsChecked = false;
             AutoScrollButton.IsChecked = true;
-            _cursorTime = null;
+            _viewportStartTime = null;
             RefreshViewport(true);
         }
 
@@ -370,7 +386,7 @@ namespace IEC101MasterTester.Views
             {
                 _isPaused = false;
                 PauseViewButton.IsChecked = false;
-                _cursorTime = null;
+                _viewportStartTime = null;
                 RefreshViewport(true);
             }
         }
@@ -413,17 +429,90 @@ namespace IEC101MasterTester.Views
 
         private void ScrubToPoint(double x)
         {
-            MainViewModel vm = ViewModel;
-            if (vm == null)
+            if (!_captureEndTime.HasValue)
             {
                 return;
             }
 
-            DateTime latest = MaxTimestamp(vm.NucTraceLinkA.ToList(), vm.NucTraceLinkB.ToList()) ?? DateTime.Now;
-            DateTime start = latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
+            DateTime start = _captureEndTime.Value.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
+            if (_viewportStartTime.HasValue)
+            {
+                start = _viewportStartTime.Value;
+            }
+
             double width = Math.Max(1, TimelineCanvas.ActualWidth - 64);
             double ratio = Math.Max(0, Math.Min(1, (x - 56) / width));
-            _cursorTime = start.AddSeconds((TimelineBucketCount * BucketSizeSeconds) * ratio);
+            DateTime newViewportStart = start.AddSeconds((TimelineBucketCount * BucketSizeSeconds) * ratio);
+            ClampAndSetViewportStart(newViewportStart);
+            _autoScroll = false;
+            _isPaused = true;
+            PauseViewButton.IsChecked = true;
+            AutoScrollButton.IsChecked = false;
+            RefreshViewport(true);
+        }
+
+        private void UpdateViewportSlider(DateTime earliest, DateTime latest, DateTime viewportStart)
+        {
+            double totalSeconds = Math.Max(0, (latest - earliest).TotalSeconds);
+            double viewportSeconds = TimelineBucketCount * BucketSizeSeconds;
+
+            _isUpdatingSlider = true;
+            try
+            {
+                if (totalSeconds > viewportSeconds)
+                {
+                    TimelineViewportSlider.Visibility = Visibility.Visible;
+                    TimelineViewportSlider.Maximum = Math.Max(0, totalSeconds - viewportSeconds);
+                    TimelineViewportSlider.Value = Math.Max(0, (viewportStart - earliest).TotalSeconds);
+                }
+                else
+                {
+                    TimelineViewportSlider.Visibility = Visibility.Collapsed;
+                    TimelineViewportSlider.Value = 0;
+                }
+            }
+            finally
+            {
+                _isUpdatingSlider = false;
+            }
+        }
+
+        private void ClampAndSetViewportStart(DateTime viewportStart)
+        {
+            if (!_captureStartTime.HasValue || !_captureEndTime.HasValue)
+            {
+                _viewportStartTime = viewportStart;
+                return;
+            }
+
+            DateTime minStart = _captureStartTime.Value;
+            DateTime maxStart = _captureEndTime.Value.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
+            if (maxStart < minStart)
+            {
+                maxStart = minStart;
+            }
+
+            if (viewportStart < minStart)
+            {
+                viewportStart = minStart;
+            }
+
+            if (viewportStart > maxStart)
+            {
+                viewportStart = maxStart;
+            }
+
+            _viewportStartTime = viewportStart;
+        }
+
+        private void TimelineViewportSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_isUpdatingSlider || !_captureStartTime.HasValue)
+            {
+                return;
+            }
+
+            ClampAndSetViewportStart(_captureStartTime.Value.AddSeconds(e.NewValue));
             _autoScroll = false;
             _isPaused = true;
             PauseViewButton.IsChecked = true;

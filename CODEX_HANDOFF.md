@@ -1,5 +1,64 @@
 # CODEX_HANDOFF.md
 
+## Latest local handoff - 2026-03-30
+
+Current working branch:
+- `codex/link-trace-restore`
+
+Current local focus:
+- `Views/NucLinkTraceWindow.xaml`
+- `Views/NucLinkTraceWindow.xaml.cs`
+
+Latest restored Link Trace baseline:
+- `NucLinkTraceWindow` is back in project and opens from `NucRedundancyWindow`
+- timeline lanes are:
+  - top = `Link A`
+  - bottom = `Link B`
+- direction encoding:
+  - `TX` = blue spike up
+  - `RX` = green spike down
+- timeline detail window:
+  - `60 seconds`
+  - `TimelineBucketCount = 60`
+  - `BucketSizeSeconds = 1`
+- no gray shading
+- no semantic coloring layer
+- left labels are `A` / `B`
+- help text is:
+  - `Link A / Link B lanes • TX spike up • RX spike down • drag to scrub`
+
+Latest runtime/resource repairs:
+- `NucLinkTraceWindow` now has local fallback resources for:
+  - `AppBackgroundBrush`
+  - `AppForegroundBrush`
+  - `SecondaryTextBrush`
+  - `NucInnerBrush`
+  - `CardBorderStyle`
+  - `SectionTitleStyle`
+  - `ActionButtonStyle`
+- root `Window` background/foreground use literal colors to avoid early parse failure
+
+Latest timeline behavior patch:
+- detail timeline remains `60s`
+- auto slider appears when total capture span exceeds `60s`
+- clicking timeline sets `viewportStart`
+- grids now read `50` events starting from `viewportStart`
+- `Live` mode resets viewport to the newest 60-second window
+
+Important known caveat for next Codex:
+- this latest slider/viewportStart patch is build-clean, but runtime UX still needs verification
+- user specifically wants recorder-like behavior:
+  - click timeline -> move visible reading point
+  - slider only when capture span > 60s
+  - preview grids must reflect the selected time window clearly
+- do not redesign Link Trace again
+- do not remove the feature
+- do not reintroduce:
+  - gray shading
+  - semantic color experiments
+  - TX/RX as lane labels
+
+
 ## Purpose
 This repository is evolving from a lightweight IEC-101 master tester into a PLN Pusertif-oriented protocol analyzer, behavior validator, findings engine, and FAT evidence collector.
 

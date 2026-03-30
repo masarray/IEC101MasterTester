@@ -191,6 +191,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="72" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -211,7 +212,14 @@
                         MouseMove="TimelineCanvas_MouseMove"
                         MouseLeave="TimelineCanvas_MouseLeave" />
 
-                <Grid Grid.Row="2">
+                <Slider x:Name="TimelineViewportSlider"
+                        Grid.Row="2"
+                        Margin="56,0,8,12"
+                        Minimum="0"
+                        Visibility="Collapsed"
+                        ValueChanged="TimelineViewportSlider_ValueChanged" />
+
+                <Grid Grid.Row="3">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="12" />
