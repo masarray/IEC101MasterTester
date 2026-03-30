@@ -57,6 +57,13 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>app.ico</ApplicationIcon>
+    <InnoSetupCompilerPath Condition="'$(InnoSetupCompilerPath)' == '' and Exists('C:\Program Files (x86)\Inno Setup 6\ISCC.exe')">C:\Program Files (x86)\Inno Setup 6\ISCC.exe</InnoSetupCompilerPath>
+    <InnoSetupCompilerPath Condition="'$(InnoSetupCompilerPath)' == '' and Exists('C:\Program Files\Inno Setup 6\ISCC.exe')">C:\Program Files\Inno Setup 6\ISCC.exe</InnoSetupCompilerPath>
+    <InstallerScriptPath>$(MSBuildProjectDirectory)\Installer\IEC101MasterTester.iss</InstallerScriptPath>
+    <InstallerOutputDir>$(MSBuildProjectDirectory)\bin\Installer</InstallerOutputDir>
+    <SlaveProjectPath>$(MSBuildProjectDirectory)\IecSlaveSimulator\IecSlaveSimulator.csproj</SlaveProjectPath>
+    <SlaveReleaseOutputDir>$(MSBuildProjectDirectory)\IecSlaveSimulator\bin\Release\net48</SlaveReleaseOutputDir>
+    <DotnetCliHome>$(MSBuildProjectDirectory)\.dotnet-home</DotnetCliHome>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -307,5 +314,21 @@
   <ItemGroup>
     <Resource Include="iec60870-icon.jpg" />
   </ItemGroup>
+  <Target Name="BuildReleaseInstaller" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' and Exists('$(InnoSetupCompilerPath)')">
+    <MakeDir Directories="$(DotnetCliHome)" />
+    <Exec Command="dotnet build &quot;$(SlaveProjectPath)&quot; -c Release"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          EnvironmentVariables="DOTNET_CLI_HOME=$(DotnetCliHome);HOME=$(DotnetCliHome)">
+      <Output TaskParameter="ExitCode" PropertyName="SlaveBuildExitCode" />
+    </Exec>
+    <Error Condition="'$(SlaveBuildExitCode)' != '0'" Text="Slave simulator Release build failed with exit code $(SlaveBuildExitCode)." />
+    <MakeDir Directories="$(InstallerOutputDir)" />
+    <Exec Command="&quot;$(InnoSetupCompilerPath)&quot; &quot;$(InstallerScriptPath)&quot;"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          EnvironmentVariables="MASTER_OUTPUT_DIR=$(TargetDir);SLAVE_OUTPUT_DIR=$(SlaveReleaseOutputDir);DOCS_SOURCE_DIR=$(MSBuildProjectDirectory);SETUP_OUTPUT_DIR=$(InstallerOutputDir)">
+      <Output TaskParameter="ExitCode" PropertyName="InnoSetupExitCode" />
+    </Exec>
+    <Error Condition="'$(InnoSetupExitCode)' != '0'" Text="Inno Setup failed with exit code $(InnoSetupExitCode)." />
+  </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
