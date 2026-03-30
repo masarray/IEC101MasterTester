@@ -14,168 +14,510 @@
         Foreground="#F3F6FB"
         WindowStartupLocation="CenterOwner"
         SizeChanged="NucLinkTraceWindow_SizeChanged">
+
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/SharedUi/ModernTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Core palette -->
             <SolidColorBrush x:Key="AppForegroundBrush" Color="#F3F6FB" />
-            <SolidColorBrush x:Key="SecondaryTextBrush" Color="#8EA3BC" />
-            <SolidColorBrush x:Key="MutedTextBrush" Color="#6B829D" />
-            <SolidColorBrush x:Key="PanelBrush" Color="#101B2A" />
-            <SolidColorBrush x:Key="PanelAltBrush" Color="#0D1623" />
-            <SolidColorBrush x:Key="StrokeBrush" Color="#243449" />
+            <SolidColorBrush x:Key="SecondaryTextBrush" Color="#9CB1C9" />
+            <SolidColorBrush x:Key="MutedTextBrush" Color="#6F849D" />
+            <SolidColorBrush x:Key="PanelBrush" Color="#0F1A2A" />
+            <SolidColorBrush x:Key="PanelAltBrush" Color="#0C1522" />
+            <SolidColorBrush x:Key="StrokeBrush" Color="#24384F" />
+            <SolidColorBrush x:Key="StrokeHoverBrush" Color="#4E86BA" />
+            <SolidColorBrush x:Key="AccentBrush" Color="#60A5FA" />
+            <SolidColorBrush x:Key="AccentStrongBrush" Color="#2F7FEA" />
+            <SolidColorBrush x:Key="GreenBrush" Color="#34D399" />
+            <SolidColorBrush x:Key="GreenSoftBrush" Color="#102A21" />
+            <SolidColorBrush x:Key="BlueSoftBrush" Color="#0D2440" />
+            <SolidColorBrush x:Key="AmberBrush" Color="#FBBF24" />
+
+            <!-- Cards -->
             <Style x:Key="CardBorderStyle" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource PanelBrush}" />
                 <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="CornerRadius" Value="14" />
                 <Setter Property="Padding" Value="14" />
                 <Setter Property="SnapsToDevicePixels" Value="True" />
             </Style>
-            <Style x:Key="MetricCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
-                <Setter Property="Padding" Value="12,10" />
-                <Setter Property="Margin" Value="0,0,10,0" />
+
+            <Style x:Key="InnerCardBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+                <Setter Property="Background" Value="{StaticResource PanelAltBrush}" />
+                <Setter Property="Padding" Value="8" />
             </Style>
+
+            <!-- Text -->
             <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="FontWeight" Value="SemiBold" />
             </Style>
+
             <Style x:Key="MetricCaptionStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
                 <Setter Property="FontSize" Value="11" />
             </Style>
-            <Style x:Key="MetricValueStyle" TargetType="TextBlock">
-                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Margin" Value="0,4,0,0" />
-            </Style>
-            <Style x:Key="ActionButtonStyle" TargetType="{x:Type ButtonBase}">
-                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
-                <Setter Property="Background" Value="#15263A" />
-                <Setter Property="BorderBrush" Value="#2C4560" />
+
+            <!-- Pills -->
+            <Style x:Key="InfoPillBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="#0D1C2E" />
+                <Setter Property="BorderBrush" Value="#21415C" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="14,7" />
-                <Setter Property="MinWidth" Value="82" />
-                <Setter Property="Height" Value="34" />
-                <Setter Property="FontSize" Value="12" />
-                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="CornerRadius" Value="7" />
+                <Setter Property="Padding" Value="8,3" />
             </Style>
-            <Style x:Key="ToolbarButtonStyle" TargetType="{x:Type ButtonBase}" BasedOn="{StaticResource ActionButtonStyle}">
-                <Setter Property="Padding" Value="10,6" />
-                <Setter Property="MinWidth" Value="88" />
-                <Setter Property="Height" Value="42" />
-                <Setter Property="Background" Value="#122131" />
+
+            <Style x:Key="BluePillBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoPillBorderStyle}">
+                <Setter Property="Background" Value="{StaticResource BlueSoftBrush}" />
+                <Setter Property="BorderBrush" Value="#295F96" />
+            </Style>
+
+            <Style x:Key="GreenPillBorderStyle" TargetType="Border" BasedOn="{StaticResource InfoPillBorderStyle}">
+                <Setter Property="Background" Value="{StaticResource GreenSoftBrush}" />
+                <Setter Property="BorderBrush" Value="#2E6D53" />
+            </Style>
+
+            <!-- Toolbar shared content styles -->
+            <Style x:Key="ToolbarTitleTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}}}" />
+                <Setter Property="FontSize" Value="11.5" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,0,0" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+            </Style>
+
+            <Style x:Key="ToolbarCaptionTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}}}" />
+                <Setter Property="FontSize" Value="10" />
+                <Setter Property="Opacity" Value="0.92" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,2,0,0" />
+                <Setter Property="TextWrapping" Value="NoWrap" />
+            </Style>
+
+            <Style x:Key="ToolbarIconPathStyle" TargetType="Path">
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="Stretch" Value="Uniform" />
+                <Setter Property="Stroke" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type ButtonBase}}}" />
+                <Setter Property="StrokeThickness" Value="1.8" />
+                <Setter Property="StrokeStartLineCap" Value="Round" />
+                <Setter Property="StrokeEndLineCap" Value="Round" />
+                <Setter Property="StrokeLineJoin" Value="Round" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+            </Style>
+
+            <Style x:Key="ToolbarButtonStackStyle" TargetType="StackPanel">
+                <Setter Property="Orientation" Value="Vertical" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+
+            <!-- Toolbar buttons -->
+            <Style x:Key="ToolbarActionButtonStyle" TargetType="Button">
+                <Setter Property="Foreground" Value="#DCEBFF" />
+                <Setter Property="Background" Value="#112133" />
                 <Setter Property="BorderBrush" Value="#29445D" />
-            </Style>
-            <Style x:Key="AnalyzerComboBoxStyle" TargetType="ComboBox">
-                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
-                <Setter Property="Background" Value="#132133" />
-                <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="10,4" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="MinWidth" Value="92" />
+                <Setter Property="MinHeight" Value="52" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="10"
+                        SnapsToDevicePixels="True">
+                                <ContentPresenter Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Root" Property="Background" Value="#162A41" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#4E86BA" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Root" Property="Background" Value="#1D3A5B" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#60A5FA" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.50" />
+                                    <Setter TargetName="Root" Property="Background" Value="#0E1723" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#223242" />
+                                    <Setter Property="Foreground" Value="#7B90A8" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ToolbarToggleButtonStyle" TargetType="ToggleButton">
+                <Setter Property="Foreground" Value="#DCEBFF" />
+                <Setter Property="Background" Value="#112133" />
+                <Setter Property="BorderBrush" Value="#29445D" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="MinWidth" Value="92" />
+                <Setter Property="MinHeight" Value="52" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="10"
+                        SnapsToDevicePixels="True">
+                                <Grid>
+                                    <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                    <Border x:Name="CheckedPill"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="0,6,6,0"
+                                Padding="5,1"
+                                CornerRadius="5"
+                                Background="#1D4F84"
+                                BorderBrush="#7FC1FF"
+                                BorderThickness="1"
+                                Visibility="Collapsed">
+                                        <TextBlock Text="ON"
+                                       FontSize="9"
+                                       FontWeight="Bold"
+                                       Foreground="#EAF4FF" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Root" Property="Background" Value="#162A41" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#4E86BA" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Root" Property="Background" Value="#1D3A5B" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#60A5FA" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Root" Property="Background" Value="#173355" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#60A5FA" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                    <Setter TargetName="CheckedPill" Property="Visibility" Value="Visible" />
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsChecked" Value="True" />
+                                        <Condition Property="IsMouseOver" Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Root" Property="Background" Value="#1D3D66" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#8AC1FF" />
+                                </MultiTrigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Root" Property="Opacity" Value="0.50" />
+                                    <Setter TargetName="Root" Property="Background" Value="#0E1723" />
+                                    <Setter TargetName="Root" Property="BorderBrush" Value="#223242" />
+                                    <Setter Property="Foreground" Value="#7B90A8" />
+                                    <Setter TargetName="CheckedPill" Property="Visibility" Value="Collapsed" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Combo -->
+            <Style x:Key="AnalyzerComboBoxStyle"
+       TargetType="ComboBox"
+       BasedOn="{StaticResource {x:Type ComboBox}}">
+                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
+                <Setter Property="Background" Value="#122133" />
+                <Setter Property="BorderBrush" Value="#29445D" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Width" Value="92" />
                 <Setter Property="Height" Value="36" />
                 <Setter Property="FontSize" Value="12" />
-            </Style>
-            <Style TargetType="ComboBoxItem">
-                <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
-                <Setter Property="Background" Value="#132133" />
-                <Setter Property="Padding" Value="8,5" />
+                <Setter Property="Padding" Value="6,2" />
+                <Setter Property="MinWidth" Value="92" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
             </Style>
-            <SolidColorBrush x:Key="StatusAccentBrush" Color="#7DB7FF" />
+
+            <!-- DataGrid -->
             <Style x:Key="AnalyzerDataGridStyle" TargetType="DataGrid">
                 <Setter Property="Background" Value="{StaticResource PanelAltBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource StrokeBrush}" />
+                <Setter Property="BorderBrush" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="HeadersVisibility" Value="Column" />
                 <Setter Property="HorizontalGridLinesBrush" Value="#1B2A3B" />
-                <Setter Property="VerticalGridLinesBrush" Value="#1B2A3B" />
-                <Setter Property="RowBackground" Value="#0F1825" />
+                <Setter Property="VerticalGridLinesBrush" Value="#172536" />
+                <Setter Property="RowBackground" Value="#0E1825" />
                 <Setter Property="AlternatingRowBackground" Value="#101B29" />
                 <Setter Property="AlternationCount" Value="2" />
                 <Setter Property="GridLinesVisibility" Value="Horizontal" />
+                <Setter Property="RowHeaderWidth" Value="0" />
+                <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+                <Setter Property="ScrollViewer.PanningMode" Value="Both" />
+                <Setter Property="ColumnHeaderStyle">
+                    <Setter.Value>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#122234" />
+                            <Setter Property="Foreground" Value="#EAF3FF" />
+                            <Setter Property="BorderBrush" Value="#1F3147" />
+                            <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            <Setter Property="Padding" Value="10,8" />
+                            <Setter Property="FontSize" Value="11" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="RowStyle">
+                    <Setter.Value>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#16263A" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#163654" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="CellStyle">
+                    <Setter.Value>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Padding" Value="8,6" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Foreground" Value="{StaticResource AppForegroundBrush}" />
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="#163654" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Setter.Value>
+                </Setter>
             </Style>
+
+            <SolidColorBrush x:Key="StatusAccentBrush" Color="#7DB7FF" />
         </ResourceDictionary>
     </Window.Resources>
-        <Grid Margin="14">
+
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+
+        <!-- Header -->
         <Border Style="{StaticResource CardBorderStyle}" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
+
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="NUC Link Trace" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <Border Background="#0E1A28" BorderBrush="#223449" BorderThickness="1" CornerRadius="5" Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="Live 60 s tape" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" />
+                    <TextBlock Text="NUC Link Trace"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+
+                    <Border Style="{StaticResource InfoPillBorderStyle}"
+                            Margin="10,0,0,0"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="Live 60 s tape"
+                                   FontSize="10"
+                                   Foreground="{StaticResource SecondaryTextBrush}" />
                     </Border>
-                    <TextBlock Text="Click burst area to inspect linked traffic." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" />
+
+                    <TextBlock Text="Click burst area to inspect linked traffic."
+                               Margin="12,0,0,0"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               FontSize="11" />
                 </StackPanel>
-                <Border Grid.Column="1" Background="#0E1A28" BorderBrush="#223449" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="16,0,0,0" VerticalAlignment="Center">
+
+                <Border Grid.Column="1"
+                        Background="#0E1A28"
+                        BorderBrush="#223449"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12,6"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Read Position" Style="{StaticResource MetricCaptionStyle}" />
-                        <TextBlock x:Name="SelectedTimeTextBlock" Text="--:--:--.---" Margin="10,0,0,0" FontFamily="Consolas" FontSize="15" FontWeight="SemiBold" />
+                        <TextBlock Text="Read Position"
+                                   Style="{StaticResource MetricCaptionStyle}" />
+                        <TextBlock x:Name="SelectedTimeTextBlock"
+                                   Text="--:--:--.---"
+                                   Margin="10,0,0,0"
+                                   FontFamily="Consolas"
+                                   FontSize="15"
+                                   FontWeight="SemiBold"
+                                   Foreground="#FFF2D6" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
-        <Border Grid.Row="1" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="10,8">
-            <DockPanel LastChildFill="True">
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                    <ToggleButton x:Name="PauseViewButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="PauseViewButton_Click">
-                        <StackPanel>
-                            <TextBlock Text="Pause" HorizontalAlignment="Center" />
-                            <TextBlock Text="Freeze inspect" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+
+        <!-- Toolbar -->
+        <Border Grid.Row="1"
+                Margin="0,10,0,0"
+                Style="{StaticResource CardBorderStyle}"
+                Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <WrapPanel Grid.Column="0"
+                           Orientation="Horizontal"
+                           VerticalAlignment="Center">
+
+                    <ToggleButton x:Name="PauseViewButton"
+                                  Margin="0,0,8,0"
+                                  Style="{StaticResource ToolbarToggleButtonStyle}"
+                                  Click="PauseViewButton_Click"
+                                  ToolTip="Freeze inspect position">
+                        <StackPanel Style="{StaticResource ToolbarButtonStackStyle}">
+                            <Path Style="{StaticResource ToolbarIconPathStyle}"
+                                  Data="M7 4 V20 M17 4 V20" />
+                            <TextBlock Text="Pause"
+                                       Style="{StaticResource ToolbarTitleTextStyle}" />
+                            <TextBlock Text="Freeze inspect"
+                                       Style="{StaticResource ToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </ToggleButton>
-                    <Button x:Name="LiveButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="LiveButton_Click">
-                        <StackPanel>
-                            <TextBlock Text="Live" HorizontalAlignment="Center" />
-                            <TextBlock Text="Follow newest" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+
+                    <Button x:Name="LiveButton"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource ToolbarActionButtonStyle}"
+                            Click="LiveButton_Click"
+                            ToolTip="Jump to newest captured traffic">
+                        <StackPanel Style="{StaticResource ToolbarButtonStackStyle}">
+                            <Path Style="{StaticResource ToolbarIconPathStyle}"
+                                  Data="M4 12 H8 L11 7 L14 17 L17 11 H20" />
+                            <TextBlock Text="Live"
+                                       Style="{StaticResource ToolbarTitleTextStyle}" />
+                            <TextBlock Text="Follow newest"
+                                       Style="{StaticResource ToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="ClearViewButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="ClearViewButton_Click">
-                        <StackPanel>
-                            <TextBlock Text="Clear" HorizontalAlignment="Center" />
-                            <TextBlock Text="Reset tape" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+
+                    <Button x:Name="ClearViewButton"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource ToolbarActionButtonStyle}"
+                            Click="ClearViewButton_Click"
+                            ToolTip="Clear current tape view">
+                        <StackPanel Style="{StaticResource ToolbarButtonStackStyle}">
+                            <Path Style="{StaticResource ToolbarIconPathStyle}"
+                                  Data="M6 7 H18 M9 7 V5 H15 V7 M8 10 V17 M12 10 V17 M16 10 V17 M7 7 L8 20 H16 L17 7" />
+                            <TextBlock Text="Clear"
+                                       Style="{StaticResource ToolbarTitleTextStyle}" />
+                            <TextBlock Text="Reset tape"
+                                       Style="{StaticResource ToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
-                    <Button x:Name="ExportCsvButton" Margin="0,0,8,0" Style="{StaticResource ToolbarButtonStyle}" Click="ExportCsvButton_Click">
-                        <StackPanel>
-                            <TextBlock Text="Export" HorizontalAlignment="Center" />
-                            <TextBlock Text="CSV snapshot" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+
+                    <Button x:Name="ExportCsvButton"
+                            Margin="0,0,8,0"
+                            Style="{StaticResource ToolbarActionButtonStyle}"
+                            Click="ExportCsvButton_Click"
+                            ToolTip="Export visible rows to CSV">
+                        <StackPanel Style="{StaticResource ToolbarButtonStackStyle}">
+                            <Path Style="{StaticResource ToolbarIconPathStyle}"
+                                  Data="M12 4 V14 M8 10 L12 14 L16 10 M5 18 H19" />
+                            <TextBlock Text="Export"
+                                       Style="{StaticResource ToolbarTitleTextStyle}" />
+                            <TextBlock Text="CSV snapshot"
+                                       Style="{StaticResource ToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </Button>
-                    <ToggleButton x:Name="AutoScrollButton" Style="{StaticResource ToolbarButtonStyle}" IsChecked="True" Click="AutoScrollButton_Click">
-                        <StackPanel>
-                            <TextBlock Text="Live Tape" HorizontalAlignment="Center" />
-                            <TextBlock Text="Auto scroll" FontSize="10" Foreground="{StaticResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+
+                    <ToggleButton x:Name="AutoScrollButton"
+                                  Margin="0,0,8,0"
+                                  Style="{StaticResource ToolbarToggleButtonStyle}"
+                                  IsChecked="True"
+                                  Click="AutoScrollButton_Click"
+                                  ToolTip="Keep tape automatically following incoming traffic">
+                        <StackPanel Style="{StaticResource ToolbarButtonStackStyle}">
+                            <Path Style="{StaticResource ToolbarIconPathStyle}"
+                                  Data="M4 16 H7 L9 9 L12 14 L15 6 L17 12 H20" />
+                            <TextBlock Text="Live Tape"
+                                       Style="{StaticResource ToolbarTitleTextStyle}" />
+                            <TextBlock Text="Auto scroll"
+                                       Style="{StaticResource ToolbarCaptionTextStyle}" />
                         </StackPanel>
                     </ToggleButton>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
-                        <TextBlock Text="Row Limit" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" HorizontalAlignment="Right" />
-                        <TextBlock Text="Per link panel" Foreground="{StaticResource MutedTextBrush}" FontSize="10" HorizontalAlignment="Right" />
+                </WrapPanel>
+
+                <StackPanel Grid.Column="1"
+            Orientation="Horizontal"
+            VerticalAlignment="Center"
+            Margin="14,0,0,0">
+                    <StackPanel Margin="0,0,10,0"
+                VerticalAlignment="Center">
+                        <TextBlock Text="Row Limit"
+                   Foreground="{StaticResource SecondaryTextBrush}"
+                   FontSize="10"
+                   HorizontalAlignment="Right" />
+                        <TextBlock Text="Per link panel"
+                   Foreground="{StaticResource MutedTextBrush}"
+                   FontSize="10"
+                   HorizontalAlignment="Right" />
                     </StackPanel>
-                    <ComboBox x:Name="RowLimitComboBox" Width="92" Style="{StaticResource AnalyzerComboBoxStyle}" SelectionChanged="RowLimitComboBox_SelectionChanged">
+
+                    <ComboBox x:Name="RowLimitComboBox"
+              Style="{StaticResource AnalyzerComboBoxStyle}"
+              SelectionChanged="RowLimitComboBox_SelectionChanged">
                         <ComboBoxItem Content="50" IsSelected="True" />
                         <ComboBoxItem Content="100" />
                         <ComboBoxItem Content="200" />
                     </ComboBox>
                 </StackPanel>
-            </DockPanel>
+            </Grid>
         </Border>
-        <Border Grid.Row="2" Margin="0,10,0,0" Style="{StaticResource CardBorderStyle}" Padding="12">
+
+        <!-- Main -->
+        <Border Grid.Row="2"
+                Margin="0,10,0,0"
+                Style="{StaticResource CardBorderStyle}"
+                Padding="12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -185,34 +527,95 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+
                 <DockPanel LastChildFill="False">
-                    <TextBlock Text="Activity Timeline" Style="{StaticResource SectionTitleStyle}" />
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                        <Border Background="#112338" BorderBrush="#28445E" BorderThickness="1" CornerRadius="5" Padding="8,3" Margin="0,0,8,0"><TextBlock Text="Link A waveform" FontSize="10" Foreground="#8BC6FF" /></Border>
-                        <Border Background="#10261B" BorderBrush="#295A3E" BorderThickness="1" CornerRadius="5" Padding="8,3" Margin="0,0,8,0"><TextBlock Text="Link B waveform" FontSize="10" Foreground="#7DE5A2" /></Border>
-                        <TextBlock Text="Click chart to inspect time" Foreground="{StaticResource SecondaryTextBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="Activity Timeline"
+                               Style="{StaticResource SectionTitleStyle}" />
+
+                    <StackPanel Orientation="Horizontal"
+                                DockPanel.Dock="Right">
+                        <Border Style="{StaticResource BluePillBorderStyle}"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="Link A waveform"
+                                       FontSize="10"
+                                       Foreground="#8BC6FF" />
+                        </Border>
+
+                        <Border Style="{StaticResource GreenPillBorderStyle}"
+                                Margin="0,0,8,0">
+                            <TextBlock Text="Link B waveform"
+                                       FontSize="10"
+                                       Foreground="#7DE5A2" />
+                        </Border>
+
+                        <TextBlock Text="Click chart to inspect time"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   VerticalAlignment="Center"
+                                   FontSize="11" />
                     </StackPanel>
                 </DockPanel>
-                <Canvas x:Name="TimelineRulerCanvas" Grid.Row="1" Margin="0,10,0,0" Background="Transparent" />
-                <controls:NucLinkTraceTapeControl x:Name="TimelineTape" Grid.Row="2" Margin="0,4,0,10" />
-                <Grid Grid.Row="3" Margin="0,0,0,10">
+
+                <Canvas x:Name="TimelineRulerCanvas"
+                        Grid.Row="1"
+                        Margin="0,10,0,0"
+                        Background="Transparent" />
+
+                <controls:NucLinkTraceTapeControl x:Name="TimelineTape"
+                                                  Grid.Row="2"
+                                                  Margin="0,4,0,10" />
+
+                <Grid Grid.Row="3"
+                      Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="NavigatorStartLabel" Text="--:--:--.---" Foreground="{StaticResource MutedTextBrush}" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1" Margin="12,0" Text="Fixed 60 s recording tape" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" FontSize="11" FontWeight="SemiBold" />
-                    <TextBlock x:Name="NavigatorEndLabel" Grid.Column="2" Text="--:--:--.---" Foreground="{StaticResource MutedTextBrush}" FontSize="10" FontFamily="Consolas" VerticalAlignment="Center" />
+
+                    <TextBlock x:Name="NavigatorStartLabel"
+                               Text="--:--:--.---"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Column="1"
+                               Margin="12,0"
+                               Text="Fixed 60 s recording tape"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               FontSize="11"
+                               FontWeight="SemiBold" />
+
+                    <TextBlock x:Name="NavigatorEndLabel"
+                               Grid.Column="2"
+                               Text="--:--:--.---"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               FontSize="10"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center" />
                 </Grid>
+
                 <Grid Grid.Row="4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}" Padding="6">
-                        <DataGrid x:Name="LinkAGrid" Style="{StaticResource AnalyzerDataGridStyle}" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False" SelectionMode="Single" SelectionUnit="FullRow" RowHeaderWidth="0">
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource InnerCardBorderStyle}">
+                        <DataGrid x:Name="LinkAGrid"
+                                  Style="{StaticResource AnalyzerDataGridStyle}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserSortColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserResizeRows="False"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="120" />
                                 <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="54" />
@@ -222,8 +625,19 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </Border>
-                    <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}" Padding="6">
-                        <DataGrid x:Name="LinkBGrid" Style="{StaticResource AnalyzerDataGridStyle}" AutoGenerateColumns="False" IsReadOnly="True" CanUserSortColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserResizeRows="False" SelectionMode="Single" SelectionUnit="FullRow" RowHeaderWidth="0">
+
+                    <Border Grid.Column="2"
+                            Style="{StaticResource InnerCardBorderStyle}">
+                        <DataGrid x:Name="LinkBGrid"
+                                  Style="{StaticResource AnalyzerDataGridStyle}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  CanUserSortColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserResizeRows="False"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="120" />
                                 <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="54" />
@@ -234,7 +648,14 @@
                         </DataGrid>
                     </Border>
                 </Grid>
-                <Border Grid.Row="5" Margin="0,10,0,0" Background="#0D1623" BorderBrush="{StaticResource StrokeBrush}" BorderThickness="1" CornerRadius="8" Padding="10,8">
+
+                <Border Grid.Row="5"
+                        Margin="0,10,0,0"
+                        Background="#0D1623"
+                        BorderBrush="{StaticResource StrokeBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        Padding="10,8">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -247,25 +668,72 @@
                             <ColumnDefinition Width="16" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
+
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Active" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding RedundancyActiveLinkText}" Margin="8,0,0,0" Foreground="{StaticResource StatusAccentBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Text="Active"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding RedundancyActiveLinkText}"
+                                       Margin="8,0,0,0"
+                                       Foreground="{StaticResource StatusAccentBrush}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
+
                         <StackPanel Grid.Column="2" Orientation="Horizontal">
-                            <TextBlock Text="Link A" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding NucMainCommStateText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Text="Link A"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding NucMainCommStateText}"
+                                       Margin="8,0,0,0"
+                                       Foreground="{StaticResource AppForegroundBrush}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
+
                         <StackPanel Grid.Column="4" Orientation="Horizontal">
-                            <TextBlock Text="Link B" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding NucBackupCommStateText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Text="Link B"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding NucBackupCommStateText}"
+                                       Margin="8,0,0,0"
+                                       Foreground="{StaticResource AppForegroundBrush}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
+
                         <StackPanel Grid.Column="6" Orientation="Horizontal">
-                            <TextBlock Text="Switch" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding LastRedundancySwitchText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock Text="Switch"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding LastRedundancySwitchText}"
+                                       Margin="8,0,0,0"
+                                       Foreground="{StaticResource AppForegroundBrush}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
-                        <StackPanel Grid.Column="8" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <TextBlock Text="Continuity" Foreground="{StaticResource SecondaryTextBrush}" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding RedundancyContinuityText}" Margin="8,0,0,0" Foreground="{StaticResource AppForegroundBrush}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+
+                        <StackPanel Grid.Column="8"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                            <TextBlock Text="Continuity"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding RedundancyContinuityText}"
+                                       Margin="8,0,0,0"
+                                       Foreground="{StaticResource AppForegroundBrush}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Grid>
                 </Border>
