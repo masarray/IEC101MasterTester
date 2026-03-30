@@ -2,6 +2,52 @@
 
 ## Latest local handoff - 2026-03-30
 
+### Update snapshot - latest source of truth
+
+Current working branch:
+- `codex/link-trace-restore`
+
+Current local focus:
+- `Views/NucLinkTraceWindow.xaml`
+- `Controls/NucLinkTraceTapeControl.cs`
+- `Views/NucLinkTraceWindow.xaml.cs`
+
+Current NUC Link Trace state:
+- fixed `60 second` tape
+- `TimelineBucketCount = 300`
+- `BucketSizeSeconds = 0.2`
+- two traffic lanes only:
+  - `Link A`
+  - `Link B`
+- user rejected experimental variants with:
+  - TX/RX split renderer
+  - semantic overlay blocks
+  - decorative shading clutter
+
+Latest interaction fixes completed:
+- plot click now only works inside the real graph area
+- cursor/time mapping uses the same plot rect as the renderer
+- selected position is bucket-based, not free-pixel based
+- clicks outside graph area should not generate inspect time
+
+Latest inspect-mode fixes completed:
+- clicking the tape enters frozen inspect mode
+- inspect keeps selected `windowStart/windowEnd` stable after click
+- lower line-monitor grids now query around the selected bucket instead of drifting with live time
+- `Live` resumes moving follow-right mode and clears inspect freeze
+
+Current known caveat:
+- graph-to-frame trust is better but not finished yet
+- next work should focus on stronger bucket-to-real-event anchoring
+- goal:
+  - click a spike/burst
+  - get matching GI/Class1/Class2 rows in the lower tables
+  - keep the same result for the same clicked bucket
+- do not reintroduce:
+  - TX/RX split renderer
+  - orange/semantic block overlays
+  - decorative timeline experiments
+
 Current working branch:
 - `codex/link-trace-restore`
 
