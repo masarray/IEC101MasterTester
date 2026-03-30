@@ -27,6 +27,10 @@ namespace IEC101MasterTester.Controls
         private static readonly Typeface BadgeTypeface = new Typeface(new FontFamily("Consolas"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
         private IReadOnlyList<float> _laneA;
         private IReadOnlyList<float> _laneB;
+        private Rect _plotRect;
+        private Rect _laneARect;
+        private Rect _laneBRect;
+        private int _selectedBucketIndex = -1;
 
         public event EventHandler<DateTime> SelectedTimeChanged;
 
@@ -58,12 +62,13 @@ namespace IEC101MasterTester.Controls
 
         public static readonly DependencyProperty SelectedTimeProperty =
             DependencyProperty.Register(nameof(SelectedTime), typeof(DateTime?), typeof(NucLinkTraceTapeControl),
-                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnSelectedTimeChanged));
 
         public void SetBuffers(IReadOnlyList<float> laneA, IReadOnlyList<float> laneB)
         {
             _laneA = laneA;
             _laneB = laneB;
+            _selectedBucketIndex = ResolveBucketIndex(SelectedTime);
             InvalidateVisual();
         }
 
@@ -86,16 +91,19 @@ namespace IEC101MasterTester.Controls
             double laneTop = 16;
             double laneBottom = ActualHeight - 10;
             double laneHeight = Math.Max(26, (laneBottom - laneTop) / 2.0);
+            _plotRect = new Rect(LeftMargin, laneTop, GetUsableWidth(), Math.Max(0, laneBottom - laneTop));
+            _laneARect = new Rect(_plotRect.Left, laneTop, _plotRect.Width, laneHeight);
+            _laneBRect = new Rect(_plotRect.Left, laneTop + laneHeight, _plotRect.Width, laneHeight);
 
             DrawText(dc, "LINK A", 8, laneTop + 4, LabelTypeface, 10, LabelBrush);
             DrawText(dc, "LINK B", 8, laneTop + laneHeight + 4, LabelTypeface, 10, LabelBrush);
-            DrawLane(dc, _laneA, laneTop, laneHeight, LinkABrush);
-            DrawLane(dc, _laneB, laneTop + laneHeight, laneHeight, LinkBBrush);
+            DrawLane(dc, _laneA, _laneARect, LinkABrush);
+            DrawLane(dc, _laneB, _laneBRect, LinkBBrush);
             DrawMarker(dc, WindowEnd, true);
 
             if (SelectedTime.HasValue)
             {
-                DrawMarker(dc, ClampToWindow(SelectedTime.Value), false);
+                DrawSelectedMarker(dc);
             }
         }
 
@@ -103,20 +111,30 @@ namespace IEC101MasterTester.Controls
         {
             base.OnMouseLeftButtonDown(e);
 
-            DateTime? selected = HitTestTime(e.GetPosition(this).X);
+            Point position = e.GetPosition(this);
+            int bucketIndex = HitTestBucketIndex(position);
+            if (bucketIndex < 0)
+            {
+                return;
+            }
+
+            _selectedBucketIndex = bucketIndex;
+            DateTime? selected = GetBucketTime(bucketIndex);
             if (selected.HasValue)
             {
                 SelectedTimeChanged?.Invoke(this, selected.Value);
             }
         }
 
-        private void DrawLane(DrawingContext dc, IReadOnlyList<float> buffer, double laneTop, double laneHeight, Brush laneBrush)
+        private void DrawLane(DrawingContext dc, IReadOnlyList<float> buffer, Rect laneRect, Brush laneBrush)
         {
             if (buffer == null || buffer.Count == 0)
             {
                 return;
             }
 
+            double laneTop = laneRect.Top;
+            double laneHeight = laneRect.Height;
             double laneCenter = laneTop + (laneHeight / 2.0);
             double highY = laneTop + 4;
             double lowY = laneTop + laneHeight - 6;
@@ -126,10 +144,10 @@ namespace IEC101MasterTester.Controls
                 basePen.Freeze();
             }
 
-            dc.DrawLine(basePen, new Point(LeftMargin, lowY), new Point(ActualWidth - RightMargin, lowY));
-            dc.DrawLine(basePen, new Point(LeftMargin, laneCenter), new Point(ActualWidth - RightMargin, laneCenter));
+            dc.DrawLine(basePen, new Point(laneRect.Left, lowY), new Point(laneRect.Right, lowY));
+            dc.DrawLine(basePen, new Point(laneRect.Left, laneCenter), new Point(laneRect.Right, laneCenter));
 
-            double dx = GetUsableWidth() / MaxSamples;
+            double dx = GetBucketWidth(buffer.Count);
             StreamGeometry lineGeometry = new StreamGeometry();
             StreamGeometry fillGeometry = new StreamGeometry();
 
@@ -141,7 +159,7 @@ namespace IEC101MasterTester.Controls
                 double giStartX = 0;
                 for (int i = 0; i < buffer.Count; i++)
                 {
-                    double x = LeftMargin + (i * dx);
+                    double x = laneRect.Left + (i * dx);
                     double y = GetLaneY(buffer[i], laneCenter, highY, lowY);
                     bool isGiBurst = buffer[i] > 0.95f;
 
@@ -172,7 +190,7 @@ namespace IEC101MasterTester.Controls
 
                 if (started)
                 {
-                    double endX = LeftMargin + ((buffer.Count - 1) * dx);
+                    double endX = laneRect.Left + ((buffer.Count - 1) * dx);
                     fill.LineTo(new Point(endX, laneCenter), true, false);
                     if (giOpen)
                     {
@@ -218,10 +236,10 @@ namespace IEC101MasterTester.Controls
 
             if (isNowMarker)
             {
-                dc.DrawRectangle(MarkerBandBrush, null, new Rect(Math.Max(LeftMargin, x - 8), 4, 8, Math.Max(0, ActualHeight - 8)));
+                dc.DrawRectangle(MarkerBandBrush, null, new Rect(Math.Max(_plotRect.Left, x - 8), 4, 8, Math.Max(0, ActualHeight - 8)));
             }
 
-            dc.DrawLine(pen, new Point(x, 4), new Point(x, ActualHeight - 4));
+            dc.DrawLine(pen, new Point(x, _plotRect.Top), new Point(x, _plotRect.Bottom));
 
             if (!isNowMarker)
             {
@@ -229,7 +247,7 @@ namespace IEC101MasterTester.Controls
                 FormattedText formatted = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, BadgeTypeface, 10, Brushes.White, 1.0);
                 double badgeWidth = formatted.Width + 16;
                 Rect badgeRect = new Rect(
-                    Math.Max(LeftMargin, Math.Min(ActualWidth - badgeWidth - 6, x - (badgeWidth / 2.0))),
+                    Math.Max(_plotRect.Left, Math.Min(_plotRect.Right - badgeWidth - 6, x - (badgeWidth / 2.0))),
                     6,
                     badgeWidth,
                     formatted.Height + 6);
@@ -239,15 +257,61 @@ namespace IEC101MasterTester.Controls
             }
         }
 
-        private DateTime? HitTestTime(double x)
+        private void DrawSelectedMarker(DrawingContext dc)
         {
-            if (WindowStart == DateTime.MinValue || WindowEnd == DateTime.MinValue)
+            DateTime? selected = GetBucketTime(_selectedBucketIndex);
+            if (!selected.HasValue)
+            {
+                selected = SelectedTime.HasValue ? ClampToWindow(SelectedTime.Value) : (DateTime?)null;
+            }
+
+            if (!selected.HasValue)
+            {
+                return;
+            }
+
+            DrawMarker(dc, selected.Value, false);
+        }
+
+        private int HitTestBucketIndex(Point point)
+        {
+            IReadOnlyList<float> reference = GetReferenceBuffer();
+            if (reference == null || reference.Count == 0 || !_plotRect.Contains(point))
+            {
+                return -1;
+            }
+
+            double ratio = (point.X - _plotRect.Left) / Math.Max(1, _plotRect.Width);
+            ratio = Math.Max(0, Math.Min(1, ratio));
+            int index = (int)(ratio * reference.Count);
+            return Math.Max(0, Math.Min(reference.Count - 1, index));
+        }
+
+        private DateTime? GetBucketTime(int bucketIndex)
+        {
+            IReadOnlyList<float> reference = GetReferenceBuffer();
+            if (reference == null || reference.Count == 0 || WindowStart == DateTime.MinValue || WindowEnd == DateTime.MinValue)
             {
                 return null;
             }
 
-            double ratio = Math.Max(0, Math.Min(1, (x - LeftMargin) / GetUsableWidth()));
-            return WindowStart.AddSeconds((WindowEnd - WindowStart).TotalSeconds * ratio);
+            int clampedIndex = Math.Max(0, Math.Min(reference.Count - 1, bucketIndex));
+            double bucketSeconds = (WindowEnd - WindowStart).TotalSeconds / Math.Max(1, reference.Count);
+            return WindowStart.AddSeconds(clampedIndex * bucketSeconds);
+        }
+
+        private int ResolveBucketIndex(DateTime? time)
+        {
+            IReadOnlyList<float> reference = GetReferenceBuffer();
+            if (!time.HasValue || reference == null || reference.Count == 0 || WindowStart == DateTime.MinValue || WindowEnd == DateTime.MinValue)
+            {
+                return -1;
+            }
+
+            double totalSeconds = Math.Max(0.001, (WindowEnd - WindowStart).TotalSeconds);
+            double ratio = (ClampToWindow(time.Value) - WindowStart).TotalSeconds / totalSeconds;
+            int index = (int)(ratio * reference.Count);
+            return Math.Max(0, Math.Min(reference.Count - 1, index));
         }
 
         private DateTime ClampToWindow(DateTime time)
@@ -269,12 +333,32 @@ namespace IEC101MasterTester.Controls
         {
             double ratio = (time - WindowStart).TotalSeconds / Math.Max(1, (WindowEnd - WindowStart).TotalSeconds);
             ratio = Math.Max(0, Math.Min(1, ratio));
-            return LeftMargin + (GetUsableWidth() * ratio);
+            return _plotRect.Left + (_plotRect.Width * ratio);
         }
 
         private double GetUsableWidth()
         {
             return Math.Max(1, ActualWidth - LeftMargin - RightMargin);
+        }
+
+        private double GetBucketWidth(int sampleCount)
+        {
+            return _plotRect.Width / Math.Max(1, sampleCount);
+        }
+
+        private IReadOnlyList<float> GetReferenceBuffer()
+        {
+            if (_laneA != null && _laneA.Count > 0)
+            {
+                return _laneA;
+            }
+
+            if (_laneB != null && _laneB.Count > 0)
+            {
+                return _laneB;
+            }
+
+            return null;
         }
 
         private static double GetLaneY(float sample, double centerY, double highY, double lowY)
@@ -305,6 +389,20 @@ namespace IEC101MasterTester.Controls
             SolidColorBrush solid = source as SolidColorBrush;
             Color baseColor = solid != null ? solid.Color : Colors.White;
             return CreateBrush(baseColor.R, baseColor.G, baseColor.B, alpha);
+        }
+
+        private static void OnSelectedTimeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            NucLinkTraceTapeControl control = d as NucLinkTraceTapeControl;
+            if (control == null)
+            {
+                return;
+            }
+
+            DateTime? selectedTime = e.NewValue is DateTime
+                ? (DateTime)e.NewValue
+                : (DateTime?)null;
+            control._selectedBucketIndex = control.ResolveBucketIndex(selectedTime);
         }
     }
 }

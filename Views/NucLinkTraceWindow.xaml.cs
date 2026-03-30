@@ -39,6 +39,9 @@ namespace IEC101MasterTester.Views
         private DateTime? _selectedTime;
         private DateTime? _windowStartTime;
         private DateTime? _windowEndTime;
+        private bool _isInspectFrozen;
+        private DateTime? _inspectWindowStartTime;
+        private DateTime? _inspectWindowEndTime;
 
         public NucLinkTraceWindow()
         {
@@ -122,8 +125,12 @@ namespace IEC101MasterTester.Views
             List<RowWithTime> parsedB = ParseRows(vm.NucTraceLinkB);
 
             DateTime latest = MaxTimestamp(parsedA, parsedB) ?? DateTime.Now;
-            DateTime windowEnd = latest;
-            DateTime windowStart = latest.AddSeconds(-ViewportDurationSeconds);
+            DateTime windowEnd = _isInspectFrozen && _inspectWindowEndTime.HasValue
+                ? _inspectWindowEndTime.Value
+                : latest;
+            DateTime windowStart = _isInspectFrozen && _inspectWindowStartTime.HasValue
+                ? _inspectWindowStartTime.Value
+                : latest.AddSeconds(-ViewportDurationSeconds);
             _windowStartTime = windowStart;
             _windowEndTime = windowEnd;
 
@@ -136,8 +143,16 @@ namespace IEC101MasterTester.Views
                 _selectedTime = ClampSelectedTime(_selectedTime.Value, windowStart, windowEnd);
             }
 
-            ReplaceRows(_linkAViewRows, TakeWindow(parsedA, windowStart, windowEnd, _rowLimit));
-            ReplaceRows(_linkBViewRows, TakeWindow(parsedB, windowStart, windowEnd, _rowLimit));
+            if (_isInspectFrozen && _selectedTime.HasValue)
+            {
+                ReplaceRows(_linkAViewRows, TakeInspectRows(parsedA, windowStart, _selectedTime.Value, _rowLimit));
+                ReplaceRows(_linkBViewRows, TakeInspectRows(parsedB, windowStart, _selectedTime.Value, _rowLimit));
+            }
+            else
+            {
+                ReplaceRows(_linkAViewRows, TakeWindow(parsedA, windowStart, windowEnd, _rowLimit));
+                ReplaceRows(_linkBViewRows, TakeWindow(parsedB, windowStart, windowEnd, _rowLimit));
+            }
 
             TimelineTape.WindowStart = windowStart;
             TimelineTape.WindowEnd = windowEnd;
@@ -267,6 +282,34 @@ namespace IEC101MasterTester.Views
                 .ToList();
         }
 
+        private static IEnumerable<LineMonitorRow> TakeInspectRows(IEnumerable<RowWithTime> rows, DateTime windowStart, DateTime selectedTime, int rowLimit)
+        {
+            DateTime bucketStart = GetBucketStart(windowStart, selectedTime);
+            DateTime bucketEnd = bucketStart.AddSeconds(BucketSizeSeconds);
+
+            List<RowWithTime> bucketRows = rows
+                .Where(r => r.Time.Value >= bucketStart && r.Time.Value < bucketEnd)
+                .OrderBy(r => r.Time.Value)
+                .ToList();
+
+            if (bucketRows.Count == 0)
+            {
+                DateTime expandedStart = bucketStart.AddSeconds(-BucketSizeSeconds);
+                DateTime expandedEnd = bucketEnd.AddSeconds(BucketSizeSeconds);
+                bucketRows = rows
+                    .Where(r => r.Time.Value >= expandedStart && r.Time.Value < expandedEnd)
+                    .OrderBy(r => Math.Abs((r.Time.Value - selectedTime).TotalMilliseconds))
+                    .Take(rowLimit)
+                    .OrderBy(r => r.Time.Value)
+                    .ToList();
+            }
+
+            return bucketRows
+                .Take(rowLimit)
+                .Select(r => r.Row)
+                .ToList();
+        }
+
         private void DrawRuler(DateTime start, DateTime end)
         {
             double width = TimelineRulerCanvas.ActualWidth;
@@ -375,6 +418,7 @@ namespace IEC101MasterTester.Views
         {
             _isPaused = false;
             PauseViewButton.IsChecked = false;
+            ClearInspectState();
             SetFollowRight(true);
             SampleTape();
             RefreshViewport(true);
@@ -392,6 +436,7 @@ namespace IEC101MasterTester.Views
             _selectedTime = null;
             _windowStartTime = null;
             _windowEndTime = null;
+            ClearInspectState();
             TimelineRulerCanvas.Children.Clear();
             TimelineTape.SetBuffers(null, null);
             TimelineTape.SelectedTime = null;
@@ -447,6 +492,7 @@ namespace IEC101MasterTester.Views
             {
                 _isPaused = false;
                 PauseViewButton.IsChecked = false;
+                ClearInspectState();
             }
 
             RefreshViewport(true);
@@ -473,6 +519,9 @@ namespace IEC101MasterTester.Views
             SetFollowRight(false);
             _isPaused = true;
             PauseViewButton.IsChecked = true;
+            _isInspectFrozen = true;
+            _inspectWindowStartTime = _windowStartTime;
+            _inspectWindowEndTime = _windowEndTime;
             _selectedTime = ClampSelectedTime(selectedTime, _windowStartTime.Value, _windowEndTime.Value);
             RefreshViewport(false);
         }
@@ -549,6 +598,24 @@ namespace IEC101MasterTester.Views
             }
 
             return selected;
+        }
+
+        private static DateTime GetBucketStart(DateTime windowStart, DateTime selectedTime)
+        {
+            double bucketOffset = Math.Floor((selectedTime - windowStart).TotalSeconds / BucketSizeSeconds);
+            if (bucketOffset < 0)
+            {
+                bucketOffset = 0;
+            }
+
+            return windowStart.AddSeconds(bucketOffset * BucketSizeSeconds);
+        }
+
+        private void ClearInspectState()
+        {
+            _isInspectFrozen = false;
+            _inspectWindowStartTime = null;
+            _inspectWindowEndTime = null;
         }
 
         private sealed class RowWithTime
