@@ -172,6 +172,8 @@ namespace IEC101MasterTester.Views
             TimelineTape.WindowStart = windowStart;
             TimelineTape.WindowEnd = windowEnd;
             TimelineTape.SelectedTime = _selectedTime;
+            TimelineTape.IsLaneAActive = IsLinkAActive(vm);
+            TimelineTape.IsLaneBActive = IsLinkBActive(vm);
             TimelineTape.SetBuffers(_laneABuffer, _laneBBuffer);
 
             DrawRuler(windowStart, windowEnd);
@@ -690,6 +692,16 @@ namespace IEC101MasterTester.Views
             }
 
             return selectedTime;
+        }
+
+        private static bool IsLinkAActive(MainViewModel vm)
+        {
+            return (vm.RedundancyActiveLinkText ?? string.Empty).IndexOf("Main", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsLinkBActive(MainViewModel vm)
+        {
+            return (vm.RedundancyActiveLinkText ?? string.Empty).IndexOf("Backup", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private sealed class RowWithTime

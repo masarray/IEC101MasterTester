@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -9,17 +10,20 @@ namespace IEC101MasterTester.Controls
 {
     public sealed class NucLinkTraceTapeControl : FrameworkElement
     {
-        private const int MaxSamples = 300;
         private const double LeftMargin = 72;
         private const double RightMargin = 14;
+        private const double WaveStrokeThickness = 1.8;
+        private const double BurstBandHalfThickness = 5.0;
+        private const float BurstHighlightThreshold = 0.9f;
         private static readonly Brush PanelBrush = CreateBrush(10, 20, 33);
         private static readonly Brush UpperLaneBrush = CreateBrush(22, 34, 49, 60);
         private static readonly Brush LowerLaneBrush = CreateBrush(16, 26, 39, 38);
         private static readonly Brush BaseLineBrush = CreateBrush(120, 140, 170, 95);
         private static readonly Brush LabelBrush = CreateBrush(142, 163, 188);
-        private static readonly Brush LinkABrush = CreateBrush(90, 162, 255, 230);
-        private static readonly Brush LinkBBrush = CreateBrush(50, 193, 108, 230);
-        private static readonly Brush GiHighlightBrush = CreateBrush(243, 182, 51, 70);
+        private static readonly Brush ActiveWaveBrush = CreateBrush(50, 193, 108, 235);
+        private static readonly Brush StandbyWaveBrush = CreateBrush(90, 162, 255, 235);
+        private static readonly Brush ActiveBurstHighlightBrush = CreateBrush(50, 193, 108, 70);
+        private static readonly Brush StandbyBurstHighlightBrush = CreateBrush(90, 162, 255, 70);
         private static readonly Brush MarkerBandBrush = CreateBrush(243, 182, 51, 45);
         private static readonly Brush MarkerLineBrush = CreateBrush(243, 182, 51);
         private static readonly Brush BadgeFillBrush = CreateBrush(30, 42, 58);
@@ -64,6 +68,26 @@ namespace IEC101MasterTester.Controls
             DependencyProperty.Register(nameof(SelectedTime), typeof(DateTime?), typeof(NucLinkTraceTapeControl),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnSelectedTimeChanged));
 
+        public bool IsLaneAActive
+        {
+            get { return (bool)GetValue(IsLaneAActiveProperty); }
+            set { SetValue(IsLaneAActiveProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsLaneAActiveProperty =
+            DependencyProperty.Register(nameof(IsLaneAActive), typeof(bool), typeof(NucLinkTraceTapeControl),
+                new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+
+        public bool IsLaneBActive
+        {
+            get { return (bool)GetValue(IsLaneBActiveProperty); }
+            set { SetValue(IsLaneBActiveProperty, value); }
+        }
+
+        public static readonly DependencyProperty IsLaneBActiveProperty =
+            DependencyProperty.Register(nameof(IsLaneBActive), typeof(bool), typeof(NucLinkTraceTapeControl),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
         public void SetBuffers(IReadOnlyList<float> laneA, IReadOnlyList<float> laneB)
         {
             _laneA = laneA;
@@ -97,8 +121,8 @@ namespace IEC101MasterTester.Controls
 
             DrawText(dc, "LINK A", 8, laneTop + 4, LabelTypeface, 10, LabelBrush);
             DrawText(dc, "LINK B", 8, laneTop + laneHeight + 4, LabelTypeface, 10, LabelBrush);
-            DrawLane(dc, _laneA, _laneARect, LinkABrush);
-            DrawLane(dc, _laneB, _laneBRect, LinkBBrush);
+            DrawLane(dc, _laneA, _laneARect, IsLaneAActive);
+            DrawLane(dc, _laneB, _laneBRect, IsLaneBActive);
             DrawMarker(dc, WindowEnd, true);
 
             if (SelectedTime.HasValue)
@@ -126,7 +150,7 @@ namespace IEC101MasterTester.Controls
             }
         }
 
-        private void DrawLane(DrawingContext dc, IReadOnlyList<float> buffer, Rect laneRect, Brush laneBrush)
+        private void DrawLane(DrawingContext dc, IReadOnlyList<float> buffer, Rect laneRect, bool isActive)
         {
             if (buffer == null || buffer.Count == 0)
             {
@@ -147,82 +171,262 @@ namespace IEC101MasterTester.Controls
             dc.DrawLine(basePen, new Point(laneRect.Left, lowY), new Point(laneRect.Right, lowY));
             dc.DrawLine(basePen, new Point(laneRect.Left, laneCenter), new Point(laneRect.Right, laneCenter));
 
-            double dx = GetBucketWidth(buffer.Count);
-            StreamGeometry lineGeometry = new StreamGeometry();
-            StreamGeometry fillGeometry = new StreamGeometry();
-
-            using (StreamGeometryContext line = lineGeometry.Open())
-            using (StreamGeometryContext fill = fillGeometry.Open())
+            List<Point> wavePoints = BuildWavePoints(buffer, laneRect, laneCenter, highY, lowY);
+            if (wavePoints.Count == 0)
             {
-                bool started = false;
-                bool giOpen = false;
-                double giStartX = 0;
-                for (int i = 0; i < buffer.Count; i++)
-                {
-                    double x = laneRect.Left + (i * dx);
-                    double y = GetLaneY(buffer[i], laneCenter, highY, lowY);
-                    bool isGiBurst = buffer[i] > 0.95f;
-
-                    if (!started)
-                    {
-                        line.BeginFigure(new Point(x, y), false, false);
-                        fill.BeginFigure(new Point(x, laneCenter), true, true);
-                        fill.LineTo(new Point(x, y), true, false);
-                        started = true;
-                    }
-                    else
-                    {
-                        line.LineTo(new Point(x, y), true, false);
-                        fill.LineTo(new Point(x, y), true, false);
-                    }
-
-                    if (isGiBurst && !giOpen)
-                    {
-                        giOpen = true;
-                        giStartX = x;
-                    }
-                    else if (!isGiBurst && giOpen)
-                    {
-                        dc.DrawRectangle(GiHighlightBrush, null, new Rect(giStartX, laneTop + 2, Math.Max(2, x - giStartX), laneHeight - 4));
-                        giOpen = false;
-                    }
-                }
-
-                if (started)
-                {
-                    double endX = laneRect.Left + ((buffer.Count - 1) * dx);
-                    fill.LineTo(new Point(endX, laneCenter), true, false);
-                    if (giOpen)
-                    {
-                        dc.DrawRectangle(GiHighlightBrush, null, new Rect(giStartX, laneTop + 2, Math.Max(2, endX - giStartX), laneHeight - 4));
-                    }
-                }
+                return;
             }
 
-            lineGeometry.Freeze();
-            fillGeometry.Freeze();
+            Brush waveBrush = GetWaveStrokeBrush(isActive);
+            Brush burstBrush = GetWaveHighlightBrush(isActive);
+            Pen wavePen = CreateWavePen(waveBrush);
+            StreamGeometry waveGeometry = BuildWaveGeometry(wavePoints);
 
-            double average = 0;
+            dc.PushClip(new RectangleGeometry(laneRect));
+            RenderBurstHighlights(dc, buffer, wavePoints, laneRect, burstBrush);
+            dc.DrawGeometry(null, wavePen, waveGeometry);
+            dc.Pop();
+        }
+
+        private List<Point> BuildWavePoints(IReadOnlyList<float> buffer, Rect laneRect, double centerY, double highY, double lowY)
+        {
+            List<Point> points = new List<Point>(buffer.Count);
+            double dx = GetBucketWidth(buffer.Count);
             for (int i = 0; i < buffer.Count; i++)
             {
-                average += buffer[i];
+                double x = laneRect.Left + (i * dx);
+                double y = GetLaneY(buffer[i], centerY, highY, lowY);
+                points.Add(new Point(x, y));
             }
 
-            average /= buffer.Count;
-            average = Math.Max(0.08, Math.Min(1.0, average));
+            return points;
+        }
 
-            bool strongGi = average > 0.95;
-            Brush fillBrush = strongGi ? CreateBrush(243, 182, 51, 55) : CreateAlphaBrush(laneBrush, (byte)(20 + (average * 55)));
-            Pen wavePen = new Pen(
-                strongGi ? CreateBrush(243, 182, 51, 235) : CreateAlphaBrush(laneBrush, (byte)(80 + (average * 175))),
-                strongGi ? 4.2 : 1.2 + (average * 2.2));
-            if (wavePen.CanFreeze)
+        private void RenderBurstHighlights(DrawingContext dc, IReadOnlyList<float> buffer, IReadOnlyList<Point> wavePoints, Rect laneRect, Brush highlightBrush)
+        {
+            foreach (BurstSegment segment in GetBurstSegments(buffer, laneRect))
             {
-                wavePen.Freeze();
+                StreamGeometry geometry = BuildBurstBandGeometry(wavePoints, segment.StartX, segment.EndX, laneRect);
+                if (geometry != null)
+                {
+                    dc.DrawGeometry(highlightBrush, null, geometry);
+                }
+            }
+        }
+
+        private List<BurstSegment> GetBurstSegments(IReadOnlyList<float> buffer, Rect laneRect)
+        {
+            List<BurstSegment> segments = new List<BurstSegment>();
+            if (buffer == null || buffer.Count == 0)
+            {
+                return segments;
             }
 
-            dc.DrawGeometry(fillBrush, wavePen, fillGeometry);
-            dc.DrawGeometry(null, wavePen, lineGeometry);
+            double dx = GetBucketWidth(buffer.Count);
+            int startIndex = -1;
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                bool isBurst = buffer[i] >= BurstHighlightThreshold;
+                if (isBurst && startIndex < 0)
+                {
+                    startIndex = i;
+                }
+                else if (!isBurst && startIndex >= 0)
+                {
+                    segments.Add(new BurstSegment(
+                        laneRect.Left + (startIndex * dx),
+                        laneRect.Left + (i * dx)));
+                    startIndex = -1;
+                }
+            }
+
+            if (startIndex >= 0)
+            {
+                segments.Add(new BurstSegment(
+                    laneRect.Left + (startIndex * dx),
+                    laneRect.Left + ((buffer.Count - 1) * dx)));
+            }
+
+            return segments;
+        }
+
+        private StreamGeometry BuildBurstBandGeometry(IReadOnlyList<Point> wavePoints, double startX, double endX, Rect laneRect)
+        {
+            List<Point> segmentPoints;
+            if (!TryCollectPointsInRange(wavePoints, startX, endX, out segmentPoints))
+            {
+                double fallbackCenterY = wavePoints.Count > 0 ? wavePoints[0].Y : laneRect.Top + (laneRect.Height / 2.0);
+                return BuildNarrowFallbackBand(startX, endX, fallbackCenterY, laneRect);
+            }
+
+            StreamGeometry geometry = new StreamGeometry();
+            using (StreamGeometryContext context = geometry.Open())
+            {
+                Point firstUpper = ClampToLaneBand(new Point(segmentPoints[0].X, segmentPoints[0].Y - BurstBandHalfThickness), laneRect);
+                context.BeginFigure(firstUpper, true, true);
+
+                for (int i = 1; i < segmentPoints.Count; i++)
+                {
+                    context.LineTo(ClampToLaneBand(new Point(segmentPoints[i].X, segmentPoints[i].Y - BurstBandHalfThickness), laneRect), true, false);
+                }
+
+                for (int i = segmentPoints.Count - 1; i >= 0; i--)
+                {
+                    context.LineTo(ClampToLaneBand(new Point(segmentPoints[i].X, segmentPoints[i].Y + BurstBandHalfThickness), laneRect), true, false);
+                }
+            }
+
+            if (geometry.CanFreeze)
+            {
+                geometry.Freeze();
+            }
+
+            return geometry;
+        }
+
+        private bool TryCollectPointsInRange(IReadOnlyList<Point> wavePoints, double startX, double endX, out List<Point> segmentPoints)
+        {
+            segmentPoints = new List<Point>();
+            if (wavePoints == null || wavePoints.Count == 0 || endX < startX)
+            {
+                return false;
+            }
+
+            Point? startBoundary = null;
+            Point? endBoundary = null;
+
+            for (int i = 0; i < wavePoints.Count - 1; i++)
+            {
+                Point current = wavePoints[i];
+                Point next = wavePoints[i + 1];
+
+                if (!startBoundary.HasValue && startX >= current.X && startX <= next.X)
+                {
+                    startBoundary = InterpolateBoundaryPoint(current, next, startX);
+                    segmentPoints.Add(startBoundary.Value);
+                }
+
+                if (current.X >= startX && current.X <= endX)
+                {
+                    segmentPoints.Add(current);
+                }
+
+                if (!endBoundary.HasValue && endX >= current.X && endX <= next.X)
+                {
+                    endBoundary = InterpolateBoundaryPoint(current, next, endX);
+                    segmentPoints.Add(endBoundary.Value);
+                    break;
+                }
+            }
+
+            Point last = wavePoints[wavePoints.Count - 1];
+            if (last.X >= startX && last.X <= endX)
+            {
+                segmentPoints.Add(last);
+            }
+
+            segmentPoints = segmentPoints
+                .OrderBy(point => point.X)
+                .GroupBy(point => Math.Round(point.X, 3))
+                .Select(group => group.First())
+                .ToList();
+
+            return segmentPoints.Count >= 2;
+        }
+
+        private static Point InterpolateBoundaryPoint(Point start, Point end, double boundaryX)
+        {
+            if (Math.Abs(end.X - start.X) < 0.0001)
+            {
+                return new Point(boundaryX, start.Y);
+            }
+
+            double ratio = (boundaryX - start.X) / (end.X - start.X);
+            ratio = Math.Max(0, Math.Min(1, ratio));
+            return new Point(boundaryX, start.Y + ((end.Y - start.Y) * ratio));
+        }
+
+        private StreamGeometry BuildNarrowFallbackBand(double startX, double endX, double centerY, Rect laneRect)
+        {
+            double left = Math.Max(laneRect.Left, Math.Min(startX, endX));
+            double right = Math.Min(laneRect.Right, Math.Max(startX, endX));
+            if (right - left < 1)
+            {
+                right = Math.Min(laneRect.Right, left + 2);
+            }
+
+            double top = Math.Max(laneRect.Top + 2, centerY - BurstBandHalfThickness);
+            double bottom = Math.Min(laneRect.Bottom - 2, centerY + BurstBandHalfThickness);
+            Rect bandRect = new Rect(new Point(left, top), new Point(right, bottom));
+            StreamGeometry geometry = new StreamGeometry();
+            using (StreamGeometryContext context = geometry.Open())
+            {
+                context.BeginFigure(new Point(bandRect.Left, bandRect.Top), true, true);
+                context.LineTo(new Point(bandRect.Right, bandRect.Top), true, false);
+                context.LineTo(new Point(bandRect.Right, bandRect.Bottom), true, false);
+                context.LineTo(new Point(bandRect.Left, bandRect.Bottom), true, false);
+            }
+
+            if (geometry.CanFreeze)
+            {
+                geometry.Freeze();
+            }
+
+            return geometry;
+        }
+
+        private static Point ClampToLaneBand(Point point, Rect laneRect)
+        {
+            return new Point(
+                Math.Max(laneRect.Left, Math.Min(laneRect.Right, point.X)),
+                Math.Max(laneRect.Top + 2, Math.Min(laneRect.Bottom - 2, point.Y)));
+        }
+
+        private static StreamGeometry BuildWaveGeometry(IReadOnlyList<Point> wavePoints)
+        {
+            StreamGeometry geometry = new StreamGeometry();
+            using (StreamGeometryContext context = geometry.Open())
+            {
+                context.BeginFigure(wavePoints[0], false, false);
+                for (int i = 1; i < wavePoints.Count; i++)
+                {
+                    context.LineTo(wavePoints[i], true, false);
+                }
+            }
+
+            if (geometry.CanFreeze)
+            {
+                geometry.Freeze();
+            }
+
+            return geometry;
+        }
+
+        private static Brush GetWaveStrokeBrush(bool isActive)
+        {
+            return isActive ? ActiveWaveBrush : StandbyWaveBrush;
+        }
+
+        private static Brush GetWaveHighlightBrush(bool isActive)
+        {
+            return isActive ? ActiveBurstHighlightBrush : StandbyBurstHighlightBrush;
+        }
+
+        private static Pen CreateWavePen(Brush brush)
+        {
+            Pen pen = new Pen(brush, WaveStrokeThickness)
+            {
+                StartLineCap = PenLineCap.Round,
+                EndLineCap = PenLineCap.Round,
+                LineJoin = PenLineJoin.Round
+            };
+
+            if (pen.CanFreeze)
+            {
+                pen.Freeze();
+            }
+
+            return pen;
         }
 
         private void DrawMarker(DrawingContext dc, DateTime time, bool isNowMarker)
@@ -384,13 +588,6 @@ namespace IEC101MasterTester.Controls
             return brush;
         }
 
-        private static SolidColorBrush CreateAlphaBrush(Brush source, byte alpha)
-        {
-            SolidColorBrush solid = source as SolidColorBrush;
-            Color baseColor = solid != null ? solid.Color : Colors.White;
-            return CreateBrush(baseColor.R, baseColor.G, baseColor.B, alpha);
-        }
-
         private static void OnSelectedTimeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             NucLinkTraceTapeControl control = d as NucLinkTraceTapeControl;
@@ -403,6 +600,19 @@ namespace IEC101MasterTester.Controls
                 ? (DateTime)e.NewValue
                 : (DateTime?)null;
             control._selectedBucketIndex = control.ResolveBucketIndex(selectedTime);
+        }
+
+        private sealed class BurstSegment
+        {
+            public BurstSegment(double startX, double endX)
+            {
+                StartX = startX;
+                EndX = endX;
+            }
+
+            public double StartX { get; private set; }
+
+            public double EndX { get; private set; }
         }
     }
 }
