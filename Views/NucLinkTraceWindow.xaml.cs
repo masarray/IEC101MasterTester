@@ -1,3 +1,4 @@
+using IEC101MasterTester.Controls;
 using IEC101MasterTester.Models;
 using IEC101MasterTester.ViewModels;
 using Microsoft.Win32;
@@ -10,7 +11,6 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -19,19 +19,26 @@ namespace IEC101MasterTester.Views
 {
     public partial class NucLinkTraceWindow : Window
     {
-        private const int TimelineBucketCount = 60;
-        private const int BucketSizeSeconds = 1;
+        private const int TimelineBucketCount = 300;
+        private const int MaxSamples = 300;
+        private const double BucketSizeSeconds = 0.2;
+        private const double TimelineLeftMargin = 72;
+        private const double TimelineRightMargin = 14;
         private readonly ObservableCollection<LineMonitorRow> _linkAViewRows = new ObservableCollection<LineMonitorRow>();
         private readonly ObservableCollection<LineMonitorRow> _linkBViewRows = new ObservableCollection<LineMonitorRow>();
         private readonly DispatcherTimer _refreshTimer;
+        private readonly List<float> _laneABuffer = new List<float>();
+        private readonly List<float> _laneBBuffer = new List<float>();
         private bool _isPaused;
-        private bool _autoScroll = true;
-        private bool _isDraggingTimeline;
+        private bool _followRight = true;
+        private bool _suppressGridSelectionSync;
         private int _rowLimit = 50;
-        private bool _isUpdatingSlider;
-        private DateTime? _viewportStartTime;
-        private DateTime? _captureStartTime;
-        private DateTime? _captureEndTime;
+        private float _laneAPrev = 0.08f;
+        private float _laneBPrev = 0.08f;
+        private DateTime? _lastSampleTime;
+        private DateTime? _selectedTime;
+        private DateTime? _windowStartTime;
+        private DateTime? _windowEndTime;
 
         public NucLinkTraceWindow()
         {
@@ -40,33 +47,45 @@ namespace IEC101MasterTester.Views
             LinkAGrid.ItemsSource = _linkAViewRows;
             LinkBGrid.ItemsSource = _linkBViewRows;
 
-            _refreshTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(250)
-            };
+            _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
             _refreshTimer.Tick += RefreshTimer_Tick;
 
             Loaded += (s, e) =>
             {
+                TimelineTape.SelectedTimeChanged += TimelineTape_SelectedTimeChanged;
                 SyncRowLimit();
+                SampleTape();
                 RefreshViewport(true);
                 _refreshTimer.Start();
             };
 
-            Closed += (s, e) => _refreshTimer.Stop();
+            Closed += (s, e) =>
+            {
+                TimelineTape.SelectedTimeChanged -= TimelineTape_SelectedTimeChanged;
+                _refreshTimer.Stop();
+            };
         }
 
-        private MainViewModel ViewModel => DataContext as MainViewModel;
+        private MainViewModel ViewModel
+        {
+            get { return DataContext as MainViewModel; }
+        }
+
+        private double ViewportDurationSeconds
+        {
+            get { return TimelineBucketCount * BucketSizeSeconds; }
+        }
 
         private void RefreshTimer_Tick(object sender, EventArgs e)
         {
-            if (!_isPaused || _autoScroll)
+            if (!_isPaused || _followRight)
             {
+                SampleTape();
                 RefreshViewport(false);
             }
         }
 
-        private void RefreshViewport(bool force)
+        private void SampleTape()
         {
             MainViewModel vm = ViewModel;
             if (vm == null)
@@ -74,36 +93,156 @@ namespace IEC101MasterTester.Views
                 return;
             }
 
-            List<LineMonitorRow> aRows = vm.NucTraceLinkA.ToList();
-            List<LineMonitorRow> bRows = vm.NucTraceLinkB.ToList();
-
-            DateTime latest = MaxTimestamp(aRows, bRows) ?? DateTime.Now;
-            DateTime earliest = MinTimestamp(aRows, bRows) ?? latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
-            _captureStartTime = earliest;
-            _captureEndTime = latest;
-
-            if (_autoScroll || !_viewportStartTime.HasValue || force)
+            List<RowWithTime> parsedA = ParseRows(vm.NucTraceLinkA);
+            List<RowWithTime> parsedB = ParseRows(vm.NucTraceLinkB);
+            DateTime sampleEnd = MaxTimestamp(parsedA, parsedB) ?? DateTime.Now;
+            DateTime sampleStart = _lastSampleTime ?? sampleEnd.AddSeconds(-BucketSizeSeconds);
+            if (sampleEnd <= sampleStart)
             {
-                _viewportStartTime = latest.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
-                if (_viewportStartTime.Value < earliest)
+                return;
+            }
+
+            AppendSample(_laneABuffer, ref _laneAPrev, ComputeLaneIntensity(GetSampleEvents(parsedA, sampleStart, sampleEnd)));
+            AppendSample(_laneBBuffer, ref _laneBPrev, ComputeLaneIntensity(GetSampleEvents(parsedB, sampleStart, sampleEnd)));
+            _lastSampleTime = sampleEnd;
+        }
+
+        private void RefreshViewport(bool forceLiveSelection)
+        {
+            MainViewModel vm = ViewModel;
+            if (vm == null)
+            {
+                return;
+            }
+
+            List<RowWithTime> parsedA = ParseRows(vm.NucTraceLinkA);
+            List<RowWithTime> parsedB = ParseRows(vm.NucTraceLinkB);
+
+            DateTime latest = MaxTimestamp(parsedA, parsedB) ?? DateTime.Now;
+            DateTime windowEnd = latest;
+            DateTime windowStart = latest.AddSeconds(-ViewportDurationSeconds);
+            _windowStartTime = windowStart;
+            _windowEndTime = windowEnd;
+
+            if (_followRight || !_selectedTime.HasValue || forceLiveSelection)
+            {
+                _selectedTime = windowEnd;
+            }
+            else
+            {
+                _selectedTime = ClampSelectedTime(_selectedTime.Value, windowStart, windowEnd);
+            }
+
+            ReplaceRows(_linkAViewRows, TakeWindow(parsedA, windowStart, windowEnd, _rowLimit));
+            ReplaceRows(_linkBViewRows, TakeWindow(parsedB, windowStart, windowEnd, _rowLimit));
+
+            TimelineTape.WindowStart = windowStart;
+            TimelineTape.WindowEnd = windowEnd;
+            TimelineTape.SelectedTime = _selectedTime;
+            TimelineTape.SetBuffers(_laneABuffer, _laneBBuffer);
+
+            DrawRuler(windowStart, windowEnd);
+            NavigatorStartLabel.Text = windowStart.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            NavigatorEndLabel.Text = windowEnd.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            UpdateReadout();
+            SyncGridSelections();
+        }
+
+        private static List<RowWithTime> ParseRows(IEnumerable<LineMonitorRow> rows)
+        {
+            return rows
+                .Select(r => new RowWithTime(r, ParseTime(r.Time)))
+                .Where(r => r.Time.HasValue)
+                .OrderBy(r => r.Time.Value)
+                .ToList();
+        }
+
+        private static List<LineMonitorRow> GetSampleEvents(IEnumerable<RowWithTime> rows, DateTime start, DateTime end)
+        {
+            return rows
+                .Where(r => r.Time.Value >= start && r.Time.Value < end)
+                .Select(r => r.Row)
+                .ToList();
+        }
+
+        private void AppendSample(List<float> buffer, ref float prev, float raw)
+        {
+            float basePulse = 0.08f;
+            float value = Math.Max(raw, basePulse);
+            float smooth = (prev * 0.7f) + (value * 0.3f);
+            prev = smooth;
+
+            buffer.Add(smooth);
+            if (buffer.Count > MaxSamples)
+            {
+                buffer.RemoveAt(0);
+            }
+        }
+
+        private static float ComputeLaneIntensity(IList<LineMonitorRow> events)
+        {
+            if (events == null || events.Count == 0)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            bool isGi = false;
+            bool isLinkCheck = true;
+
+            foreach (LineMonitorRow ev in events)
+            {
+                string summary = ev.Summary ?? string.Empty;
+                string detail = ev.Detail ?? string.Empty;
+
+                if (summary.IndexOf("GI", StringComparison.OrdinalIgnoreCase) >= 0
+                    || detail.IndexOf("GI", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    _viewportStartTime = earliest;
+                    isGi = true;
+                }
+
+                bool fixedFrame = string.Equals(ev.FrameType, "Fixed", StringComparison.OrdinalIgnoreCase)
+                    || ((ev.FrameType ?? string.Empty).IndexOf("Fixed", StringComparison.OrdinalIgnoreCase) >= 0);
+                bool looksLikeLinkCheck = fixedFrame
+                    && (detail.IndexOf("Length=6", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("Length-6", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("link test", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("link test", StringComparison.OrdinalIgnoreCase) >= 0);
+
+                if (!looksLikeLinkCheck)
+                {
+                    isLinkCheck = false;
+                }
+
+                if (!IsLowPriorityTraffic(ev))
+                {
+                    count++;
                 }
             }
 
-            DateTime viewportStart = _viewportStartTime ?? earliest;
-            DateTime viewportEnd = viewportStart.AddSeconds(TimelineBucketCount * BucketSizeSeconds);
+            if (isGi || count > 20)
+            {
+                return 1.0f;
+            }
 
-            ReplaceRows(_linkAViewRows, TakeWindow(aRows, viewportStart, _rowLimit));
-            ReplaceRows(_linkBViewRows, TakeWindow(bRows, viewportStart, _rowLimit));
+            if (isLinkCheck)
+            {
+                return 0.15f;
+            }
 
-            List<TimelineEvent> linkAEvents = BuildTimelineEvents(aRows);
-            List<TimelineEvent> linkBEvents = BuildTimelineEvents(bRows);
-            DrawTimeline(linkAEvents, linkBEvents, viewportStart, viewportEnd);
-            UpdateViewportSlider(earliest, latest, viewportStart);
+            return (float)(1.0 - Math.Exp(-count * 0.5));
         }
 
-        private static void ReplaceRows(ObservableCollection<LineMonitorRow> target, List<LineMonitorRow> rows)
+        private static bool IsLowPriorityTraffic(LineMonitorRow row)
+        {
+            string summary = row.Summary ?? string.Empty;
+            string detail = row.Detail ?? string.Empty;
+            return summary.IndexOf("link test", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("link test", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("link-layer test function", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static void ReplaceRows(ObservableCollection<LineMonitorRow> target, IEnumerable<LineMonitorRow> rows)
         {
             target.Clear();
             foreach (LineMonitorRow row in rows)
@@ -112,139 +251,66 @@ namespace IEC101MasterTester.Views
             }
         }
 
-        private static List<LineMonitorRow> TakeWindow(List<LineMonitorRow> rows, DateTime viewportStart, int rowLimit)
-        {
-            List<RowWithTime> parsed = rows
-                .Select(r => new RowWithTime(r, ParseTime(r.Time)))
-                .Where(r => r.Time.HasValue)
-                .OrderBy(r => r.Time.Value)
-                .ToList();
-
-            if (parsed.Count == 0)
-            {
-                return rows.Take(rowLimit).ToList();
-            }
-
-            List<LineMonitorRow> window = parsed
-                .Where(r => r.Time.Value >= viewportStart)
-                .Select(r => r.Row)
-                .Take(rowLimit)
-                .ToList();
-
-            if (window.Count == 0)
-            {
-                window = parsed.OrderByDescending(r => r.Time.Value).Take(rowLimit).Select(r => r.Row).ToList();
-            }
-
-            return window;
-        }
-
-        private static List<TimelineEvent> BuildTimelineEvents(List<LineMonitorRow> rows)
+        private static IEnumerable<LineMonitorRow> TakeWindow(IEnumerable<RowWithTime> rows, DateTime start, DateTime end, int rowLimit)
         {
             return rows
-                .Select(r => new TimelineEvent(ParseTime(r.Time), string.Equals(r.Direction, "TX", StringComparison.OrdinalIgnoreCase), IsFixedFrame(r)))
-                .Where(r => r.Time.HasValue)
-                .Select(r => r)
+                .Where(r => r.Time.Value >= start && r.Time.Value <= end)
+                .OrderByDescending(r => r.Time.Value)
+                .Take(rowLimit)
+                .OrderBy(r => r.Time.Value)
+                .Select(r => r.Row)
                 .ToList();
         }
 
-        private void DrawTimeline(List<TimelineEvent> aRows, List<TimelineEvent> bRows, DateTime start, DateTime end)
+        private void DrawRuler(DateTime start, DateTime end)
         {
-            double width = TimelineCanvas.ActualWidth;
-            double height = TimelineCanvas.ActualHeight;
+            double width = TimelineRulerCanvas.ActualWidth;
+            double height = TimelineRulerCanvas.ActualHeight;
             if (width <= 0 || height <= 0)
             {
                 return;
             }
 
-            TimelineCanvas.Children.Clear();
-            double laneTop = 16;
-            double laneBottom = height - 10;
-            double laneHeight = Math.Max(18, (laneBottom - laneTop) / 2.0);
-            double aBaseY = laneTop + (laneHeight * 0.55);
-            double bBaseY = laneTop + laneHeight + (laneHeight * 0.55);
+            TimelineRulerCanvas.Children.Clear();
 
-            DrawLaneLabel("A", aBaseY - 9);
-            DrawLaneLabel("B", bBaseY - 9);
-
-            DrawBaseLine(aBaseY);
-            DrawBaseLine(bBaseY);
-
-            DrawTraceRows(aRows, start, end, width, aBaseY);
-            DrawTraceRows(bRows, start, end, width, bBaseY);
-
-            double cursorX = TimeToX(start, start, end, width);
-            TimelineCanvas.Children.Add(new Line
+            TimelineRulerCanvas.Children.Add(new Line
             {
-                X1 = cursorX,
-                X2 = cursorX,
-                Y1 = 2,
-                Y2 = height - 2,
-                Stroke = new SolidColorBrush(Color.FromRgb(255, 191, 0)),
-                StrokeThickness = 1.5
-            });
-        }
-
-        private void DrawLaneLabel(string text, double top)
-        {
-            TextBlock label = new TextBlock
-            {
-                Text = text,
-                Foreground = (Brush)FindResource("SecondaryTextBrush"),
-                FontSize = 10
-            };
-
-            Canvas.SetLeft(label, 8);
-            Canvas.SetTop(label, Math.Max(0, top));
-            TimelineCanvas.Children.Add(label);
-        }
-
-        private void DrawBaseLine(double y)
-        {
-            TimelineCanvas.Children.Add(new Line
-            {
-                X1 = 56,
-                X2 = Math.Max(56, TimelineCanvas.ActualWidth - 6),
-                Y1 = y,
-                Y2 = y,
-                Stroke = new SolidColorBrush(Color.FromArgb(90, 120, 140, 170)),
+                X1 = TimelineLeftMargin,
+                X2 = Math.Max(TimelineLeftMargin, width - TimelineRightMargin),
+                Y1 = height - 4,
+                Y2 = height - 4,
+                Stroke = new SolidColorBrush(Color.FromArgb(120, 76, 98, 122)),
                 StrokeThickness = 1
             });
-        }
 
-        private void DrawTraceRows(List<TimelineEvent> rows, DateTime start, DateTime end, double width, double baseY)
-        {
-            foreach (TimelineEvent row in rows)
+            int tickStep = (int)(5 / BucketSizeSeconds);
+            for (int i = 0; i <= TimelineBucketCount; i += tickStep)
             {
-                if (!row.Time.HasValue || row.Time.Value < start || row.Time.Value > end)
-                {
-                    continue;
-                }
+                DateTime tickTime = start.AddSeconds(i * BucketSizeSeconds);
+                double x = TimeToX(tickTime, start, end, width);
+                bool major = ((i / tickStep) % 2) == 0;
 
-                Brush stroke = row.IsTx
-                    ? new SolidColorBrush(row.IsFixed ? Color.FromArgb(150, 56, 189, 248) : Color.FromArgb(235, 56, 189, 248))
-                    : new SolidColorBrush(row.IsFixed ? Color.FromArgb(150, 34, 197, 94) : Color.FromArgb(235, 34, 197, 94));
-
-                double x = TimeToX(row.Time.Value, start, end, width);
-                double tipY = row.IsTx ? baseY - 11 : baseY + 11;
-
-                TimelineCanvas.Children.Add(new Line
+                TimelineRulerCanvas.Children.Add(new Line
                 {
                     X1 = x,
                     X2 = x,
-                    Y1 = baseY,
-                    Y2 = tipY,
-                    Stroke = stroke,
-                    StrokeThickness = row.IsFixed ? 1.2 : 1.8,
-                    SnapsToDevicePixels = true
+                    Y1 = major ? 2 : 8,
+                    Y2 = height - 4,
+                    Stroke = new SolidColorBrush(Color.FromArgb(major ? (byte)150 : (byte)90, 77, 98, 122)),
+                    StrokeThickness = 1
                 });
-            }
-        }
 
-        private static bool IsFixedFrame(LineMonitorRow row)
-        {
-            return string.Equals(row.FrameType, "Fixed", StringComparison.OrdinalIgnoreCase)
-                || (row.FrameType ?? string.Empty).IndexOf("Fixed", StringComparison.OrdinalIgnoreCase) >= 0;
+                TextBlock label = new TextBlock
+                {
+                    Text = tickTime.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
+                    Foreground = (Brush)FindResource("MutedTextBrush"),
+                    FontSize = 10,
+                    FontFamily = new FontFamily("Consolas")
+                };
+                Canvas.SetLeft(label, Math.Max(TimelineLeftMargin, x - 28));
+                Canvas.SetTop(label, 0);
+                TimelineRulerCanvas.Children.Add(label);
+            }
         }
 
         private static double TimeToX(DateTime time, DateTime start, DateTime end, double width)
@@ -252,27 +318,12 @@ namespace IEC101MasterTester.Views
             double seconds = Math.Max(1, (end - start).TotalSeconds);
             double ratio = (time - start).TotalSeconds / seconds;
             ratio = Math.Max(0, Math.Min(1, ratio));
-            return 56 + ((width - 64) * ratio);
+            return TimelineLeftMargin + (Math.Max(1, width - TimelineLeftMargin - TimelineRightMargin) * ratio);
         }
 
-        private static DateTime? MaxTimestamp(List<LineMonitorRow> aRows, List<LineMonitorRow> bRows)
+        private static DateTime? MaxTimestamp(List<RowWithTime> aRows, List<RowWithTime> bRows)
         {
-            return aRows.Concat(bRows)
-                .Select(r => ParseTime(r.Time))
-                .Where(t => t.HasValue)
-                .Select(t => t.Value)
-                .OrderByDescending(t => t)
-                .FirstOrDefault();
-        }
-
-        private static DateTime? MinTimestamp(List<LineMonitorRow> aRows, List<LineMonitorRow> bRows)
-        {
-            return aRows.Concat(bRows)
-                .Select(r => ParseTime(r.Time))
-                .Where(t => t.HasValue)
-                .Select(t => t.Value)
-                .OrderBy(t => t)
-                .FirstOrDefault();
+            return aRows.Concat(bRows).Select(t => t.Time.Value).DefaultIfEmpty().Max();
         }
 
         private static DateTime? ParseTime(string value)
@@ -311,18 +362,16 @@ namespace IEC101MasterTester.Views
             _isPaused = PauseViewButton.IsChecked == true;
             if (_isPaused)
             {
-                _autoScroll = false;
-                AutoScrollButton.IsChecked = false;
+                SetFollowRight(false);
             }
         }
 
         private void LiveButton_Click(object sender, RoutedEventArgs e)
         {
             _isPaused = false;
-            _autoScroll = true;
             PauseViewButton.IsChecked = false;
-            AutoScrollButton.IsChecked = true;
-            _viewportStartTime = null;
+            SetFollowRight(true);
+            SampleTape();
             RefreshViewport(true);
         }
 
@@ -330,7 +379,20 @@ namespace IEC101MasterTester.Views
         {
             _linkAViewRows.Clear();
             _linkBViewRows.Clear();
-            TimelineCanvas.Children.Clear();
+            _laneABuffer.Clear();
+            _laneBBuffer.Clear();
+            _laneAPrev = 0.08f;
+            _laneBPrev = 0.08f;
+            _lastSampleTime = null;
+            _selectedTime = null;
+            _windowStartTime = null;
+            _windowEndTime = null;
+            TimelineRulerCanvas.Children.Clear();
+            TimelineTape.SetBuffers(null, null);
+            TimelineTape.SelectedTime = null;
+            NavigatorStartLabel.Text = "--:--:--.---";
+            NavigatorEndLabel.Text = "--:--:--.---";
+            SelectedTimeTextBlock.Text = "--:--:--.---";
         }
 
         private void ExportCsvButton_Click(object sender, RoutedEventArgs e)
@@ -358,13 +420,7 @@ namespace IEC101MasterTester.Views
         {
             foreach (LineMonitorRow row in rows)
             {
-                writer.WriteLine(string.Join(",",
-                    Csv(link),
-                    Csv(row.Time),
-                    Csv(row.Direction),
-                    Csv(row.FrameType),
-                    Csv(row.Summary),
-                    Csv(row.Detail)));
+                writer.WriteLine(string.Join(",", Csv(link), Csv(row.Time), Csv(row.Direction), Csv(row.FrameType), Csv(row.Summary), Csv(row.Detail)));
             }
         }
 
@@ -381,14 +437,14 @@ namespace IEC101MasterTester.Views
 
         private void AutoScrollButton_Click(object sender, RoutedEventArgs e)
         {
-            _autoScroll = AutoScrollButton.IsChecked == true;
-            if (_autoScroll)
+            SetFollowRight(AutoScrollButton.IsChecked == true);
+            if (_followRight)
             {
                 _isPaused = false;
                 PauseViewButton.IsChecked = false;
-                _viewportStartTime = null;
-                RefreshViewport(true);
             }
+
+            RefreshViewport(true);
         }
 
         private void RowLimitComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -397,132 +453,97 @@ namespace IEC101MasterTester.Views
             RefreshViewport(true);
         }
 
-        private void TimelineCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void NucLinkTraceWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            _isDraggingTimeline = true;
-            TimelineCanvas.CaptureMouse();
-            ScrubToPoint(e.GetPosition(TimelineCanvas).X);
+            RefreshViewport(false);
         }
 
-        private void TimelineCanvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void TimelineTape_SelectedTimeChanged(object sender, DateTime selectedTime)
         {
-            _isDraggingTimeline = false;
-            TimelineCanvas.ReleaseMouseCapture();
-        }
-
-        private void TimelineCanvas_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_isDraggingTimeline && e.LeftButton == MouseButtonState.Pressed)
-            {
-                ScrubToPoint(e.GetPosition(TimelineCanvas).X);
-            }
-        }
-
-        private void TimelineCanvas_MouseLeave(object sender, MouseEventArgs e)
-        {
-            if (_isDraggingTimeline && e.LeftButton != MouseButtonState.Pressed)
-            {
-                _isDraggingTimeline = false;
-                TimelineCanvas.ReleaseMouseCapture();
-            }
-        }
-
-        private void ScrubToPoint(double x)
-        {
-            if (!_captureEndTime.HasValue)
+            if (!_windowStartTime.HasValue || !_windowEndTime.HasValue)
             {
                 return;
             }
 
-            DateTime start = _captureEndTime.Value.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
-            if (_viewportStartTime.HasValue)
-            {
-                start = _viewportStartTime.Value;
-            }
-
-            double width = Math.Max(1, TimelineCanvas.ActualWidth - 64);
-            double ratio = Math.Max(0, Math.Min(1, (x - 56) / width));
-            DateTime newViewportStart = start.AddSeconds((TimelineBucketCount * BucketSizeSeconds) * ratio);
-            ClampAndSetViewportStart(newViewportStart);
-            _autoScroll = false;
+            SetFollowRight(false);
             _isPaused = true;
             PauseViewButton.IsChecked = true;
-            AutoScrollButton.IsChecked = false;
-            RefreshViewport(true);
+            _selectedTime = ClampSelectedTime(selectedTime, _windowStartTime.Value, _windowEndTime.Value);
+            RefreshViewport(false);
         }
 
-        private void UpdateViewportSlider(DateTime earliest, DateTime latest, DateTime viewportStart)
+        private void SyncGridSelections()
         {
-            double totalSeconds = Math.Max(0, (latest - earliest).TotalSeconds);
-            double viewportSeconds = TimelineBucketCount * BucketSizeSeconds;
+            if (!_selectedTime.HasValue || _suppressGridSelectionSync)
+            {
+                return;
+            }
 
-            _isUpdatingSlider = true;
+            _suppressGridSelectionSync = true;
             try
             {
-                if (totalSeconds > viewportSeconds)
-                {
-                    TimelineViewportSlider.Visibility = Visibility.Visible;
-                    TimelineViewportSlider.Maximum = Math.Max(0, totalSeconds - viewportSeconds);
-                    TimelineViewportSlider.Value = Math.Max(0, (viewportStart - earliest).TotalSeconds);
-                }
-                else
-                {
-                    TimelineViewportSlider.Visibility = Visibility.Collapsed;
-                    TimelineViewportSlider.Value = 0;
-                }
+                SelectNearestRow(LinkAGrid, _linkAViewRows);
+                SelectNearestRow(LinkBGrid, _linkBViewRows);
             }
             finally
             {
-                _isUpdatingSlider = false;
+                _suppressGridSelectionSync = false;
             }
         }
 
-        private void ClampAndSetViewportStart(DateTime viewportStart)
+        private void SelectNearestRow(DataGrid grid, ObservableCollection<LineMonitorRow> visibleRows)
         {
-            if (!_captureStartTime.HasValue || !_captureEndTime.HasValue)
+            if (!_selectedTime.HasValue || visibleRows.Count == 0)
             {
-                _viewportStartTime = viewportStart;
+                grid.SelectedItem = null;
                 return;
             }
 
-            DateTime minStart = _captureStartTime.Value;
-            DateTime maxStart = _captureEndTime.Value.AddSeconds(-(TimelineBucketCount * BucketSizeSeconds));
-            if (maxStart < minStart)
-            {
-                maxStart = minStart;
-            }
+            RowWithTime nearest = visibleRows
+                .Select(r => new RowWithTime(r, ParseTime(r.Time)))
+                .Where(r => r.Time.HasValue)
+                .OrderBy(r => Math.Abs((r.Time.Value - _selectedTime.Value).TotalMilliseconds))
+                .FirstOrDefault();
 
-            if (viewportStart < minStart)
+            if (nearest == null)
             {
-                viewportStart = minStart;
-            }
-
-            if (viewportStart > maxStart)
-            {
-                viewportStart = maxStart;
-            }
-
-            _viewportStartTime = viewportStart;
-        }
-
-        private void TimelineViewportSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isUpdatingSlider || !_captureStartTime.HasValue)
-            {
+                grid.SelectedItem = null;
                 return;
             }
 
-            ClampAndSetViewportStart(_captureStartTime.Value.AddSeconds(e.NewValue));
-            _autoScroll = false;
-            _isPaused = true;
-            PauseViewButton.IsChecked = true;
-            AutoScrollButton.IsChecked = false;
-            RefreshViewport(true);
+            if (!ReferenceEquals(grid.SelectedItem, nearest.Row))
+            {
+                grid.SelectedItem = nearest.Row;
+                grid.ScrollIntoView(nearest.Row);
+            }
         }
 
-        private void NucLinkTraceWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void UpdateReadout()
         {
-            RefreshViewport(true);
+            SelectedTimeTextBlock.Text = _selectedTime.HasValue
+                ? _selectedTime.Value.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)
+                : "--:--:--.---";
+        }
+
+        private void SetFollowRight(bool enabled)
+        {
+            _followRight = enabled;
+            AutoScrollButton.IsChecked = enabled;
+        }
+
+        private static DateTime ClampSelectedTime(DateTime selected, DateTime windowStart, DateTime windowEnd)
+        {
+            if (selected < windowStart)
+            {
+                return windowStart;
+            }
+
+            if (selected > windowEnd)
+            {
+                return windowEnd;
+            }
+
+            return selected;
         }
 
         private sealed class RowWithTime
@@ -533,22 +554,8 @@ namespace IEC101MasterTester.Views
                 Time = time;
             }
 
-            public LineMonitorRow Row { get; }
-            public DateTime? Time { get; }
-        }
-
-        private sealed class TimelineEvent
-        {
-            public TimelineEvent(DateTime? time, bool isTx, bool isFixed)
-            {
-                Time = time;
-                IsTx = isTx;
-                IsFixed = isFixed;
-            }
-
-            public DateTime? Time { get; }
-            public bool IsTx { get; }
-            public bool IsFixed { get; }
+            public LineMonitorRow Row { get; private set; }
+            public DateTime? Time { get; private set; }
         }
     }
 }

@@ -161,6 +161,7 @@
     <Compile Include="Models\AvailabilityTimelineRow.cs" />
     <Compile Include="Models\BufferReplaySession.cs" />
     <Compile Include="Models\CommandLifeMonitorRow.cs" />
+    <Compile Include="Controls\NucLinkTraceTapeControl.cs" />
     <Compile Include="Models\EventLogRow.cs" />
     <Compile Include="Models\Export\EventLogExportMetadata.cs" />
     <Compile Include="Models\Export\EventLogExportRequest.cs" />
