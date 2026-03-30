@@ -42,6 +42,8 @@ namespace IEC101MasterTester.Views
         private bool _isInspectFrozen;
         private DateTime? _inspectWindowStartTime;
         private DateTime? _inspectWindowEndTime;
+        private DateTime? _inspectBucketStartTime;
+        private DateTime? _selectedAnchorTime;
 
         public NucLinkTraceWindow()
         {
@@ -137,6 +139,7 @@ namespace IEC101MasterTester.Views
             if (_followRight || !_selectedTime.HasValue || forceLiveSelection)
             {
                 _selectedTime = windowEnd;
+                _selectedAnchorTime = null;
             }
             else
             {
@@ -145,8 +148,10 @@ namespace IEC101MasterTester.Views
 
             if (_isInspectFrozen && _selectedTime.HasValue)
             {
-                ReplaceRows(_linkAViewRows, TakeInspectRows(parsedA, windowStart, _selectedTime.Value, _rowLimit));
-                ReplaceRows(_linkBViewRows, TakeInspectRows(parsedB, windowStart, _selectedTime.Value, _rowLimit));
+                DateTime anchorTime = _selectedAnchorTime ?? _selectedTime.Value;
+                DateTime bucketStart = _inspectBucketStartTime ?? GetBucketStart(windowStart, anchorTime);
+                ReplaceRows(_linkAViewRows, TakeInspectRows(parsedA, bucketStart, anchorTime, _rowLimit));
+                ReplaceRows(_linkBViewRows, TakeInspectRows(parsedB, bucketStart, anchorTime, _rowLimit));
             }
             else
             {
@@ -282,9 +287,8 @@ namespace IEC101MasterTester.Views
                 .ToList();
         }
 
-        private static IEnumerable<LineMonitorRow> TakeInspectRows(IEnumerable<RowWithTime> rows, DateTime windowStart, DateTime selectedTime, int rowLimit)
+        private static IEnumerable<LineMonitorRow> TakeInspectRows(IEnumerable<RowWithTime> rows, DateTime bucketStart, DateTime anchorTime, int rowLimit)
         {
-            DateTime bucketStart = GetBucketStart(windowStart, selectedTime);
             DateTime bucketEnd = bucketStart.AddSeconds(BucketSizeSeconds);
 
             List<RowWithTime> bucketRows = rows
@@ -298,7 +302,7 @@ namespace IEC101MasterTester.Views
                 DateTime expandedEnd = bucketEnd.AddSeconds(BucketSizeSeconds);
                 bucketRows = rows
                     .Where(r => r.Time.Value >= expandedStart && r.Time.Value < expandedEnd)
-                    .OrderBy(r => Math.Abs((r.Time.Value - selectedTime).TotalMilliseconds))
+                    .OrderBy(r => Math.Abs((r.Time.Value - anchorTime).TotalMilliseconds))
                     .Take(rowLimit)
                     .OrderBy(r => r.Time.Value)
                     .ToList();
@@ -516,13 +520,28 @@ namespace IEC101MasterTester.Views
                 return;
             }
 
+            MainViewModel vm = ViewModel;
+            if (vm == null)
+            {
+                return;
+            }
+
             SetFollowRight(false);
             _isPaused = true;
             PauseViewButton.IsChecked = true;
             _isInspectFrozen = true;
             _inspectWindowStartTime = _windowStartTime;
             _inspectWindowEndTime = _windowEndTime;
-            _selectedTime = ClampSelectedTime(selectedTime, _windowStartTime.Value, _windowEndTime.Value);
+            DateTime frozenSelected = ClampSelectedTime(selectedTime, _windowStartTime.Value, _windowEndTime.Value);
+            DateTime bucketStart = GetBucketStart(_windowStartTime.Value, frozenSelected);
+
+            List<RowWithTime> parsedA = ParseRows(vm.NucTraceLinkA);
+            List<RowWithTime> parsedB = ParseRows(vm.NucTraceLinkB);
+            DateTime anchorTime = ResolveAnchorTime(parsedA, parsedB, bucketStart, frozenSelected);
+
+            _inspectBucketStartTime = bucketStart;
+            _selectedAnchorTime = anchorTime;
+            _selectedTime = anchorTime;
             RefreshViewport(false);
         }
 
@@ -616,6 +635,40 @@ namespace IEC101MasterTester.Views
             _isInspectFrozen = false;
             _inspectWindowStartTime = null;
             _inspectWindowEndTime = null;
+            _inspectBucketStartTime = null;
+            _selectedAnchorTime = null;
+        }
+
+        private static DateTime ResolveAnchorTime(IEnumerable<RowWithTime> parsedA, IEnumerable<RowWithTime> parsedB, DateTime bucketStart, DateTime selectedTime)
+        {
+            DateTime bucketEnd = bucketStart.AddSeconds(BucketSizeSeconds);
+            DateTime bucketCenter = bucketStart.AddSeconds(BucketSizeSeconds / 2.0);
+
+            List<RowWithTime> bucketEvents = parsedA
+                .Concat(parsedB)
+                .Where(r => r.Time.Value >= bucketStart && r.Time.Value < bucketEnd)
+                .OrderBy(r => Math.Abs((r.Time.Value - bucketCenter).TotalMilliseconds))
+                .ThenBy(r => r.Time.Value)
+                .ToList();
+
+            if (bucketEvents.Count > 0)
+            {
+                return bucketEvents[0].Time.Value;
+            }
+
+            List<RowWithTime> nearbyEvents = parsedA
+                .Concat(parsedB)
+                .Where(r => r.Time.Value >= bucketStart.AddSeconds(-BucketSizeSeconds) && r.Time.Value < bucketEnd.AddSeconds(BucketSizeSeconds))
+                .OrderBy(r => Math.Abs((r.Time.Value - bucketCenter).TotalMilliseconds))
+                .ThenBy(r => r.Time.Value)
+                .ToList();
+
+            if (nearbyEvents.Count > 0)
+            {
+                return nearbyEvents[0].Time.Value;
+            }
+
+            return selectedTime;
         }
 
         private sealed class RowWithTime
