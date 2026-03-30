@@ -19,6 +19,7 @@ namespace IEC101MasterTester.Controls
         private static readonly Brush LabelBrush = CreateBrush(142, 163, 188);
         private static readonly Brush LinkABrush = CreateBrush(90, 162, 255, 230);
         private static readonly Brush LinkBBrush = CreateBrush(50, 193, 108, 230);
+        private static readonly Brush GiHighlightBrush = CreateBrush(243, 182, 51, 70);
         private static readonly Brush MarkerBandBrush = CreateBrush(243, 182, 51, 45);
         private static readonly Brush MarkerLineBrush = CreateBrush(243, 182, 51);
         private static readonly Brush BadgeFillBrush = CreateBrush(30, 42, 58);
@@ -136,10 +137,13 @@ namespace IEC101MasterTester.Controls
             using (StreamGeometryContext fill = fillGeometry.Open())
             {
                 bool started = false;
+                bool giOpen = false;
+                double giStartX = 0;
                 for (int i = 0; i < buffer.Count; i++)
                 {
                     double x = LeftMargin + (i * dx);
                     double y = GetLaneY(buffer[i], laneCenter, highY, lowY);
+                    bool isGiBurst = buffer[i] > 0.95f;
 
                     if (!started)
                     {
@@ -153,12 +157,27 @@ namespace IEC101MasterTester.Controls
                         line.LineTo(new Point(x, y), true, false);
                         fill.LineTo(new Point(x, y), true, false);
                     }
+
+                    if (isGiBurst && !giOpen)
+                    {
+                        giOpen = true;
+                        giStartX = x;
+                    }
+                    else if (!isGiBurst && giOpen)
+                    {
+                        dc.DrawRectangle(GiHighlightBrush, null, new Rect(giStartX, laneTop + 2, Math.Max(2, x - giStartX), laneHeight - 4));
+                        giOpen = false;
+                    }
                 }
 
                 if (started)
                 {
                     double endX = LeftMargin + ((buffer.Count - 1) * dx);
                     fill.LineTo(new Point(endX, laneCenter), true, false);
+                    if (giOpen)
+                    {
+                        dc.DrawRectangle(GiHighlightBrush, null, new Rect(giStartX, laneTop + 2, Math.Max(2, endX - giStartX), laneHeight - 4));
+                    }
                 }
             }
 
@@ -174,8 +193,11 @@ namespace IEC101MasterTester.Controls
             average /= buffer.Count;
             average = Math.Max(0.08, Math.Min(1.0, average));
 
-            Brush fillBrush = CreateAlphaBrush(laneBrush, (byte)(20 + (average * 55)));
-            Pen wavePen = new Pen(CreateAlphaBrush(laneBrush, (byte)(80 + (average * 175))), 1.2 + (average * 2.2));
+            bool strongGi = average > 0.95;
+            Brush fillBrush = strongGi ? CreateBrush(243, 182, 51, 55) : CreateAlphaBrush(laneBrush, (byte)(20 + (average * 55)));
+            Pen wavePen = new Pen(
+                strongGi ? CreateBrush(243, 182, 51, 235) : CreateAlphaBrush(laneBrush, (byte)(80 + (average * 175))),
+                strongGi ? 4.2 : 1.2 + (average * 2.2));
             if (wavePen.CanFreeze)
             {
                 wavePen.Freeze();

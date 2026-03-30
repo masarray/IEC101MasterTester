@@ -102,8 +102,11 @@ namespace IEC101MasterTester.Views
                 return;
             }
 
-            AppendSample(_laneABuffer, ref _laneAPrev, ComputeLaneIntensity(GetSampleEvents(parsedA, sampleStart, sampleEnd)));
-            AppendSample(_laneBBuffer, ref _laneBPrev, ComputeLaneIntensity(GetSampleEvents(parsedB, sampleStart, sampleEnd)));
+            bool isLinkAActive = (vm.RedundancyActiveLinkText ?? string.Empty).IndexOf("Main", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isLinkBActive = (vm.RedundancyActiveLinkText ?? string.Empty).IndexOf("Backup", StringComparison.OrdinalIgnoreCase) >= 0;
+
+            AppendSample(_laneABuffer, ref _laneAPrev, ComputeLaneIntensity(GetSampleEvents(parsedA, sampleStart, sampleEnd), !isLinkAActive));
+            AppendSample(_laneBBuffer, ref _laneBPrev, ComputeLaneIntensity(GetSampleEvents(parsedB, sampleStart, sampleEnd), !isLinkBActive));
             _lastSampleTime = sampleEnd;
         }
 
@@ -169,7 +172,7 @@ namespace IEC101MasterTester.Views
         {
             float basePulse = 0.08f;
             float value = Math.Max(raw, basePulse);
-            float smooth = (prev * 0.7f) + (value * 0.3f);
+            float smooth = (prev * 0.3f) + (value * 0.7f);
             prev = smooth;
 
             buffer.Add(smooth);
@@ -179,7 +182,7 @@ namespace IEC101MasterTester.Views
             }
         }
 
-        private static float ComputeLaneIntensity(IList<LineMonitorRow> events)
+        private static float ComputeLaneIntensity(IList<LineMonitorRow> events, bool isStandby)
         {
             if (events == null || events.Count == 0)
             {
@@ -222,15 +225,17 @@ namespace IEC101MasterTester.Views
 
             if (isGi || count > 20)
             {
-                return 1.0f;
+                return isStandby ? 0.92f : 1.0f;
             }
 
             if (isLinkCheck)
             {
-                return 0.15f;
+                return 0.12f + ((DateTime.UtcNow.Millisecond % 400 < 200) ? 0.05f : 0f);
             }
 
-            return (float)(1.0 - Math.Exp(-count * 0.5));
+            float raw = (float)(1.0 - Math.Exp(-count * 0.5));
+            raw *= isStandby ? 0.4f : 1.2f;
+            return Math.Max(0, Math.Min(1.0f, raw));
         }
 
         private static bool IsLowPriorityTraffic(LineMonitorRow row)
