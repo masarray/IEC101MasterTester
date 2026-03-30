@@ -308,6 +308,16 @@
                         </StackPanel>
                     </Button>
                     <Button Width="90"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource ActionButtonStyle}"
+                            Click="OpenLinkTrace_Click"
+                            ToolTip="Open Link Trace">
+                        <StackPanel Orientation="Vertical">
+                            <Path Width="20" Height="20" Stretch="Uniform" Stroke="#CFE5FF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M3 16 H7 L9 9 L12 14 L15 6 L18 12 H21 M4 4 H20 V20 H4 Z"/>
+                            <TextBlock Margin="0,4,0,0" Text="Link Trace" FontSize="10.5" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Width="90"
                             Style="{StaticResource ActionButtonStyle}"
                             Click="OpenSoeAudit_Click"
                             ToolTip="Open SOE Audit">
@@ -1029,18 +1039,6 @@
                         <StackPanel DockPanel.Dock="Right"
                                     Orientation="Horizontal"
                                     HorizontalAlignment="Right">
-                            <Button x:Name="OpenLinkTraceButton"
-                                    Width="108"
-                                    Margin="0,0,8,0"
-                                    Style="{StaticResource ActionButtonStyle}"
-                                    Click="OpenLinkTrace_Click"
-                                    ToolTip="Open Link Trace">
-                                <TextBlock Text="Link Trace"
-                                           FontSize="10.5"
-                                           FontWeight="SemiBold"
-                                           Foreground="#E2E8F0"
-                                           HorizontalAlignment="Center" />
-                            </Button>
                             <Button x:Name="LineMonitorDockToggleButton"
                                     Style="{StaticResource LineMonitorToggleButtonStyle}"
                                     Click="ToggleLineMonitorPane_Click"

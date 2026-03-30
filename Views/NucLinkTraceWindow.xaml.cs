@@ -127,6 +127,16 @@ namespace IEC101MasterTester.Views
             List<RowWithTime> parsedB = ParseRows(vm.NucTraceLinkB);
 
             DateTime latest = MaxTimestamp(parsedA, parsedB) ?? DateTime.Now;
+            if (latest < DateTime.MinValue.AddSeconds(ViewportDurationSeconds))
+            {
+                latest = DateTime.MinValue.AddSeconds(ViewportDurationSeconds);
+            }
+
+            if (latest > DateTime.MaxValue)
+            {
+                latest = DateTime.Now;
+            }
+
             DateTime windowEnd = _isInspectFrozen && _inspectWindowEndTime.HasValue
                 ? _inspectWindowEndTime.Value
                 : latest;
@@ -375,7 +385,18 @@ namespace IEC101MasterTester.Views
 
         private static DateTime? MaxTimestamp(List<RowWithTime> aRows, List<RowWithTime> bRows)
         {
-            return aRows.Concat(bRows).Select(t => t.Time.Value).DefaultIfEmpty().Max();
+            List<DateTime> values = aRows
+                .Concat(bRows)
+                .Where(t => t.Time.HasValue)
+                .Select(t => t.Time.Value)
+                .ToList();
+
+            if (values.Count == 0)
+            {
+                return null;
+            }
+
+            return values.Max();
         }
 
         private static DateTime? ParseTime(string value)
