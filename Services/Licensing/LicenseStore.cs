@@ -64,29 +64,6 @@ namespace IEC101MasterTester.Services.Licensing
                 return "License payload signature mismatch detected.";
             }
 
-            bool hasMissingStore = accessible.Count > 0 && valid.Count != accessible.Count;
-            if (hasMissingStore)
-            {
-                return "One or more license stores are missing.";
-            }
-
-            string installId = valid[0].Payload.InstallId;
-            if (valid.Any(r => !string.Equals(r.Payload.InstallId, installId, StringComparison.Ordinal)))
-            {
-                return "License install identity mismatch detected.";
-            }
-
-            if (valid.Any(r => !string.Equals(r.Payload.HardwareId, hardwareId, StringComparison.Ordinal)))
-            {
-                return "License hardware identity mismatch detected.";
-            }
-
-            string canonicalSignature = valid[0].Payload.Signature ?? string.Empty;
-            if (valid.Any(r => !string.Equals(r.Payload.Signature ?? string.Empty, canonicalSignature, StringComparison.Ordinal)))
-            {
-                return "License store copies are inconsistent.";
-            }
-
             return null;
         }
 

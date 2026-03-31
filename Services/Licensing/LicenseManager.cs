@@ -51,6 +51,16 @@ namespace IEC101MasterTester.Services.Licensing
                 payload = CreateInitialPayload(hardwareId, nowUtc);
             }
 
+            if (string.IsNullOrWhiteSpace(tamperReason) && CanRecoverLegacyPermanentLock(payload))
+            {
+                payload.TamperFlag = false;
+                payload.TamperReason = null;
+                if (payload.LicenseState == LicenseState.PermanentDemoLocked)
+                {
+                    payload.LicenseState = LicenseState.Trial;
+                }
+            }
+
             if (!string.IsNullOrWhiteSpace(tamperReason))
             {
                 payload.TamperFlag = true;
@@ -127,6 +137,23 @@ namespace IEC101MasterTester.Services.Licensing
                 TamperFlag = false,
                 TamperReason = null
             };
+        }
+
+        private static bool CanRecoverLegacyPermanentLock(PersistedLicensePayload payload)
+        {
+            if (payload == null
+                || !payload.TamperFlag
+                || payload.LicenseState != LicenseState.PermanentDemoLocked
+                || string.IsNullOrWhiteSpace(payload.TamperReason))
+            {
+                return false;
+            }
+
+            string reason = payload.TamperReason.Trim();
+            return reason.IndexOf("One or more license stores are missing.", StringComparison.OrdinalIgnoreCase) >= 0
+                || reason.IndexOf("License install identity mismatch detected.", StringComparison.OrdinalIgnoreCase) >= 0
+                || reason.IndexOf("License hardware identity mismatch detected.", StringComparison.OrdinalIgnoreCase) >= 0
+                || reason.IndexOf("License store copies are inconsistent.", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private PersistedLicensePayload CreateOrCloneCurrentPayload()

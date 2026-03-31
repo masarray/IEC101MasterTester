@@ -3,14 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:shapes="clr-namespace:System.Windows.Shapes;assembly=PresentationFramework"
         mc:Ignorable="d"
         Title="License Status"
         Height="704"
         Width="1169"
         MinWidth="900"
         MinHeight="560"
+        WindowStyle="None"
+        AllowsTransparency="False"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
+        ShowInTaskbar="False"
         Background="#0F172A">
 
     <Window.Resources>
@@ -202,6 +206,9 @@
             <RowDefinition Height="74"/>
         </Grid.RowDefinitions>
 
+        <Border Background="#C0000000"
+                IsHitTestVisible="False" />
+
         <!-- Header -->
         <Border Grid.Row="0"
                 Background="#111827"
@@ -236,11 +243,13 @@
                 <StackPanel Grid.Column="1"
                             VerticalAlignment="Center"
                             Margin="14,0,24,0">
-                    <TextBlock Text="Evaluation Mode"
+                    <TextBlock x:Name="HeaderTitleTextBlock"
+                               Text="Evaluation Mode"
                                Foreground="{StaticResource TextMain}"
                                FontSize="26"
                                FontWeight="Bold"/>
-                    <TextBlock Text="This application is running under evaluation restrictions. Activate the license to unlock uninterrupted engineering workflow."
+                    <TextBlock x:Name="HeaderDetailTextBlock"
+                               Text="This application is running under evaluation restrictions. Activate the license to unlock uninterrupted engineering workflow."
                                Foreground="{StaticResource TextMuted}"
                                FontSize="12.8"
                                TextWrapping="Wrap"/>
@@ -255,11 +264,13 @@
                         CornerRadius="12"
                         Padding="14,10">
                     <StackPanel>
-                        <TextBlock Text="Trial day 12 / 30"
+                        <TextBlock x:Name="HeaderTrialTextBlock"
+                                   Text="Trial day 12 / 30"
                                    Foreground="{StaticResource TextMain}"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Right"/>
-                        <TextBlock Text="State: Evaluation Mode"
+                        <TextBlock x:Name="HeaderStateTextBlock"
+                                   Text="State: Evaluation Mode"
                                    Foreground="{StaticResource TextMuted}"
                                    FontSize="12"
                                    HorizontalAlignment="Right"/>
@@ -286,7 +297,8 @@
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel>
                             <TextBlock Text="Current Status" Style="{StaticResource SectionTitleStyle}"/>
-                            <TextBlock Style="{StaticResource BodyTextStyle}">
+                            <TextBlock x:Name="CurrentStatusTextBlock"
+                                       Style="{StaticResource BodyTextStyle}">
 This software is currently running in evaluation mode. Core protocol visibility remains available for review and testing, while selected advanced capabilities remain restricted until activation.
                             </TextBlock>
 
@@ -301,7 +313,8 @@ This software is currently running in evaluation mode. Core protocol visibility 
                                                Foreground="#FCD34D"
                                                FontWeight="SemiBold"
                                                Margin="0,0,0,6"/>
-                                    <TextBlock Style="{StaticResource BodyTextStyle}"
+                                    <TextBlock x:Name="StatusSummaryTextBlock"
+                                               Style="{StaticResource BodyTextStyle}"
                                                Text="Continue in Demo will become available after the short countdown. You may also activate immediately using a valid serial key."/>
                                 </StackPanel>
                             </Border>
@@ -343,7 +356,8 @@ This software is currently running in evaluation mode. Core protocol visibility 
                             <TextBlock Text="Hardware ID" Style="{StaticResource LabelStyle}"/>
                             <Border Style="{StaticResource ReadOnlyValueBorderStyle}">
                                 <DockPanel>
-                                    <TextBlock Text="HWID-3A92-7C4F-91D8-8F21"
+                                    <TextBlock x:Name="HardwareIdTextBlock"
+                                               Text="HWID-3A92-7C4F-91D8-8F21"
                                                Foreground="{StaticResource TextMain}"
                                                FontFamily="Consolas"
                                                FontSize="13.2"
@@ -355,13 +369,17 @@ This software is currently running in evaluation mode. Core protocol visibility 
                                             HorizontalAlignment="Right"
                                             DockPanel.Dock="Right"
                                             Margin="12,0,0,0"
+                                            Click="CopyHardwareIdButton_Click"
                                             Style="{StaticResource CompactInlineButtonStyle}"/>
                                 </DockPanel>
                             </Border>
 
                             <TextBlock Text="Serial Key" Style="{StaticResource LabelStyle}" Margin="0,16,0,0"/>
-                            <TextBox Style="{StaticResource TextInputStyle}"
+                            <TextBox x:Name="SerialKeyTextBox"
+                                     Style="{StaticResource TextInputStyle}"
                                      Text="Enter serial key here..."
+                                     GotFocus="SerialKeyTextBox_GotFocus"
+                                     LostFocus="SerialKeyTextBox_LostFocus"
                                      Foreground="{StaticResource TextMuted}"/>
 
                             <TextBlock Text="Contact" Style="{StaticResource LabelStyle}" Margin="0,16,0,0"/>
@@ -402,22 +420,22 @@ This software is currently running in evaluation mode. Core protocol visibility 
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="State" Style="{StaticResource LabelStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="Evaluation Mode" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="LicenseStateValueTextBlock" Grid.Row="0" Grid.Column="1" Text="Evaluation Mode" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Machine" Style="{StaticResource LabelStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="Local Device" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="MachineValueTextBlock" Grid.Row="1" Grid.Column="1" Text="Local Device" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
 
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Trial Start" Style="{StaticResource LabelStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="2026-03-01" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="TrialStartValueTextBlock" Grid.Row="2" Grid.Column="1" Text="2026-03-01" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Days Left" Style="{StaticResource LabelStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="18 days remaining" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="DaysLeftValueTextBlock" Grid.Row="3" Grid.Column="1" Text="18 days remaining" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
 
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Tamper" Style="{StaticResource LabelStyle}" Margin="0,0,0,10"/>
-                                <TextBlock Grid.Row="4" Grid.Column="1" Text="No integrity issue detected" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="TamperValueTextBlock" Grid.Row="4" Grid.Column="1" Text="No integrity issue detected" Style="{StaticResource ValueStyle}" Margin="0,0,0,10"/>
 
                                 <TextBlock Grid.Row="5" Grid.Column="0" Text="HWID" Style="{StaticResource LabelStyle}"/>
-                                <TextBlock Grid.Row="5" Grid.Column="1"
+                                <TextBlock x:Name="SummaryHardwareIdTextBlock" Grid.Row="5" Grid.Column="1"
                                            Text="HWID-3A92-7C4F-91D8-8F21"
                                            Foreground="{StaticResource TextMain}"
                                            FontFamily="Consolas"
@@ -452,20 +470,15 @@ This software is currently running in evaluation mode. Core protocol visibility 
                                 </Viewbox>
                             </Border>
 
-                            <TextBlock Text="Continue in Demo"
+                            <TextBlock x:Name="ContinueTitleTextBlock"
+                                       Text="Continue in Demo"
                                        Foreground="{StaticResource TextMain}"
                                        FontSize="19"
                                        FontWeight="Bold"
                                        HorizontalAlignment="Center"/>
 
-                            <TextBlock Text="Available in 00:10"
-                                       Foreground="{StaticResource Accent}"
-                                       FontSize="13"
-                                       FontWeight="SemiBold"
-                                       HorizontalAlignment="Center"
-                                       Margin="0,6,0,0"/>
-
-                            <TextBlock Text="You may continue with evaluation restrictions after the short acknowledgement delay."
+                            <TextBlock x:Name="ContinueDetailTextBlock"
+                                       Text="You may continue with evaluation restrictions after the short acknowledgement delay."
                                        Foreground="{StaticResource TextMuted}"
                                        FontSize="12.2"
                                        TextWrapping="Wrap"
@@ -509,6 +522,7 @@ For activation, update support, maintenance, or feature discussion, please conta
                 </Grid.ColumnDefinitions>
 
                 <TextBlock VerticalAlignment="Center"
+                           x:Name="BottomStatusTextBlock"
                            Foreground="{StaticResource TextMuted}"
                            FontSize="12.5"
                            Text="Evaluation mode keeps the application usable for review while selected advanced capabilities remain restricted."/>
@@ -516,16 +530,69 @@ For activation, update support, maintenance, or feature discussion, please conta
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
+                    <TextBlock x:Name="ContinueCountdownFooterTextBlock"
+                               Text="Available in 00:20"
+                               Foreground="{StaticResource WarningAccent}"
+                               FontSize="12.5"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Margin="0,0,14,0"/>
+
                     <Button Content="Copy HWID"
+                            Click="CopyHardwareIdButton_Click"
                             Style="{StaticResource CompactInlineButtonStyle}"
                             Margin="0,0,10,0"/>
 
-                    <Button Content="Continue in Demo (10)"
-                            Style="{StaticResource OutlineWarningButtonStyle}"
-                            IsEnabled="False"
-                            Margin="0,0,10,0"/>
+                    <Grid Margin="0,0,10,0">
+                        <Button x:Name="ContinueInDemoButton"
+            Content="Continue in Demo"
+            Click="ContinueInDemoButton_Click"
+            Style="{StaticResource OutlineWarningButtonStyle}"
+            IsEnabled="False"
+            MinWidth="170"/>
 
-                    <Button Content="Activate License"
+                        <Border x:Name="ContinueCountdownOverlay"
+            Background="#F5EBD7"
+            BorderBrush="#111111"
+            BorderThickness="1.5"
+            CornerRadius="12"
+            Padding="12,0"
+            Height="42"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
+            Visibility="Visible"
+            Panel.ZIndex="10"
+            IsHitTestVisible="False">
+                            <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                                <Border Width="24"
+                    Height="24"
+                    CornerRadius="12"
+                    Background="#F6B23E"
+                    BorderBrush="#111111"
+                    BorderThickness="1.5"
+                    Margin="0,0,10,0">
+                                    <Viewbox Margin="5">
+                                        <Path Data="M0,0 L1,0.5 L0,1 Z"
+                          Fill="#111111"
+                          Stretch="Fill"/>
+                                    </Viewbox>
+                                </Border>
+
+                                <TextBlock x:Name="ContinueCountdownOverlayTextBlock"
+                       Text="00:20"
+                       Foreground="#111111"
+                       FontSize="15"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Button x:Name="ActivateLicenseButton"
+                            Content="Activate License"
+                            Click="ActivateLicenseButton_Click"
                             Style="{StaticResource PrimaryButtonStyle}"/>
                 </StackPanel>
             </Grid>

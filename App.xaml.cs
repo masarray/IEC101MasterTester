@@ -2,6 +2,7 @@ using System.Windows;
 using IEC101MasterTester.Services.Iec101;
 using IEC101MasterTester.Services.Licensing;
 using IEC101MasterTester.Services.Settings;
+using IEC101MasterTester.SharedUi;
 using IEC101MasterTester.ViewModels;
 using IEC101MasterTester.Views;
 
@@ -40,6 +41,28 @@ namespace IEC101MasterTester
 
             MainWindow = window;
             window.Show();
+
+            if (ShouldShowDemoModeAlert(LicenseManager))
+            {
+                DemoModeAlert alertWindow = new DemoModeAlert(LicenseManager)
+                {
+                    Owner = window
+                };
+                alertWindow.ShowDialog();
+                Properties["LicenseSnapshot"] = LicenseManager.CurrentSnapshot;
+            }
+        }
+
+        private static bool ShouldShowDemoModeAlert(LicenseManager licenseManager)
+        {
+            if (licenseManager == null || licenseManager.CurrentSnapshot == null)
+            {
+                return false;
+            }
+
+            return !licenseManager.CurrentSnapshot.IsLicensed
+                && (licenseManager.CurrentSnapshot.IsExpired
+                    || licenseManager.CurrentSnapshot.IsPermanentDemoLocked);
         }
     }
 }

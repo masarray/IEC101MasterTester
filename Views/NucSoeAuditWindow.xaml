@@ -69,7 +69,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="NUC SOE Audit"
+                    <TextBlock Text="ArSul Sequence of Events Audit"
                                FontSize="22"
                                FontWeight="SemiBold"
                                Foreground="#F8FAFC" />

@@ -937,6 +937,15 @@ namespace IEC101MasterTester.Views
             _legacyMainWindow.Activate();
         }
 
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            SharedUi.AboutWindow window = new SharedUi.AboutWindow
+            {
+                Owner = this
+            };
+            window.ShowDialog();
+        }
+
         private void ClearBufferEventStatistic_Click(object sender, RoutedEventArgs e)
         {
             MainViewModel viewModel = DataContext as MainViewModel;

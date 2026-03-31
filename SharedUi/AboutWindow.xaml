@@ -64,6 +64,27 @@
             <Setter Property="Margin" Value="0,8,8,0"/>
         </Style>
 
+        <Style x:Key="ValueChipBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="#0B1220"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="0,8,0,0"/>
+        </Style>
+
+        <Style x:Key="LabelMiniStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style x:Key="ValueMiniStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMain}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
         <SolidColorBrush x:Key="ScrollTrackBrush" Color="#0B1220"/>
         <SolidColorBrush x:Key="ScrollThumbBrush" Color="#334155"/>
         <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#14B8A6"/>
@@ -323,6 +344,29 @@ For full version access, update support, new feature requests, or maintenance di
                                            Foreground="{StaticResource TextMain}"
                                            FontSize="16"
                                            FontWeight="SemiBold"/>
+                            </Border>
+
+                            <Border Style="{StaticResource ValueChipBorderStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="License State" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock x:Name="LicenseStateTextBlock" Grid.Row="0" Grid.Column="1" Text="-" Style="{StaticResource ValueMiniStyle}" />
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,0,0" Text="Trial Counter" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock x:Name="TrialCounterTextBlock" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="-" Style="{StaticResource ValueMiniStyle}" />
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,0,0" Text="Trial Start" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock x:Name="TrialStartTextBlock" Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="-" Style="{StaticResource ValueMiniStyle}" />
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>

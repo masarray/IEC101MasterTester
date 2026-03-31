@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:IEC101MasterTester.Controls"
-        Title="IEC-101 Availability Dashboard"
+        Title="ArSul IEC-60870-5-101 Availability Dashboard"
         Height="765"
         Width="1320"
         MinHeight="620"
