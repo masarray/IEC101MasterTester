@@ -116,16 +116,16 @@ namespace IEC101MasterTester.Models
         {
             return new ConnectionSettings
             {
-                SerialPort = "COM1",
-                BaudRate = 9600,
+                SerialPort = "COM12",
+                BaudRate = 1200,
                 DataBits = 8,
                 Parity = "Even",
                 StopBits = "One",
                 LinkLayerMode = "Unbalanced",
-                LinkAddressLength = 1,
-                LinkAddress = 1,
+                LinkAddressLength = 2,
+                LinkAddress = 105,
                 CasduLength = 2,
-                CasduAddress = 1,
+                CasduAddress = 105,
                 IoaLength = 3,
                 OriginatorAddress = 0,
                 ResponseTimeoutMs = 1343,

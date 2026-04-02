@@ -332,6 +332,8 @@ namespace IecSlaveSimulator.Services
                     return HandleSingleCommand(connection, asdu);
                 case TypeID.C_DC_NA_1:
                     return HandleDoubleCommand(connection, asdu);
+                case TypeID.C_SE_NA_1:
+                    return HandleNormalizedSetpointCommand(connection, asdu);
                 default:
                     return false;
             }
@@ -480,6 +482,48 @@ namespace IecSlaveSimulator.Services
             }
 
             AcknowledgeCommand(connection, asdu, label + " execute accepted.");
+            return true;
+        }
+
+        private bool HandleNormalizedSetpointCommand(IMasterConnection connection, ASDU asdu)
+        {
+            SetpointCommandNormalized command = asdu.GetElement(0) as SetpointCommandNormalized;
+            if (command == null)
+                return false;
+
+            SignalDefinition commandSignal;
+            SignalDefinition targetSignal;
+            lock (_sync)
+            {
+                _runtimeSignals.TryGetValue(command.ObjectAddress, out commandSignal);
+                targetSignal = commandSignal != null && commandSignal.LinkedStatusIoa > 0 && _runtimeSignals.ContainsKey(commandSignal.LinkedStatusIoa)
+                    ? _runtimeSignals[commandSignal.LinkedStatusIoa]
+                    : null;
+            }
+
+            if (commandSignal == null || targetSignal == null)
+                return RejectCommand(connection, asdu, "Normalized setpoint rejected: binding not found.");
+
+            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, CommandIntent.On, false, "Normalized setpoint"))
+                return true;
+
+            SignalDefinition updatedTarget = CloneSignal(targetSignal);
+            updatedTarget.RuntimeValue = command.NormalizedValue.ToString("0.###", CultureInfo.InvariantCulture);
+            updatedTarget.LiveCot = updatedTarget.ResolveBindingCot();
+
+            lock (_sync)
+            {
+                _runtimeSignals[updatedTarget.Ioa] = CloneSignal(updatedTarget);
+            }
+
+            if (RuntimeSignalUpdated != null)
+                RuntimeSignalUpdated(updatedTarget.Ioa, updatedTarget.RuntimeValue, updatedTarget.LiveCot);
+
+            LogStatus("CMD", string.Format("Normalized setpoint on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
+
+            if (updatedTarget.SpontaneousEnabled || string.Equals(updatedTarget.LiveCot, "CmdFb", StringComparison.OrdinalIgnoreCase))
+                EnqueueSignal(updatedTarget, ResolveCot(updatedTarget.LiveCot), true);
+
             return true;
         }
 

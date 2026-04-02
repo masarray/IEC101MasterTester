@@ -1,7 +1,7 @@
 <Window x:Class="IEC101MasterTester.Views.NucRedundancyWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ArSul IEC-101 Dual Link Redundancy Test"
+        Title="IEC 60870-5-101 Dual Link Redundancy Test"
         Height="920"
         Width="1480"
         MinHeight="760"
@@ -369,11 +369,10 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Margin="8,0,0,0">
-                    <TextBlock Text="ArSul IEC101 Dual-link Redundancy Test"
+                <StackPanel Margin="0,0,0,0">
+                    <TextBlock Text="IEC 60870-5-101 Dual-link Redundancy Analyzer" TextWrapping="Wrap"
                                FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource NucTextBrush}" />
+                               Foreground="{StaticResource NucTextBrush}" FontWeight="Bold" />
                     <TextBlock Margin="0,8,0,0"
                                Foreground="{StaticResource NucMutedBrush}"
                                Text="{Binding RedundancyConfigSummaryText}"
@@ -383,12 +382,12 @@
                 <StackPanel Grid.Column="1"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Right"
-                            Margin="12,0,0,0">
+                            Margin="0,0,0,0">
 
                     <WrapPanel HorizontalAlignment="Right">
 
                     <Button Width="108"
-            Margin="0,0,10,0"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="ConfigureLinks_Click"
             ToolTip="Configure Links">
@@ -401,7 +400,7 @@
                     </Button>
 
                     <Button Width="108"
-        Margin="0,0,10,0"
+        Margin="0,0,6,0"
         IsEnabled="{Binding CanStartNucRedundancySessionButton}"
         Click="StartSession_Click"
         ToolTip="Start Session"
@@ -439,7 +438,7 @@
                     </Button>
 
                     <Button Width="108"
-            Margin="0,0,10,0"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionDangerButtonStyle}"
             IsEnabled="{Binding CanStopNucRedundancySessionButton}"
             Click="StopSession_Click"
@@ -453,7 +452,7 @@
                     </Button>
 
                     <Button Width="94"
-            Margin="0,0,10,0"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             IsEnabled="{Binding CanStopNucRedundancySessionButton}"
             Click="SendGi_Click"
@@ -467,7 +466,7 @@
                     </Button>
 
                     <Button Width="94"
-            Margin="0,0,10,0"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="OpenAvailabilityDashboard_Click"
             ToolTip="Open Availability Dashboard">
@@ -485,8 +484,8 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Width="124"
-            Margin="0,0,10,0"
+                    <Button Width="94"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionDangerButtonStyle}"
             Click="ClearBufferEventStatistic_Click"
             ToolTip="Clear Buffer, Event, and Statistic">
@@ -498,25 +497,9 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Width="98"
-        Margin="0,0,10,0"
-        Style="{StaticResource ActionButtonStyle}"
-        Click="OpenMainWindow_Click"
-        ToolTip="Open Single Link Test Window">
-
-                        <StackPanel Orientation="Vertical">
-
-                            <Path Style="{StaticResource ActionIconPathStyle}"
-              Data="M15 3H21V9 M10 14L21 3 M18 13V19A2 2 0 0 1 16 21H5A2 2 0 0 1 3 19V8A2 2 0 0 1 5 6H11"/>
-
-                            <TextBlock Text="Single Link"
-                   Style="{StaticResource ActionButtonLabelStyle}" />
-
-                        </StackPanel>
-                    </Button>
                     
                     <Button Width="90"
-            Margin="0,0,10,0"
+            Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="OpenLinkTrace_Click"
             ToolTip="Open Link Trace">
@@ -539,6 +522,24 @@
                        Style="{StaticResource ActionButtonLabelStyle}" />
                         </StackPanel>
                     </Button>
+
+                        <Button Width="98"
+        Margin="0,0,6,0"
+        Style="{StaticResource ActionButtonStyle}"
+        Click="OpenMainWindow_Click"
+        ToolTip="Open Single Link Test Window">
+
+                            <StackPanel Orientation="Vertical">
+
+                                <Path Style="{StaticResource ActionIconPathStyle}"
+              Data="M15 3H21V9 M10 14L21 3 M18 13V19A2 2 0 0 1 16 21H5A2 2 0 0 1 3 19V8A2 2 0 0 1 5 6H11"/>
+
+                                <TextBlock Text="Single Link"
+                   Style="{StaticResource ActionButtonLabelStyle}" />
+
+                            </StackPanel>
+                        </Button>
+
 
                         <Button Width="40"
                             Height="40"

@@ -9,6 +9,7 @@
     <AssemblyName>IecSlaveSimulator</AssemblyName>
     <Platforms>AnyCPU;x64</Platforms>
     <StartupObject>IecSlaveSimulator.App</StartupObject>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +28,10 @@
 
   <ItemGroup>
     <Compile Include="..\Vendor\lib60870\**\*.cs" Exclude="..\Vendor\lib60870\Properties\AssemblyInfo.cs;..\Vendor\lib60870\obj\**\*.cs;..\Vendor\lib60870\bin\**\*.cs" Link="Vendor\lib60870\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="app.ico" />
   </ItemGroup>
 
   <ItemGroup>

@@ -9,7 +9,7 @@ namespace IEC101MasterTester.Services.Profiles
         public static readonly OfficialPointProfile PlnPusertif101Profile = new OfficialPointProfile("PlnPusertif101Profile", CreatePlnPoints());
         public static readonly OfficialPointProfile PlnPusertif104Profile = new OfficialPointProfile("PlnPusertif104Profile", CreatePlnPoints());
 
-        public static OfficialPointProfile ActiveProfile => LegacyProfile;
+        public static OfficialPointProfile ActiveProfile => PlnPusertif101Profile;
 
         public static bool TryGetPointByIoa(int ioa, out PointDefinition point)
         {
@@ -143,7 +143,7 @@ namespace IEC101MasterTester.Services.Profiles
                 Create("FeederLocalRemote", 16712694, 31, null, "Feeder LR1 Local / Remote", "TSD", "Binary", "Class 1", "Spont", true, null, null),
                 Create("KopelLocalRemote", 16712701, 31, null, "Kopel LR2 Local / Remote", "TSD", "Binary", "Class 1", "Spont", true, null, null),
                 Create("TrafoLocalRemote", 16712708, 31, null, "Trafo LR Local / Remote", "TSD", "Binary", "Class 1", "Spont", true, null, null),
-                Create("TapChangerLocalRemote", 16712709, 31, "LRT", "Tap Changer Local / Remote", "TSD", "Binary", "Class 1", "Spont", true, null, null),
+                Create("TapChangerLocalRemote", 16712709, 31, "LRC", "Tap Changer Local / Remote", "TSD", "Binary", "Class 1", "Spont", true, null, null),
                 Create("TapChangerAutoManual", 16712710, 31, "TCC", "Tap Changer Auto / Manual", "TSD", "Binary", "Class 1", "Spont", true, null, null),
                 Create("TrafoSogiTapPosition", 790448, 32, null, "Tap Position Indication", "TPI", "Analog", "Class 2", "Spont", true, null, "TapChangerRaiseLowerCommand"),
                 Create("FeederP1", 790446, 13, null, "Feeder Active Power P1", "TM", "Analog", "Class 2", "Spont", true, null, null),
@@ -156,7 +156,7 @@ namespace IEC101MasterTester.Services.Profiles
                 Create("FeederCbCommand", 68542, 46, null, "Feeder CB1 Double Command", "RCD", "Command", "Class 1", "Act", false, null, "FeederCbStatus"),
                 Create("KopelCbCommand", 68539, 46, null, "Kopel CB2 Double Command", "RCD", "Command", "Class 1", "Act", false, null, "KopelCbStatus"),
                 Create("TrafoCbCommand", 68550, 46, null, "Trafo CB Double Command", "RCD", "Command", "Class 1", "Act", false, null, "TrafoCbStatus"),
-                Create("TapChangerRaiseLowerCommand", 74537, 47, null, "Tap Changer Raise / Lower", "CTC", "Command", "Class 1", "Act", false, null, "TrafoSogiTapPosition"),
+                Create("TapChangerRaiseLowerCommand", 74537, 47, null, "Tap Changer Raise / Lower", "RCD", "Command", "Class 1", "Act", false, null, "TrafoSogiTapPosition"),
                 Create("RealPowerSetPointCommand", 70537, 48, "POOP", "Real Power Set Point Command", "RCA", "Command", "Class 1", "Act", false, null, "RealPowerSettingMeasured")
             };
         }

@@ -29,8 +29,8 @@ namespace IecSlaveSimulator.Models
             return new SlaveProjectDefinition
             {
                 ProjectName = "IEC-101 PLN Pusertif Stage 1",
-                CommonAddress = 1,
-                LinkAddress = 1,
+                CommonAddress = 105,
+                LinkAddress = 105,
                 Notes = "Stage 1 PLN Pusertif baseline: gateway redundancy points, CB/LR status, analog telemetry, and command-feedback pairs.",
                 Signals = CreatePlnPusertifStage1Signals(),
                 NucSettings = NucSlaveSettings.CreateDefault()
@@ -78,20 +78,20 @@ namespace IecSlaveSimulator.Models
                 CreateDoubleStatus(16712689, "Feeder CB1 Status", "ON"),
                 CreateDoubleStatus(16712686, "Kopel CB2 Status", "ON"),
                 CreateDoubleStatus(16712704, "Trafo CB Status", "ON"),
-                CreateBinary(16712694, "Feeder LR1 Local / Remote", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(16712701, "Kopel LR2 Local / Remote", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(16712708, "Trafo LR Local / Remote", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(16712709, "Tap Changer Local / Remote", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(16712710, "Tap Changer Auto / Manual", SignalPublishMode.Spontaneous, "ON"),
+                CreateDoubleStatus(16712694, "Feeder LR1 Local / Remote", "ON"),
+                CreateDoubleStatus(16712701, "Kopel LR2 Local / Remote", "ON"),
+                CreateDoubleStatus(16712708, "Trafo LR Local / Remote", "ON"),
+                CreateDoubleStatus(16712709, "Tap Changer Local / Remote", "ON"),
+                CreateDoubleStatus(16712710, "Tap Changer Auto / Manual", "ON"),
 
                 CreateAnalog(790448, "Tap Position Indication", "7", 0d, 15d, 1d, SlaveSignalType.StepPosition),
-                CreateAnalog(790446, "Feeder Active Power P1", "12.5", 11.8d, 13.4d, 0.1d),
-                CreateAnalog(790447, "Feeder Reactive Power Q1", "4.2", 3.8d, 4.7d, 0.05d),
-                CreateAnalog(790438, "Kopel Active Power P2", "10.1", 9.5d, 10.8d, 0.08d),
-                CreateAnalog(790439, "Kopel Reactive Power Q2", "3.7", 3.2d, 4.2d, 0.05d),
-                CreateAnalog(790442, "Trafo Active Power", "21.2", 20.4d, 22.1d, 0.12d),
-                CreateAnalog(790443, "Trafo Reactive Power", "5.9", 5.3d, 6.4d, 0.06d),
-                CreateAnalog(790449, "Real Power Setting Measured", "15.0", 14.0d, 16.0d, 0.1d),
+                CreateAnalog(790446, "Feeder Active Power P1", "12.5", 11.8d, 13.4d, 0.1d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
+                CreateAnalog(790447, "Feeder Reactive Power Q1", "4.2", 3.8d, 4.7d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
+                CreateAnalog(790438, "Kopel Active Power P2", "10.1", 9.5d, 10.8d, 0.08d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
+                CreateAnalog(790439, "Kopel Reactive Power Q2", "3.7", 3.2d, 4.2d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
+                CreateAnalog(790442, "Trafo Active Power", "21.2", 20.4d, 22.1d, 0.12d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
+                CreateAnalog(790443, "Trafo Reactive Power", "5.9", 5.3d, 6.4d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
+                CreateAnalog(790449, "Real Power Setting Measured", "0.15", 0d, 1d, 0.01d, SlaveSignalType.MeasuredNormalized, SignalPublishMode.Spontaneous),
 
                 CreateDoubleCommand(68542, "Feeder CB1 Double Command", 16712689),
                 CreateDoubleCommand(68539, "Kopel CB2 Double Command", 16712686),
@@ -137,16 +137,24 @@ namespace IecSlaveSimulator.Models
             };
         }
 
-        private static SignalDefinition CreateAnalog(int ioa, string label, string defaultValue, double from, double to, double step, SlaveSignalType type = SlaveSignalType.MeasuredShort)
+        private static SignalDefinition CreateAnalog(
+            int ioa,
+            string label,
+            string defaultValue,
+            double from,
+            double to,
+            double step,
+            SlaveSignalType type = SlaveSignalType.MeasuredShort,
+            SignalPublishMode publishMode = SignalPublishMode.BackgroundScan)
         {
             return new SignalDefinition
             {
                 Ioa = ioa,
                 Label = label,
                 SignalType = type,
-                PublishMode = SignalPublishMode.BackgroundScan,
-                BackgroundEnabled = true,
-                SpontaneousEnabled = false,
+                PublishMode = publishMode,
+                BackgroundEnabled = publishMode == SignalPublishMode.BackgroundScan || publishMode == SignalPublishMode.BackgroundAndSpontaneous,
+                SpontaneousEnabled = publishMode == SignalPublishMode.Spontaneous || publishMode == SignalPublishMode.BackgroundAndSpontaneous,
                 DefaultValue = defaultValue,
                 RuntimeValue = defaultValue,
                 AnalogAnimation = AnalogAnimationKind.RampPingPong,
@@ -207,7 +215,7 @@ namespace IecSlaveSimulator.Models
             {
                 Ioa = ioa,
                 Label = label,
-                SignalType = SlaveSignalType.CommandSetpointShort,
+                SignalType = SlaveSignalType.CommandSetpointNormalized,
                 PublishMode = SignalPublishMode.CommandFeedback,
                 BackgroundEnabled = false,
                 SpontaneousEnabled = false,

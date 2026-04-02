@@ -36,16 +36,16 @@ namespace IecSlaveSimulator.Models
         {
             return new SlaveConnectionSettings
             {
-                SerialPort = "COM1",
-                BaudRate = 9600,
+                SerialPort = "COM12",
+                BaudRate = 1200,
                 DataBits = 8,
                 Parity = "Even",
                 StopBits = "One",
                 LinkLayerMode = "Unbalanced",
                 LinkAddressLength = 2,
-                LinkAddress = 1,
+                LinkAddress = 105,
                 CasduLength = 2,
-                CommonAddress = 1,
+                CommonAddress = 105,
                 IoaLength = 3,
                 OriginatorAddress = 0,
                 ResponseTimeoutMs = 300,
