@@ -330,6 +330,19 @@ namespace IEC101MasterTester.Services.Iec101
                         return string.Format("State={0}, Select={1}", state, cmd.Select ? 1 : 0);
                     }
                 }
+
+                if (asdu.TypeId == TypeID.C_SE_NA_1)
+                {
+                    SetpointCommandNormalized cmd = informationObject as SetpointCommandNormalized;
+                    if (cmd != null)
+                    {
+                        return string.Format(
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            "Value={0:0.###}, Select={1}",
+                            cmd.NormalizedValue,
+                            cmd.QOS.Select ? 1 : 0);
+                    }
+                }
             }
             catch
             {

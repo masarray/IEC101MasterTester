@@ -557,7 +557,7 @@ namespace IEC101MasterTester.ViewModels
         public int SingleCommandIoa { get => _singleCommandIoa; set => SetProperty(ref _singleCommandIoa, value); }
         public int DoubleCommandIoa { get => _doubleCommandIoa; set => SetProperty(ref _doubleCommandIoa, value); }
         public int StepCommandIoa { get => _stepCommandIoa; set => SetProperty(ref _stepCommandIoa, value); }
-        public bool CanOpenSelectedValueCommand => SelectedValue != null && GetSignalCommandFamily(SelectedValue.Type) != null;
+        public bool CanOpenSelectedValueCommand => GetSignalCommandFamily(SelectedValue) != null;
         public bool IsTxActive { get => _isTxActive; private set => SetProperty(ref _isTxActive, value); }
         public bool IsRxActive { get => _isRxActive; private set => SetProperty(ref _isRxActive, value); }
         public ValueViewerRow SelectedValue
@@ -986,12 +986,12 @@ namespace IEC101MasterTester.ViewModels
 
         public string GetSelectedValueCommandFamily()
         {
-            return SelectedValue == null ? null : GetSignalCommandFamily(SelectedValue.Type);
+            return GetSignalCommandFamily(SelectedValue);
         }
 
         public string GetSelectedNucValueCommandFamily()
         {
-            return SelectedNucValue == null ? null : GetSignalCommandFamily(SelectedNucValue.Type);
+            return GetSignalCommandFamily(SelectedNucValue);
         }
 
         public int GetSelectedValueSuggestedCommandIoa()
@@ -1081,6 +1081,14 @@ namespace IEC101MasterTester.ViewModels
                     string.Equals(normalizedOperation, "RAISE", StringComparison.OrdinalIgnoreCase),
                     select);
             }
+            else if (family == "Setpoint")
+            {
+                float normalizedValue;
+                if (float.TryParse(normalizedOperation, NumberStyles.Float, CultureInfo.InvariantCulture, out normalizedValue))
+                {
+                    await _nucRedundancyService.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select);
+                }
+            }
         }
 
         public async Task SendNucSignalCommandAsync(string family, int ioa, string operation, bool select)
@@ -1117,6 +1125,14 @@ namespace IEC101MasterTester.ViewModels
                     ioa,
                     string.Equals(normalizedOperation, "RAISE", StringComparison.OrdinalIgnoreCase),
                     select);
+            }
+            else if (family == "Setpoint")
+            {
+                float normalizedValue;
+                if (float.TryParse(normalizedOperation, NumberStyles.Float, CultureInfo.InvariantCulture, out normalizedValue))
+                {
+                    await _nucRedundancyService.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select);
+                }
             }
         }
 
@@ -1157,6 +1173,14 @@ namespace IEC101MasterTester.ViewModels
                             string.Equals(normalizedOperation, "RAISE", StringComparison.OrdinalIgnoreCase),
                             select);
                         break;
+
+                    case "Setpoint":
+                        float normalizedValue;
+                        if (float.TryParse(normalizedOperation, NumberStyles.Float, CultureInfo.InvariantCulture, out normalizedValue))
+                        {
+                            await _masterService.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select);
+                        }
+                        break;
                 }
 
                 CommandTransaction transaction = RegisterPendingCommand(ioa, commandType, normalizedOperation, select);
@@ -1166,6 +1190,50 @@ namespace IEC101MasterTester.ViewModels
             catch (Exception ex)
             {
                 AddSystemLine("ERR", "Command send failed", ex.Message);
+            }
+            finally
+            {
+                _isBusy = false;
+                RefreshCommands();
+            }
+        }
+
+        public async Task SendSetpointCommandAsync(int ioa, float normalizedValue, bool select, bool useNucSession)
+        {
+            string operation = normalizedValue.ToString("0.###", CultureInfo.InvariantCulture);
+            string commandType = GetCommandTypeForFamily("Setpoint");
+
+            if (useNucSession)
+            {
+                if (!_nucRedundancyService.IsSessionActive)
+                {
+                    return;
+                }
+
+                CommandTransaction nucTransaction = RegisterPendingCommand(ioa, commandType, operation, select);
+                LogCommandTransmission(nucTransaction);
+                ScheduleCommandTimeoutCheck();
+                await _nucRedundancyService.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select);
+                return;
+            }
+
+            if (!CanSendCommands)
+            {
+                return;
+            }
+
+            _isBusy = true;
+            RefreshCommands();
+            try
+            {
+                await _masterService.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select);
+                CommandTransaction transaction = RegisterPendingCommand(ioa, commandType, operation, select);
+                LogCommandTransmission(transaction);
+                ScheduleCommandTimeoutCheck();
+            }
+            catch (Exception ex)
+            {
+                AddSystemLine("ERR", "Setpoint send failed", ex.Message);
             }
             finally
             {
@@ -1314,6 +1382,7 @@ namespace IEC101MasterTester.ViewModels
                         existing.Acd = e.Acd;
                         existing.Cot = e.Cot;
                         existing.TrafficClass = e.TrafficClass;
+                        existing.DeliveryContext = e.DeliveryContext;
                     }
                 }
                 else
@@ -1337,7 +1406,7 @@ namespace IEC101MasterTester.ViewModels
                 {
                     _giReceivedIoas.Add(e.IOA);
 
-                    string family = GetSignalCommandFamily(e.Type);
+                    string family = GetSignalCommandFamily(e);
 
                     if (IsDiscreteType(e.Type))
                     {
@@ -1386,13 +1455,13 @@ namespace IEC101MasterTester.ViewModels
             CommandSignals.Clear();
             foreach (ValueViewerRow row in Values)
             {
-                if (GetSignalCommandFamily(row.Type) != null)
+                if (GetSignalCommandFamily(row) != null)
                 {
                     CommandSignals.Add(row);
                 }
             }
 
-            if (SelectedValue != null && GetSignalCommandFamily(SelectedValue.Type) == null)
+            if (SelectedValue != null && GetSignalCommandFamily(SelectedValue) == null)
             {
                 SelectedValue = null;
             }
@@ -1923,7 +1992,7 @@ namespace IEC101MasterTester.ViewModels
             }
         }
 
-        public bool CanOpenSelectedNucValueCommand => SelectedNucValue != null && GetSignalCommandFamily(SelectedNucValue.Type) != null;
+        public bool CanOpenSelectedNucValueCommand => GetSignalCommandFamily(SelectedNucValue) != null;
         public bool IsRedundancyMainFaultActive => _mainLinkFaultActive == true;
         public bool IsRedundancyBackupFaultActive => _backupLinkFaultActive == true;
         public bool IsRedundancyIedFaultActive => _iedFaultActive == true;
@@ -2174,7 +2243,9 @@ namespace IEC101MasterTester.ViewModels
                 SignalName = value.Name,
                 ValueText = value.Value,
                 QualityText = value.Quality,
-                Origin = "Value"
+                Origin = "Value",
+                DeliveryContext = string.IsNullOrWhiteSpace(value.DeliveryContext) ? "Unknown" : value.DeliveryContext,
+                ClassContext = string.IsNullOrWhiteSpace(value.TrafficClass) ? "Unknown" : value.TrafficClass
             });
         }
 
@@ -2203,7 +2274,9 @@ namespace IEC101MasterTester.ViewModels
                 SignalName = "Command",
                 ValueText = operation ?? "-",
                 QualityText = "-",
-                Origin = "Command"
+                Origin = "Command",
+                DeliveryContext = "Command lifecycle",
+                ClassContext = "Class 1"
             });
         }
 
@@ -2230,7 +2303,9 @@ namespace IEC101MasterTester.ViewModels
                 SignalName = signalName,
                 ValueText = valueText,
                 QualityText = "-",
-                Origin = "Redundancy"
+                Origin = "Redundancy",
+                DeliveryContext = string.Equals(cot, "GI", StringComparison.OrdinalIgnoreCase) ? "GI Response" : "Unknown",
+                ClassContext = string.Equals(cot, "GI", StringComparison.OrdinalIgnoreCase) ? "Class 2" : "Unknown"
             });
         }
 
@@ -2482,9 +2557,7 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
-            string incomingTimestamp = string.IsNullOrWhiteSpace(source.Timestamp)
-                ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
-                : source.Timestamp;
+            string incomingTimestamp = GetEffectiveValueTimestampText(source);
             bool isDiscrete = IsDiscreteType(source.Type);
             bool isGi = string.Equals(source.Cot, "GI", StringComparison.OrdinalIgnoreCase);
 
@@ -2494,13 +2567,26 @@ namespace IEC101MasterTester.ViewModels
                 existing.Name = OfficialPointProfiles.GetDisplayNameOrDefault(source.IOA, source.Name);
                 existing.Type = source.Type;
                 existing.Value = source.Value;
+                existing.Quality = source.Quality;
+                existing.ReceiveTimestampUtc = source.ReceiveTimestampUtc;
+                existing.ReceiveTimestampText = source.ReceiveTimestampText;
+                existing.EventTimestampUtc = source.EventTimestampUtc;
+                existing.SnapshotTimestampUtc = source.SnapshotTimestampUtc;
+                existing.HasProtocolTimestamp = source.HasProtocolTimestamp;
+                existing.SourceType = source.SourceType;
                 if (!(isDiscrete && !valueChanged && !string.IsNullOrWhiteSpace(existing.Timestamp) && existing.Timestamp != "-")
                     && !(isDiscrete && isGi && !string.IsNullOrWhiteSpace(existing.Timestamp) && existing.Timestamp != "-"))
                 {
                     existing.Timestamp = incomingTimestamp;
                 }
                 existing.UpdateSource = channel;
-                existing.Cot = source.Cot;
+                if (ShouldOverwriteMetadata(existing.Cot, source.Cot))
+                {
+                    existing.Acd = source.Acd;
+                    existing.Cot = source.Cot;
+                    existing.TrafficClass = string.IsNullOrWhiteSpace(source.TrafficClass) ? "-" : source.TrafficClass;
+                    existing.DeliveryContext = string.IsNullOrWhiteSpace(source.DeliveryContext) ? "Unknown" : source.DeliveryContext;
+                }
                 return;
             }
 
@@ -2511,9 +2597,19 @@ namespace IEC101MasterTester.ViewModels
                 Name = OfficialPointProfiles.GetDisplayNameOrDefault(source.IOA, source.Name),
                 Type = source.Type,
                 Value = source.Value,
+                Quality = source.Quality,
                 Timestamp = incomingTimestamp,
+                ReceiveTimestampUtc = source.ReceiveTimestampUtc,
+                ReceiveTimestampText = source.ReceiveTimestampText,
+                EventTimestampUtc = source.EventTimestampUtc,
+                SnapshotTimestampUtc = source.SnapshotTimestampUtc,
+                HasProtocolTimestamp = source.HasProtocolTimestamp,
+                SourceType = source.SourceType,
                 UpdateSource = channel,
-                Cot = source.Cot
+                Acd = source.Acd,
+                Cot = source.Cot,
+                TrafficClass = string.IsNullOrWhiteSpace(source.TrafficClass) ? "-" : source.TrafficClass,
+                DeliveryContext = string.IsNullOrWhiteSpace(source.DeliveryContext) ? "Unknown" : source.DeliveryContext
             };
 
             int orderedInsertIndex = GetNucValueInsertIndex(row);
@@ -2528,6 +2624,36 @@ namespace IEC101MasterTester.ViewModels
                 _nucValueIndex.Remove(trimmed.IOA);
                 NucValues.RemoveAt(NucValues.Count - 1);
             }
+        }
+
+        private static string GetEffectiveValueTimestampText(ValueViewerRow source)
+        {
+            if (source == null)
+            {
+                return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            }
+
+            if (source.HasProtocolTimestamp && source.EventTimestampUtc.HasValue)
+            {
+                return source.EventTimestampUtc.Value.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            }
+
+            if (source.SnapshotTimestampUtc.HasValue)
+            {
+                return source.SnapshotTimestampUtc.Value.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            }
+
+            if (!string.IsNullOrWhiteSpace(source.ReceiveTimestampText) && source.ReceiveTimestampText != "-")
+            {
+                return source.ReceiveTimestampText;
+            }
+
+            if (!string.IsNullOrWhiteSpace(source.Timestamp) && source.Timestamp != "-")
+            {
+                return source.Timestamp;
+            }
+
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
         }
 
         private void ReorderNucValuesNewestFirst()
@@ -2966,6 +3092,13 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
+            if (settings.BaseConnectionSettings != null)
+            {
+                CurrentSettings = settings.BaseConnectionSettings.Clone();
+                _masterService.ApplySettings(CurrentSettings);
+                RefreshCommands();
+            }
+
             if (!string.IsNullOrWhiteSpace(settings.PrimarySerialPort))
             {
                 RedundancyPrimaryPort = settings.PrimarySerialPort;
@@ -3013,6 +3146,11 @@ namespace IEC101MasterTester.ViewModels
 
             ApplyLoadedNucRedundancySettings(settings);
             await _nucRedundancySettingsStore.SaveAsync(settings);
+            if (settings.BaseConnectionSettings != null)
+            {
+                await _settingsStore.SaveAsync(CurrentSettings);
+                AddSystemLine("CFG", "NUC link profile applied", CurrentProfileSummary);
+            }
             RefreshRedundancyConfigurationSummary();
         }
 
@@ -3330,22 +3468,29 @@ namespace IEC101MasterTester.ViewModels
                 UpsertNucValue(value, channelName);
                 if (shouldLogScadaEvent)
                 {
+                    ValueViewerRow currentNucValue = value;
+                    if (_nucValueIndex.TryGetValue(value.IOA, out ValueViewerRow normalizedNucValue) && normalizedNucValue != null)
+                    {
+                        currentNucValue = normalizedNucValue;
+                    }
+
                     EventLogRow row = new EventLogRow
                     {
-                        Time = string.IsNullOrWhiteSpace(value.Timestamp) ? "-" : value.Timestamp,
+                        Time = string.IsNullOrWhiteSpace(currentNucValue.Timestamp) ? "-" : currentNucValue.Timestamp,
                         RecvTime = string.IsNullOrWhiteSpace(value.ReceiveTimestampText) ? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture) : value.ReceiveTimestampText,
-                        SourceTime = string.IsNullOrWhiteSpace(value.Timestamp) ? "-" : value.Timestamp,
+                        SourceTime = string.IsNullOrWhiteSpace(currentNucValue.Timestamp) ? "-" : currentNucValue.Timestamp,
                         DeltaMs = FormatSoeDeltaMs(value.ReceiveTimestampUtc, value.EventTimestampUtc),
                         Source = channelName,
-                        Name = value.Name,
-                        IOA = value.IOA.ToString(CultureInfo.InvariantCulture),
-                        Type = value.Type,
-                        TypeId = value.TypeId,
-                        Casdu = value.Casdu,
-                        Event = string.IsNullOrWhiteSpace(value.Cot) ? "Value update" : value.Cot,
-                        Value = value.Value,
-                        Quality = value.Quality,
-                        Cot = string.IsNullOrWhiteSpace(value.Cot) ? "-" : value.Cot
+                        Name = currentNucValue.Name,
+                        IOA = currentNucValue.IOA.ToString(CultureInfo.InvariantCulture),
+                        Type = currentNucValue.Type,
+                        TypeId = currentNucValue.TypeId,
+                        Casdu = currentNucValue.Casdu,
+                        Event = string.IsNullOrWhiteSpace(currentNucValue.Cot) ? "Value update" : currentNucValue.Cot,
+                        Value = currentNucValue.Value,
+                        Quality = currentNucValue.Quality,
+                        Cot = string.IsNullOrWhiteSpace(currentNucValue.Cot) ? "-" : currentNucValue.Cot,
+                        DataClass = string.IsNullOrWhiteSpace(currentNucValue.TrafficClass) ? "-" : currentNucValue.TrafficClass
                     };
                     AddNucEventLog(row);
                 }
@@ -6011,6 +6156,11 @@ namespace IEC101MasterTester.ViewModels
                 return "Regulating Command";
             }
 
+            if (asduType.IndexOf("C_SE_NA_1", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "Setpoint Command";
+            }
+
             return "Command";
         }
 
@@ -6057,6 +6207,25 @@ namespace IEC101MasterTester.ViewModels
                 if (detail.IndexOf("LOWER", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return "LOWER";
+                }
+            }
+            else if (row.AsduType.IndexOf("C_SE_NA_1", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                const string marker = "Value=";
+                int start = detail.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+                if (start >= 0)
+                {
+                    start += marker.Length;
+                    int end = start;
+                    while (end < detail.Length && "-+.0123456789".IndexOf(detail[end]) >= 0)
+                    {
+                        end++;
+                    }
+
+                    if (end > start)
+                    {
+                        return detail.Substring(start, end - start);
+                    }
                 }
             }
 
@@ -6383,6 +6552,8 @@ namespace IEC101MasterTester.ViewModels
                     return "Double Command";
                 case "Regulating":
                     return "Regulating Command";
+                case "Setpoint":
+                    return "Setpoint Command";
                 default:
                     return "Command";
             }
@@ -6421,6 +6592,17 @@ namespace IEC101MasterTester.ViewModels
             return "-";
         }
 
+        public ValueViewerRow TryGetCurrentValueByIoa(int ioa, bool useNucSession)
+        {
+            ValueViewerRow row;
+            if (useNucSession)
+            {
+                return _nucValueIndex.TryGetValue(ioa, out row) ? row : null;
+            }
+
+            return _valueIndex.TryGetValue(ioa, out row) ? row : null;
+        }
+
         private static string NormalizeCommandOperation(string familyOrType, string operation)
         {
             if (string.IsNullOrWhiteSpace(operation))
@@ -6440,6 +6622,15 @@ namespace IEC101MasterTester.ViewModels
                 {
                     return "OPEN";
                 }
+            }
+
+            if (string.Equals(familyOrType, "Setpoint", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(familyOrType, "Setpoint Command", StringComparison.OrdinalIgnoreCase))
+            {
+                float normalizedValue;
+                return float.TryParse(operation, NumberStyles.Float, CultureInfo.InvariantCulture, out normalizedValue)
+                    ? normalizedValue.ToString("0.###", CultureInfo.InvariantCulture)
+                    : operation;
             }
 
             return operation.ToUpperInvariant();
@@ -6736,6 +6927,37 @@ namespace IEC101MasterTester.ViewModels
                 || type.IndexOf("Double Point", StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
+        private static string GetSignalCommandFamily(ValueViewerRow row)
+        {
+            if (row == null)
+            {
+                return null;
+            }
+
+            string family = GetSignalCommandFamily(row.Type);
+            if (family != null)
+            {
+                return family;
+            }
+
+            int? relatedCommandIoa = OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
+            PointDefinition commandPoint;
+            if (relatedCommandIoa.HasValue
+                && OfficialPointProfiles.TryGetPointByIoa(relatedCommandIoa.Value, out commandPoint)
+                && commandPoint != null)
+            {
+                return GetSignalCommandFamilyForTypeId(commandPoint.TypeId);
+            }
+
+            PointDefinition point;
+            if (OfficialPointProfiles.TryGetPointByIoa(row.IOA, out point) && point != null)
+            {
+                return GetSignalCommandFamilyForTypeId(point.TypeId);
+            }
+
+            return null;
+        }
+
         private static string GetSignalCommandFamily(string type)
         {
             if (string.IsNullOrWhiteSpace(type))
@@ -6751,6 +6973,23 @@ namespace IEC101MasterTester.ViewModels
                 return "Regulating";
 
             return null;
+        }
+
+        private static string GetSignalCommandFamilyForTypeId(int typeId)
+        {
+            switch (typeId)
+            {
+                case 45:
+                    return "Single";
+                case 46:
+                    return "Double";
+                case 47:
+                    return "Regulating";
+                case 48:
+                    return "Setpoint";
+                default:
+                    return null;
+            }
         }
         private static bool IsMeteringType(string type)
         {

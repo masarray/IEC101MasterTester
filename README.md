@@ -12,6 +12,41 @@ This repository focuses on:
 
 It is not a protocol lab that invents its own communication engine.
 
+## PLN Pusertif Baseline
+
+Default communication baseline used across master/slave profiles:
+- `1200 bps`
+- `8E1`
+- `Link Address Length = 2`
+- `CAASDU Length = 2`
+- `IOA Length = 3`
+- `OA = 0`
+- `Link Address = 105`
+- `CAASDU = 105`
+
+This baseline lives in:
+- [Models/ConnectionSettings.cs](D:/CODEX/NewEx/IEC101MasterTester/Models/ConnectionSettings.cs)
+- [IecSlaveSimulator/Models/SlaveConnectionSettings.cs](D:/CODEX/NewEx/IEC101MasterTester/IecSlaveSimulator/Models/SlaveConnectionSettings.cs)
+
+## Class Data Semantics
+
+Important analyzer rule:
+- `Class 1 / Class 2` is not a literal IOA field.
+- It is delivery context inferred from IEC-101 request/response flow.
+
+Current intended interpretation:
+- response to `FC10` -> `Class 1`
+- response to `FC11` -> `Class 2`
+- `GI` / `INTERROGATED_BY_STATION` -> `Class 2` delivery path
+- `BACKGROUND_SCAN` / `PERIODIC` -> `Class 2`
+- `Spontaneous` is event traffic and must not overwrite factual `COT`
+
+Files that matter:
+- [Services/Iec101/Iec101MasterService.cs](D:/CODEX/NewEx/IEC101MasterTester/Services/Iec101/Iec101MasterService.cs)
+- [ViewModels/MainViewModel.cs](D:/CODEX/NewEx/IEC101MasterTester/ViewModels/MainViewModel.cs)
+- [Models/ValueViewerRow.cs](D:/CODEX/NewEx/IEC101MasterTester/Models/ValueViewerRow.cs)
+- [Models/LineMonitorRow.cs](D:/CODEX/NewEx/IEC101MasterTester/Models/LineMonitorRow.cs)
+
 ## Core Rules
 
 - All IEC-101 communication must go through `lib60870.NET`.

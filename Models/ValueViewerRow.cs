@@ -22,6 +22,7 @@ namespace IEC101MasterTester.Models
         private string _acd;
         private string _cot;
         private string _trafficClass;
+        private string _deliveryContext;
         private string _updateSource;
         private string _pointKey;
         private string _typeId;
@@ -47,6 +48,7 @@ namespace IEC101MasterTester.Models
         public string Acd { get => _acd; set => SetField(ref _acd, value); }
         public string Cot { get => _cot; set => SetField(ref _cot, value); }
         public string TrafficClass { get => _trafficClass; set => SetField(ref _trafficClass, value); }
+        public string DeliveryContext { get => _deliveryContext; set => SetField(ref _deliveryContext, value); }
         public string UpdateSource { get => _updateSource; set => SetField(ref _updateSource, value); }
         public string PointKey { get => _pointKey; set => SetField(ref _pointKey, value); }
         public string TypeId { get => _typeId; set => SetField(ref _typeId, value); }

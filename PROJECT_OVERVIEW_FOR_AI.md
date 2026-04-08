@@ -30,6 +30,34 @@ The key rule across the project:
 - UI/analyzer layers are passive observers and validators
 - redundancy policy belongs above the protocol stack
 
+## Protocol Truth Rules
+
+### Communication baseline
+Reference IEC-101 profile used by this repo:
+- `1200 bps`
+- `8E1`
+- `Link Address Length = 2`
+- `CAASDU Length = 2`
+- `IOA Length = 3`
+- `Link Address = 105`
+- `CAASDU = 105`
+- `Originator Address = 0`
+
+### Class Data semantics
+`Class Data` is not a literal field inside the IOA payload.
+
+It is delivery-context metadata inferred from IEC-101 transaction flow:
+- response to `FC10` -> `Class 1`
+- response to `FC11` -> `Class 2`
+- `GI / INTERROGATED_BY_STATION` -> `Class 2`
+- `BACKGROUND_SCAN / PERIODIC` -> `Class 2`
+- spontaneous traffic is event-oriented and must not overwrite factual `COT`
+
+Practical split used in this project:
+- `COT` = factual application-layer cause
+- `ACD` = factual link-layer indication from secondary frame
+- `Class Data` = inferred delivery context
+
 ## Main Repository Structure
 
 ### `App.xaml` / `App.xaml.cs`
@@ -76,6 +104,14 @@ Important design direction:
 - this window is becoming the primary operator shell for redundancy testing
 - it should stay responsive and compact
 - it should focus on auditability rather than decorative dashboards
+
+Important current caution:
+- NUC must not diverge from `MainWindow` on protocol truth
+- if `Value Viewer` class/timestamp differs, compare:
+  - `Services/Iec101/Iec101MasterService.cs`
+  - `ViewModels/MainViewModel.cs`
+  - metadata overwrite rules
+  - NUC dual-link last-writer behavior
 
 ### `Views/NucSoeAuditWindow.xaml` / `.cs`
 Dedicated NUC SOE audit workspace.
@@ -157,6 +193,12 @@ It currently owns:
 
 This file is large and central.
 Most cross-window behavior flows through it.
+
+It also carries the most important NUC-specific projection logic:
+- NUC value aggregation
+- NUC event log projection
+- NUC line monitor projection
+- metadata overwrite guards to prevent `GI/Class 2` traffic from blindly stomping stronger value metadata
 
 ### `ViewModels/CommandLifeTrackerEngine.cs`
 Small dedicated command lifecycle engine.
@@ -387,4 +429,3 @@ Favor changes that:
 - preserve GI responsiveness
 - keep redundancy visuals accurate but not expensive
 - keep the slave simulator and master analyzer roles cleanly separated
-

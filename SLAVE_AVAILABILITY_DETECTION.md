@@ -22,6 +22,11 @@ The state machine consumes only passive evidence already produced by the tester:
 - error frame observations
 - availability timing counters already tracked in `MainViewModel`
 
+Important protocol note:
+- `Class Data` is inferred delivery context, not a literal field from the IOA payload
+- availability logic may use `Class 1 / Class 2` as supporting evidence only
+- it must not overwrite factual `COT` or `ACD`
+
 ## States
 
 ### `Disconnected`

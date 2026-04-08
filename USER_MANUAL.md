@@ -72,6 +72,37 @@ Typical operator flow:
    - `Availability Dashboard` for long-run health
    - `Findings` for analyzer verdicts
 
+## Communication Baseline
+
+Default PLN Pusertif profile used in this project:
+- `1200 bps`
+- `8E1`
+- `Link Address Length = 2`
+- `CAASDU Length = 2`
+- `IOA Length = 3`
+- `Link Address = 105`
+- `CAASDU = 105`
+- `OA = 0`
+
+## How To Read `Class Data`
+
+Important:
+- `Class Data` is not written literally inside each IOA payload.
+- it is inferred from IEC-101 delivery context.
+
+Practical meaning in this project:
+- response to `Class 1 request (FC10)` -> `Class 1`
+- response to `Class 2 request (FC11)` -> `Class 2`
+- `GI response` -> `Class 2` delivery path
+- `BACKGROUND_SCAN / PERIODIC` -> `Class 2`
+- `COT` remains separate and factual
+
+If `MainWindow` and `NUC` disagree on `Class Data`, trust the raw line/frame context first and inspect:
+- `Line Monitor`
+- `NUC Link Trace`
+- current `COT`
+- whether traffic was `GI`, `FC10`, `FC11`, or spontaneous
+
 ## Notes
 
 - This project is designed for practical FAT/troubleshooting, not decorative visualization.

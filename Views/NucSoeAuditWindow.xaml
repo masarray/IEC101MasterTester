@@ -249,6 +249,8 @@
                         <DataGridTextColumn Header="Channel" Binding="{Binding Source}" Width="80" />
                         <DataGridTextColumn Header="Type ID" Binding="{Binding TypeId}" Width="105" />
                         <DataGridTextColumn Header="COT" Binding="{Binding Cot}" Width="90" />
+                        <DataGridTextColumn Header="Delivery Context" Binding="{Binding SourceKind}" Width="150" />
+                        <DataGridTextColumn Header="Class Context" Binding="{Binding ClassKind}" Width="110" />
                         <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="120" />
                         <DataGridTextColumn Header="Quality" Binding="{Binding Quality}" Width="90" />
                     </DataGrid.Columns>

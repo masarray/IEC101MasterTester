@@ -22,5 +22,6 @@ namespace IEC101MasterTester.Services.Iec101
         Task SendSingleCommandAsync(int ioa, bool state, bool select = false, int quality = 0);
         Task SendDoubleCommandAsync(int ioa, bool on, bool select = false, int quality = 0);
         Task SendStepCommandAsync(int ioa, bool raise, bool select = false, int quality = 0);
+        Task SendSetpointNormalizedCommandAsync(int ioa, float normalizedValue, bool select = false, int quality = 0);
     }
 }

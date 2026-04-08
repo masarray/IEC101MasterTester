@@ -817,12 +817,35 @@ namespace IEC101MasterTester.Views
 
             if (!viewModel.CanOpenSelectedNucValueCommand)
             {
-                MessageBox.Show(this, "Pilih signal Single Point, Double Point, atau Step Position terlebih dahulu.", "NUC Redundancy", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "NUC Redundancy", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             string family = viewModel.GetSelectedNucValueCommandFamily();
             ValueViewerRow row = viewModel.SelectedNucValue;
+            if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
+            {
+                int commandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa();
+                int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
+                SetpointCommandWindowModel setpointModel = new SetpointCommandWindowModel
+                {
+                    SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Setpoint",
+                    SignalInfo = row == null ? string.Empty : string.Format("Feedback IOA {0} | {1}", row.IOA, row.Type),
+                    CommandIoa = commandIoa,
+                    FeedbackIoa = feedbackIoa,
+                    FeedbackName = OfficialPointProfiles.GetDisplayNameOrDefault(feedbackIoa, "POAQ"),
+                    CommandLifeMonitor = viewModel.CommandLifeMonitor,
+                    UseNucSession = true
+                };
+
+                SetpointCommandWindow setpointWindow = new SetpointCommandWindow(viewModel, setpointModel)
+                {
+                    Owner = this
+                };
+                setpointWindow.ShowDialog();
+                return;
+            }
+
             SignalCommandWindowModel model = new SignalCommandWindowModel
             {
                 Family = family,

@@ -135,6 +135,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Views\SetpointCommandWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\BufferedEventAuditWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -255,6 +259,10 @@
     </Compile>
     <Compile Include="Views\SignalCommandWindow.xaml.cs">
       <DependentUpon>SignalCommandWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\SetpointCommandWindow.xaml.cs">
+      <DependentUpon>SetpointCommandWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Views\BufferedEventAuditWindow.xaml.cs">

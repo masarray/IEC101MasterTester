@@ -657,6 +657,10 @@
                         CornerRadius="10"
                         Padding="10,8">
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="16" />
@@ -735,6 +739,33 @@
                                        FontWeight="SemiBold"
                                        VerticalAlignment="Center" />
                         </StackPanel>
+
+                        <Border Grid.Row="1"
+                                Grid.ColumnSpan="9"
+                                Margin="0,10,0,0"
+                                Padding="10,8"
+                                Background="#0B1320"
+                                BorderBrush="#223449"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <StackPanel>
+                                <TextBlock Text="Diagnostics"
+                                           Foreground="{StaticResource SecondaryTextBrush}"
+                                           FontSize="10" />
+                                <TextBlock x:Name="LinkADiagnosticTextBlock"
+                                           Margin="0,6,0,0"
+                                           Foreground="{StaticResource AppForegroundBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Text="Link A: waiting for trace data." />
+                                <TextBlock x:Name="LinkBDiagnosticTextBlock"
+                                           Margin="0,4,0,0"
+                                           Foreground="{StaticResource AppForegroundBrush}"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"
+                                           Text="Link B: waiting for trace data." />
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Border>
             </Grid>

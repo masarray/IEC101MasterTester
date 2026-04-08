@@ -163,8 +163,8 @@ namespace IEC101MasterTester.Views
                     Value = string.IsNullOrWhiteSpace(row.ValueText) ? "-" : row.ValueText,
                     Cot = string.IsNullOrWhiteSpace(row.CotText) ? "-" : row.CotText,
                     Quality = string.IsNullOrWhiteSpace(row.QualityText) ? "-" : row.QualityText,
-                    SourceKind = string.IsNullOrWhiteSpace(row.Origin) ? "-" : row.Origin,
-                    ClassKind = "-",
+                    SourceKind = string.IsNullOrWhiteSpace(row.DeliveryContext) ? (string.IsNullOrWhiteSpace(row.Origin) ? "-" : row.Origin) : row.DeliveryContext,
+                    ClassKind = string.IsNullOrWhiteSpace(row.ClassContext) ? "-" : row.ClassContext,
                     ReplayFlagText = "-",
                     SwitchoverContext = ClassifySwitchoverContext(row, switchoverUtc)
                 });
@@ -858,7 +858,8 @@ namespace IEC101MasterTester.Views
                 Event = source?.Origin ?? row?.Event ?? "-",
                 Value = row?.Value ?? "-",
                 Quality = row?.Quality ?? "-",
-                Cot = row?.Cot ?? "-"
+                Cot = row?.Cot ?? "-",
+                DataClass = row?.ClassKind ?? "-"
             };
         }
 

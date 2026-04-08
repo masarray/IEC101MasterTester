@@ -180,6 +180,7 @@ namespace IEC101MasterTester.Views
             NavigatorStartLabel.Text = windowStart.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
             NavigatorEndLabel.Text = windowEnd.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
             UpdateReadout();
+            UpdateDiagnostics(parsedA, parsedB);
             SyncGridSelections();
         }
 
@@ -619,6 +620,89 @@ namespace IEC101MasterTester.Views
             SelectedTimeTextBlock.Text = _selectedTime.HasValue
                 ? _selectedTime.Value.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)
                 : "--:--:--.---";
+        }
+
+        private void UpdateDiagnostics(IReadOnlyList<RowWithTime> parsedA, IReadOnlyList<RowWithTime> parsedB)
+        {
+            LinkADiagnosticTextBlock.Text = "Link A: " + BuildDiagnosticText(parsedA);
+            LinkBDiagnosticTextBlock.Text = "Link B: " + BuildDiagnosticText(parsedB);
+        }
+
+        private static string BuildDiagnosticText(IReadOnlyList<RowWithTime> rows)
+        {
+            if (rows == null || rows.Count == 0)
+            {
+                return "No response from RTU.";
+            }
+
+            bool hasTx = rows.Any(r => string.Equals(r.Row.Direction, "TX", StringComparison.OrdinalIgnoreCase));
+            bool hasRx = rows.Any(r => string.Equals(r.Row.Direction, "RX", StringComparison.OrdinalIgnoreCase));
+            bool hasFixedRx = rows.Any(r => string.Equals(r.Row.Direction, "RX", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(r.Row.FrameType, "Fixed", StringComparison.OrdinalIgnoreCase));
+            bool hasSingleCharAck = rows.Any(r => string.Equals(r.Row.Direction, "RX", StringComparison.OrdinalIgnoreCase)
+                && (string.Equals(r.Row.FrameType, "Single Char", StringComparison.OrdinalIgnoreCase)
+                    || Contains(r.Row, "Single-character ACK")));
+            bool hasAsdu = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase));
+            bool giSent = rows.Any(r => Contains(r.Row, "GI command sent"));
+            bool giActCon = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+                && Contains(r.Row, "C_IC_NA_1", "General interrogation command")
+                && Contains(r.Row, "ACTIVATION CON", "ACT_CON"));
+            bool acdObserved = rows.Any(r => string.Equals(r.Row.ACD, "1", StringComparison.OrdinalIgnoreCase)
+                || Contains(r.Row, "ACD asserted", "ACD=1"));
+            bool class1Observed = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(r.Row.DataClass, "Class 1", StringComparison.OrdinalIgnoreCase));
+
+            if (hasTx && !hasRx)
+            {
+                return "No response from RTU.";
+            }
+
+            if (hasRx && !hasFixedRx && !hasSingleCharAck && !hasAsdu)
+            {
+                return "Link confirm/fixed frame not observed.";
+            }
+
+            if (hasRx && !hasAsdu)
+            {
+                return hasSingleCharAck
+                    ? "RX exists but no ASDU observed. Possible address/profile mismatch."
+                    : "RX exists but no ASDU observed. Possible single-char ACK mismatch.";
+            }
+
+            if (giSent && !giActCon)
+            {
+                return "GI sent but no ACT_CON.";
+            }
+
+            if (acdObserved && !class1Observed)
+            {
+                return "ACD observed but Class 1 not yet received.";
+            }
+
+            return hasAsdu
+                ? "Link response and ASDU observed."
+                : "Waiting for stronger communication evidence.";
+        }
+
+        private static bool Contains(LineMonitorRow row, params string[] needles)
+        {
+            string summary = row == null ? string.Empty : row.Summary ?? string.Empty;
+            string detail = row == null ? string.Empty : row.Detail ?? string.Empty;
+            string asduType = row == null ? string.Empty : row.AsduType ?? string.Empty;
+            string cot = row == null ? string.Empty : row.COT ?? string.Empty;
+
+            foreach (string needle in needles)
+            {
+                if (summary.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0
+                    || detail.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0
+                    || asduType.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0
+                    || cot.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void SetFollowRight(bool enabled)

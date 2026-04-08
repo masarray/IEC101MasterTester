@@ -504,7 +504,7 @@ namespace IecSlaveSimulator.Services
             if (commandSignal == null || targetSignal == null)
                 return RejectCommand(connection, asdu, "Normalized setpoint rejected: binding not found.");
 
-            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, CommandIntent.On, false, "Normalized setpoint"))
+            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, CommandIntent.On, command.QOS.Select, "Normalized setpoint"))
                 return true;
 
             SignalDefinition updatedTarget = CloneSignal(targetSignal);
@@ -521,8 +521,9 @@ namespace IecSlaveSimulator.Services
 
             LogStatus("CMD", string.Format("Normalized setpoint on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
 
-            if (updatedTarget.SpontaneousEnabled || string.Equals(updatedTarget.LiveCot, "CmdFb", StringComparison.OrdinalIgnoreCase))
-                EnqueueSignal(updatedTarget, ResolveCot(updatedTarget.LiveCot), true);
+            SignalDefinition publishSignal = CloneSignal(updatedTarget);
+            publishSignal.LiveCot = "CmdFb";
+            EnqueueSignal(publishSignal, ResolveCot(publishSignal.LiveCot), true);
 
             return true;
         }

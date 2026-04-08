@@ -37,5 +37,7 @@ namespace IEC101MasterTester.Services.Redundancy
         Task SendDoubleCommandAsync(int ioa, bool on, bool select = false, int quality = 0);
 
         Task SendStepCommandAsync(int ioa, bool raise, bool select = false, int quality = 0);
+
+        Task SendSetpointNormalizedCommandAsync(int ioa, float normalizedValue, bool select = false, int quality = 0);
     }
 }

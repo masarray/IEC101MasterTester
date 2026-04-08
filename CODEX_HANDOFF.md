@@ -2,6 +2,34 @@
 
 ## Latest local handoff - 2026-03-30
 
+### Latest protocol/class note - 2026-04-08
+
+Current critical truth for continuation:
+- `Class Data` is delivery context, not an IOA field
+- do not assign `Class 1 / Class 2` by point type alone
+- current project baseline:
+  - response to `FC10` -> `Class 1`
+  - response to `FC11` -> `Class 2`
+  - `GI / INTERROGATED_BY_STATION` -> `Class 2`
+  - `BACKGROUND_SCAN / PERIODIC` -> `Class 2`
+- `COT` must stay factual from callback data
+- `ACD` must stay factual from secondary control bits
+
+Recent NUC fixes already applied:
+- `NUC Value Viewer` now exposes `Class`
+- `NUC Event Log` now exposes `Class`
+- `NUC Line Monitor` now exposes `ACD` and `Class`
+- NUC value upsert now uses metadata overwrite guard closer to `MainWindow`
+- NUC value timestamp fallback now prefers protocol/snapshot/receive time rather than leaving `-`
+- `GetAsduClass(asdu)` now maps `BACKGROUND_SCAN` and `PERIODIC` explicitly to `Class 2`
+
+Current caution:
+- if NUC and Main still disagree on `Class`, inspect:
+  - `Services/Iec101/Iec101MasterService.cs`
+  - `ViewModels/MainViewModel.cs`
+  - dual-link last-writer behavior
+  - whether traffic was spontaneous, GI, FC10, or FC11 response
+
 ### Update snapshot - latest source of truth
 
 Current working branch:

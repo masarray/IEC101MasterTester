@@ -69,11 +69,11 @@ namespace IecSlaveSimulator.Models
             return new List<SignalDefinition>
             {
                 CreateBinary(8388754, "MPU / Voltage Status", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(8388714, "L1FT Main Link Fault", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(8388715, "L2FT Backup Link Fault", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(8388716, "MPU 1 Trip", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(8388717, "MPU 2 Trip", SignalPublishMode.Spontaneous, "ON"),
-                CreateBinary(8388725, "IEDF IED Faulty", SignalPublishMode.Spontaneous, "ON"),
+                CreateBinary(8388714, "L1FT Main Link Fault", SignalPublishMode.Spontaneous, "OFF"),
+                CreateBinary(8388715, "L2FT Backup Link Fault", SignalPublishMode.Spontaneous, "OFF"),
+                CreateBinary(8388716, "MPU 1 Trip", SignalPublishMode.Spontaneous, "OFF"),
+                CreateBinary(8388717, "MPU 2 Trip", SignalPublishMode.Spontaneous, "OFF"),
+                CreateBinary(8388725, "IEDF IED Faulty", SignalPublishMode.Spontaneous, "OFF"),
 
                 CreateDoubleStatus(16712689, "Feeder CB1 Status", "ON"),
                 CreateDoubleStatus(16712686, "Kopel CB2 Status", "ON"),
@@ -85,13 +85,13 @@ namespace IecSlaveSimulator.Models
                 CreateDoubleStatus(16712710, "Tap Changer Auto / Manual", "ON"),
 
                 CreateAnalog(790448, "Tap Position Indication", "7", 0d, 15d, 1d, SlaveSignalType.StepPosition),
-                CreateAnalog(790446, "Feeder Active Power P1", "12.5", 11.8d, 13.4d, 0.1d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
-                CreateAnalog(790447, "Feeder Reactive Power Q1", "4.2", 3.8d, 4.7d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
-                CreateAnalog(790438, "Kopel Active Power P2", "10.1", 9.5d, 10.8d, 0.08d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
-                CreateAnalog(790439, "Kopel Reactive Power Q2", "3.7", 3.2d, 4.2d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
-                CreateAnalog(790442, "Trafo Active Power", "21.2", 20.4d, 22.1d, 0.12d, SlaveSignalType.MeasuredShort, SignalPublishMode.Spontaneous),
-                CreateAnalog(790443, "Trafo Reactive Power", "5.9", 5.3d, 6.4d, 1d, SlaveSignalType.MeasuredScaled, SignalPublishMode.Spontaneous),
-                CreateAnalog(790449, "Real Power Setting Measured", "0.15", 0d, 1d, 0.01d, SlaveSignalType.MeasuredNormalized, SignalPublishMode.Spontaneous),
+                CreateAnalog(790446, "Feeder Active Power P1", "12.5", 11.8d, 13.4d, 0.1d, SlaveSignalType.MeasuredShort),
+                CreateAnalog(790447, "Feeder Reactive Power Q1", "4.2", 3.8d, 4.7d, 1d, SlaveSignalType.MeasuredScaled),
+                CreateAnalog(790438, "Kopel Active Power P2", "10.1", 9.5d, 10.8d, 0.08d, SlaveSignalType.MeasuredShort),
+                CreateAnalog(790439, "Kopel Reactive Power Q2", "3.7", 3.2d, 4.2d, 1d, SlaveSignalType.MeasuredScaled),
+                CreateAnalog(790442, "Trafo Active Power", "21.2", 20.4d, 22.1d, 0.12d, SlaveSignalType.MeasuredShort),
+                CreateAnalog(790443, "Trafo Reactive Power", "5.9", 5.3d, 6.4d, 1d, SlaveSignalType.MeasuredScaled),
+                CreateAnalog(790449, "Real Power Setting Measured", "0.15", 0d, 1d, 0.01d, SlaveSignalType.MeasuredNormalized),
 
                 CreateDoubleCommand(68542, "Feeder CB1 Double Command", 16712689),
                 CreateDoubleCommand(68539, "Kopel CB2 Double Command", 16712686),

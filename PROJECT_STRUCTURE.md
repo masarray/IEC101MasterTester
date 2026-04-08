@@ -13,6 +13,23 @@
 - [App.xaml](D:/CODEX/NewEx/IEC101MasterTester/App.xaml)
 - [App.xaml.cs](D:/CODEX/NewEx/IEC101MasterTester/App.xaml.cs)
 
+## Communication Truth
+
+Reference IEC-101 baseline:
+- `1200 bps`
+- `8E1`
+- `Link Address Length = 2`
+- `CAASDU Length = 2`
+- `IOA Length = 3`
+- `Link Address = 105`
+- `CAASDU = 105`
+
+`Class Data` note:
+- not a literal IOA field
+- inferred from polling/request context
+- use `FC10/FC11`, `COT`, GI state, and frame direction
+- `BACKGROUND_SCAN` and `INTERROGATED_BY_STATION` belong to `Class 2` delivery path
+
 ## UI Layers
 
 - [MainWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/MainWindow.xaml)

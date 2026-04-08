@@ -138,6 +138,13 @@ namespace IEC101MasterTester.Services.Redundancy
                 : _service.SendStepCommandAsync(ioa, raise, select, quality);
         }
 
+        public Task SendSetpointNormalizedCommandAsync(int ioa, float normalizedValue, bool select = false, int quality = 0)
+        {
+            return Role != NucChannelRole.Active
+                ? Task.CompletedTask
+                : _service.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select, quality);
+        }
+
         private async Task StartWithRoleAsync(NucChannelRole role)
         {
             ConnectionSettings settings;

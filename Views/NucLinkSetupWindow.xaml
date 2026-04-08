@@ -49,27 +49,193 @@
             </Grid>
         </Border>
 
-        <StackPanel>
-            <TextBlock FontSize="20"
-                       FontWeight="SemiBold"
-                       Foreground="#F8FAFC"
-                       Text="IEC-101 Dual Link Setup" />
-            <TextBlock Margin="0,6,0,0"
-                       Foreground="#94A3B8"
-                       TextWrapping="Wrap"
-                       Text="Configure Link A and Link B once, then use the NUC window for observation and switchover analysis." />
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock FontSize="20"
+                                   FontWeight="SemiBold"
+                                   Foreground="#F8FAFC"
+                                   Text="IEC-101 Dual Link Setup" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Foreground="#94A3B8"
+                                   TextWrapping="Wrap"
+                                   Text="Configure Link A and Link B once, then use the NUC window for observation and switchover analysis." />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Top">
+                        <Button Width="96"
+                                Height="32"
+                                Margin="0,0,8,0"
+                                Style="{StaticResource TactileSecondaryButtonStyle}"
+                                Click="ApplyPlnDefaults_Click"
+                                Content="PLN Default" />
+                        <Button Width="96"
+                                Height="32"
+                                Style="{StaticResource TactileSecondaryButtonStyle}"
+                                Click="ToggleExpert_Click"
+                                Content="Expert" />
+                    </StackPanel>
+                </Grid>
 
-            <TextBlock Margin="0,18,0,4" Foreground="#CBD5E1" Text="Link A / Main COM Port" />
-            <ComboBox ItemsSource="{Binding SerialPortOptions}" SelectedItem="{Binding PrimaryPort, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="0,18,0,4" Foreground="#CBD5E1" Text="Link A / Main COM Port" />
+                <ComboBox Style="{StaticResource DarkPopupComboBoxStyle}"
+                          ItemsSource="{Binding SerialPortOptions}"
+                          SelectedItem="{Binding PrimaryPort, UpdateSourceTrigger=PropertyChanged}" />
 
-            <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="Link B / Backup COM Port" />
-            <ComboBox ItemsSource="{Binding SerialPortOptions}" SelectedItem="{Binding BackupPort, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="Link B / Backup COM Port" />
+                <ComboBox Style="{StaticResource DarkPopupComboBoxStyle}"
+                          ItemsSource="{Binding SerialPortOptions}"
+                          SelectedItem="{Binding BackupPort, UpdateSourceTrigger=PropertyChanged}" />
 
-            <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="Redundancy Mode" />
-            <ComboBox ItemsSource="{Binding ModeOptions}" SelectedItem="{Binding SelectedMode, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="Redundancy Mode" />
+                <ComboBox Style="{StaticResource DarkPopupComboBoxStyle}"
+                          ItemsSource="{Binding ModeOptions}"
+                          SelectedItem="{Binding SelectedMode, UpdateSourceTrigger=PropertyChanged}" />
 
-            <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="GI Policy" />
-            <ComboBox ItemsSource="{Binding GiPolicyOptions}" SelectedItem="{Binding SelectedGiPolicy, UpdateSourceTrigger=PropertyChanged}" />
-        </StackPanel>
+                <TextBlock Margin="0,14,0,4" Foreground="#CBD5E1" Text="GI Policy" />
+                <ComboBox Style="{StaticResource DarkPopupComboBoxStyle}"
+                          ItemsSource="{Binding GiPolicyOptions}"
+                          SelectedItem="{Binding SelectedGiPolicy, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Expander Margin="0,18,0,0"
+                          IsExpanded="{Binding IsExpertExpanded}"
+                          Background="#101826"
+                          BorderBrush="#334155"
+                          BorderThickness="1"
+                          Foreground="#E2E8F0">
+                    <Expander.Header>
+                        <TextBlock FontWeight="SemiBold" Text="Expert Communication Parameters" />
+                    </Expander.Header>
+                    <Grid Margin="12,10,12,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Baud Rate" />
+                        <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding BaudRateOptions}"
+                                  SelectedItem="{Binding BaudRate}" />
+
+                        <TextBlock Grid.Row="1" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Data Bits" />
+                        <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding DataBitOptions}"
+                                  SelectedItem="{Binding DataBits}" />
+
+                        <TextBlock Grid.Row="2" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Parity" />
+                        <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding ParityOptions}"
+                                  SelectedItem="{Binding Parity}" />
+
+                        <TextBlock Grid.Row="3" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Stop Bits" />
+                        <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding StopBitOptions}"
+                                  SelectedItem="{Binding StopBits}" />
+
+                        <TextBlock Grid.Row="4" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Link Layer Mode" />
+                        <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding LinkLayerModeOptions}"
+                                  SelectedItem="{Binding LinkLayerMode}" />
+
+                        <TextBlock Grid.Row="5" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Link Address Length" />
+                        <ComboBox Grid.Row="5" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding LinkAddressLengthOptions}"
+                                  SelectedItem="{Binding LinkAddressLength}" />
+
+                        <TextBlock Grid.Row="6" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Link Address" />
+                        <TextBox Grid.Row="6" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding LinkAddress}" />
+
+                        <TextBlock Grid.Row="7" Foreground="#CBD5E1" Margin="0,0,12,8" Text="CASDU Length" />
+                        <ComboBox Grid.Row="7" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding CasduLengthOptions}"
+                                  SelectedItem="{Binding CasduLength}" />
+
+                        <TextBlock Grid.Row="8" Foreground="#CBD5E1" Margin="0,0,12,8" Text="CASDU / CAASDU" />
+                        <TextBox Grid.Row="8" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding CasduAddress}" />
+
+                        <TextBlock Grid.Row="9" Foreground="#CBD5E1" Margin="0,0,12,8" Text="IOA Length" />
+                        <ComboBox Grid.Row="9" Grid.Column="1" Margin="0,0,0,8"
+                                  Style="{StaticResource DarkPopupComboBoxStyle}"
+                                  ItemsSource="{Binding IoaLengthOptions}"
+                                  SelectedItem="{Binding IoaLength}" />
+
+                        <TextBlock Grid.Row="10" Foreground="#CBD5E1" Margin="0,0,12,8" Text="COT Length" />
+                        <TextBlock Grid.Row="10" Grid.Column="1" Margin="0,6,0,8" Foreground="#94A3B8" Text="{Binding CotLengthText}" />
+
+                        <TextBlock Grid.Row="11" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Originator / OA" />
+                        <TextBox Grid.Row="11" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding OriginatorAddress}" />
+
+                        <TextBlock Grid.Row="12" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Response Timeout" />
+                        <TextBox Grid.Row="12" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding ResponseTimeoutMs}" />
+
+                        <TextBlock Grid.Row="13" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Class 1 Poll Interval" />
+                        <TextBox Grid.Row="13" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding Class1PollIntervalMs}" />
+
+                        <TextBlock Grid.Row="14" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Class 2 Poll Interval" />
+                        <TextBox Grid.Row="14" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding PollIntervalMs}" />
+
+                        <TextBlock Grid.Row="15" Foreground="#CBD5E1" Margin="0,0,12,8" Text="Busy Backoff" />
+                        <TextBox Grid.Row="15" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding BusyBackoffMs}" />
+
+                        <TextBlock Grid.Row="16" Foreground="#CBD5E1" Margin="0,0,12,8" Text="GI Startup Delay" />
+                        <TextBox Grid.Row="16" Grid.Column="1" Margin="0,0,0,8"
+                                 Style="{StaticResource DarkPopupTextBoxStyle}"
+                                 Text="{Binding GiStartupDelayMs}" />
+
+                        <TextBlock Grid.Row="17" Foreground="#CBD5E1" Margin="0,0,12,0" Text="Use Single Char ACK" />
+                        <CheckBox Grid.Row="17" Grid.Column="1" Foreground="#E2E8F0" IsChecked="{Binding UseSingleCharAck}" />
+                    </Grid>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
     </DockPanel>
 </Window>

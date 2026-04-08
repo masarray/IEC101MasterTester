@@ -36,11 +36,44 @@ WPF `.NET Framework 4.8` IEC-101 testing suite for master analysis, NUC redundan
 - Slave simulator is its own workspace and should be treated as a separate subsystem.
 - Event log should stay SCADA-like, not raw frame spam.
 
+## Current Communication Baseline
+- `1200 bps`
+- `8E1`
+- `LinkAddressLength = 2`
+- `CasduLength = 2`
+- `IoaLength = 3`
+- `LinkAddress = 105`
+- `CasduAddress = 105`
+- `OriginatorAddress = 0`
+
+## Current Class Data Rule
+- `Class Data` is delivery context, not an IOA attribute.
+- Engine truth comes from:
+  - primary request context (`FC10` vs `FC11`)
+  - `COT`
+  - GI state
+  - link-layer ACD observations
+- Current intended mapping:
+  - `FC10 response` -> `Class 1`
+  - `FC11 response` -> `Class 2`
+  - `GI / INTERROGATED_BY_STATION` -> `Class 2`
+  - `BACKGROUND_SCAN / PERIODIC` -> `Class 2`
+  - `Spontaneous` stays event-oriented and must not overwrite `COT`
+
 ## Current Outstanding Issue
-The last active problem is command confirmation latency on NUC:
-- GI is okay again
-- command confirmation still feels slower than MainWindow
-- likely cause is extra UI/observer work in the NUC command RX path
+Current sensitive/debug-heavy areas:
+- NUC UI can feel heavier than `MainWindow` because it updates:
+  - value viewer
+  - event log
+  - line monitor
+  - link trace
+  - traffic badges
+  - ribbon animations
+- `Class Data` debugging must compare:
+  - [Services/Iec101/Iec101MasterService.cs](D:/CODEX/NewEx/IEC101MasterTester/Services/Iec101/Iec101MasterService.cs)
+  - [ViewModels/MainViewModel.cs](D:/CODEX/NewEx/IEC101MasterTester/ViewModels/MainViewModel.cs)
+  - [MainWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/MainWindow.xaml)
+  - [Views/NucRedundancyWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/NucRedundancyWindow.xaml)
 
 ## Best Starting Point For Debugging
 If command responsiveness is the topic:
@@ -58,4 +91,3 @@ If slave dual-link behavior is the topic:
 
 ## Practical Rule For Future Changes
 Keep protocol truth in services, keep verdicts in the viewmodel/rule layer, and keep the UI lightweight.
-

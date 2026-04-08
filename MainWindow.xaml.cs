@@ -451,17 +451,46 @@ namespace IEC101MasterTester
         {
             if (!_viewModel.CanOpenSelectedValueCommand)
             {
-                MessageBox.Show(this, "Pilih signal Single Point, Double Point, atau Step Position terlebih dahulu.", "IEC101MasterTester", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "IEC101MasterTester", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             string family = _viewModel.GetSelectedValueCommandFamily();
+            if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
+            {
+                SetpointCommandWindowModel setpointModel = BuildSetpointCommandModel(false);
+                SetpointCommandWindow setpointWindow = new SetpointCommandWindow(_viewModel, setpointModel)
+                {
+                    Owner = this
+                };
+                setpointWindow.ShowDialog();
+                return;
+            }
+
             SignalCommandWindowModel model = BuildSignalCommandModel(family);
             SignalCommandWindow window = new SignalCommandWindow(_viewModel, model)
             {
                 Owner = this
             };
             window.ShowDialog();
+        }
+
+        private SetpointCommandWindowModel BuildSetpointCommandModel(bool useNucSession)
+        {
+            ValueViewerRow row = _viewModel.SelectedValue;
+            int commandIoa = _viewModel.GetSelectedValueSuggestedCommandIoa();
+            int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
+
+            return new SetpointCommandWindowModel
+            {
+                SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Setpoint",
+                SignalInfo = row == null ? string.Empty : string.Format("Feedback IOA {0} | {1}", row.IOA, row.Type),
+                CommandIoa = commandIoa,
+                FeedbackIoa = feedbackIoa,
+                FeedbackName = OfficialPointProfiles.GetDisplayNameOrDefault(feedbackIoa, "POAQ"),
+                CommandLifeMonitor = _viewModel.CommandLifeMonitor,
+                UseNucSession = useNucSession
+            };
         }
 
         private SignalCommandWindowModel BuildSignalCommandModel(string family)

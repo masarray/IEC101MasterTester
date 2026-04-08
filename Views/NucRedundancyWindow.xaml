@@ -1191,6 +1191,7 @@
                             <DataGridTextColumn Header="Signal Name" Binding="{Binding Name}" Width="*" />
                             <DataGridTextColumn Header="IOA" Binding="{Binding IOA}" Width="90" />
                             <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="120" />
+                            <DataGridTextColumn Header="Class" Binding="{Binding TrafficClass}" Width="80" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -1236,6 +1237,7 @@
                             <DataGridTextColumn Header="IOA" Binding="{Binding IOA}" Width="90" />
                             <DataGridTextColumn Header="Event" Binding="{Binding Event}" Width="140" />
                             <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="150" />
+                            <DataGridTextColumn Header="Class" Binding="{Binding DataClass}" Width="80" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -1289,6 +1291,8 @@
                             <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="120" />
                             <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="60" />
                             <DataGridTextColumn Header="Frame" Binding="{Binding FrameType}" Width="80" />
+                            <DataGridTextColumn Header="ACD" Binding="{Binding ACD}" Width="55" />
+                            <DataGridTextColumn Header="Class" Binding="{Binding DataClass}" Width="80" />
                             <DataGridTextColumn Header="Summary" Binding="{Binding Summary}" Width="*" />
                             <DataGridTextColumn Header="Detail" Binding="{Binding Detail}" Width="2*" />
                         </DataGrid.Columns>

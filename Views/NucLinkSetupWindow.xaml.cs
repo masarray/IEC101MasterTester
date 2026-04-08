@@ -13,7 +13,7 @@ namespace IEC101MasterTester.Views
         {
             InitializeComponent();
             _baseSettings = baseSettings == null ? ConnectionSettings.CreateDefault() : baseSettings.Clone();
-            _viewModel = new NucLinkSetupViewModel(currentSettings);
+            _viewModel = new NucLinkSetupViewModel(currentSettings, _baseSettings);
             DataContext = _viewModel;
         }
 
@@ -30,6 +30,17 @@ namespace IEC101MasterTester.Views
             ResultSettings = settings;
             DialogResult = true;
             Close();
+        }
+
+        private void ToggleExpert_Click(object sender, RoutedEventArgs e)
+        {
+            _viewModel.IsExpertExpanded = !_viewModel.IsExpertExpanded;
+        }
+
+        private void ApplyPlnDefaults_Click(object sender, RoutedEventArgs e)
+        {
+            _viewModel.ApplyPlnPusertifDefaults();
+            _viewModel.IsExpertExpanded = true;
         }
     }
 }

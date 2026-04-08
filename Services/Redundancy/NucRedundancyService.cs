@@ -152,6 +152,17 @@ namespace IEC101MasterTester.Services.Redundancy
                 string.Format("Step command {0} IOA {1} sent through active channel.", raise ? "RAISE" : "LOWER", ioa));
         }
 
+        public Task SendSetpointNormalizedCommandAsync(int ioa, float normalizedValue, bool select = false, int quality = 0)
+        {
+            return DispatchActiveCommandAsync(
+                active => active.SendSetpointNormalizedCommandAsync(ioa, normalizedValue, select, quality),
+                string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    "Setpoint normalized {0:0.###} IOA {1} sent through active channel.",
+                    normalizedValue,
+                    ioa));
+        }
+
         private async Task SendGeneralInterrogationCoreAsync()
         {
             INucLinkChannel active = GetActiveChannel();

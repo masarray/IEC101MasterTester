@@ -17,6 +17,7 @@ namespace IEC101MasterTester.Services.Iec101
             public string Kind { get; set; }
             public int Ioa { get; set; }
             public bool State { get; set; }
+            public float NormalizedValue { get; set; }
             public bool Select { get; set; }
             public int Quality { get; set; }
             public long EnqueuedAt { get; set; }
@@ -539,6 +540,20 @@ namespace IEC101MasterTester.Services.Iec101
             return Task.CompletedTask;
         }
 
+        public Task SendSetpointNormalizedCommandAsync(int ioa, float normalizedValue, bool select = false, int quality = 0)
+        {
+            lock (_syncRoot)
+            {
+                if (_master == null)
+                {
+                    throw new InvalidOperationException("IEC-101 master is not connected.");
+                }
+            }
+
+            EnqueueSetpointCommand(ioa, normalizedValue, select, quality);
+            return Task.CompletedTask;
+        }
+
         private async Task DisconnectInternalAsync(bool raiseDisconnectedState)
         {
             CS101Master master;
@@ -906,6 +921,7 @@ namespace IEC101MasterTester.Services.Iec101
                     if (row != null)
                     {
                         row.TrafficClass = GetAsduClass(asdu);
+                        row.DeliveryContext = GetAsduDeliveryContext(asdu);
 
                         // ACD is a frame-level indication, not a point attribute.
                         // Do not stamp it onto Value Viewer rows.
@@ -1140,6 +1156,24 @@ namespace IEC101MasterTester.Services.Iec101
             }
         }
 
+        private void EnqueueSetpointCommand(int ioa, float normalizedValue, bool select, int quality)
+        {
+            lock (_syncRoot)
+            {
+                _pendingCommand = new PendingCommandRequest
+                {
+                    Kind = "SetpointNormalized",
+                    Ioa = ioa,
+                    NormalizedValue = normalizedValue,
+                    Select = select,
+                    Quality = quality,
+                    EnqueuedAt = SystemUtils.currentTimeMillis()
+                };
+
+                _lastPollAt = 0;
+            }
+        }
+
         private bool TryExecutePendingCommand(CS101Master master, ConnectionSettings settings, long now)
         {
             if (settings.ChannelOperationMode != Iec101ChannelOperationMode.FullActive)
@@ -1199,6 +1233,16 @@ namespace IEC101MasterTester.Services.Iec101
                                     request.State ? StepCommandValue.HIGHER : StepCommandValue.LOWER,
                                     request.Select,
                                     request.Quality));
+                            break;
+
+                        case "SetpointNormalized":
+                            master.SendControlCommand(
+                                CauseOfTransmission.ACTIVATION,
+                                settings.CasduAddress,
+                                new SetpointCommandNormalized(
+                                    request.Ioa,
+                                    request.NormalizedValue,
+                                    new SetpointCommandQualifier(request.Select, request.Quality)));
                             break;
 
                         default:
@@ -1317,26 +1361,33 @@ namespace IEC101MasterTester.Services.Iec101
 
         private string GetAsduClass(ASDU asdu)
         {
-            if (asdu != null && asdu.Cot == CauseOfTransmission.INTERROGATED_BY_STATION)
+            if (asdu == null)
             {
-                return "Class 2";
+                return string.IsNullOrWhiteSpace(_lastRxFrameClass)
+                    ? (string.IsNullOrWhiteSpace(_currentFlowClass) ? "Unknown" : _currentFlowClass)
+                    : _lastRxFrameClass;
             }
 
-            if (asdu != null)
+            switch (asdu.Cot)
             {
-                switch (asdu.TypeId)
-                {
-                    case TypeID.C_IC_NA_1:
-                        return "Class 2";
-                    case TypeID.C_CS_NA_1:
-                    case TypeID.C_SC_NA_1:
-                    case TypeID.C_DC_NA_1:
-                    case TypeID.C_RC_NA_1:
-                    case TypeID.C_SE_NA_1:
-                    case TypeID.C_SE_NB_1:
-                    case TypeID.C_SE_NC_1:
-                        return "Class 1";
-                }
+                case CauseOfTransmission.INTERROGATED_BY_STATION:
+                case CauseOfTransmission.BACKGROUND_SCAN:
+                case CauseOfTransmission.PERIODIC:
+                    return "Class 2";
+            }
+
+            switch (asdu.TypeId)
+            {
+                case TypeID.C_IC_NA_1:
+                    return "Class 2";
+                case TypeID.C_CS_NA_1:
+                case TypeID.C_SC_NA_1:
+                case TypeID.C_DC_NA_1:
+                case TypeID.C_RC_NA_1:
+                case TypeID.C_SE_NA_1:
+                case TypeID.C_SE_NB_1:
+                case TypeID.C_SE_NC_1:
+                    return "Class 1";
             }
 
             if (!string.IsNullOrWhiteSpace(_lastRxFrameClass))
@@ -1355,6 +1406,38 @@ namespace IEC101MasterTester.Services.Iec101
             }
 
             return "-";
+        }
+
+        private string GetAsduDeliveryContext(ASDU asdu)
+        {
+            if (asdu == null)
+            {
+                return "Unknown";
+            }
+
+            switch (asdu.Cot)
+            {
+                case CauseOfTransmission.SPONTANEOUS:
+                    return "Spontaneous";
+                case CauseOfTransmission.INTERROGATED_BY_STATION:
+                    return "GI Response";
+                case CauseOfTransmission.BACKGROUND_SCAN:
+                case CauseOfTransmission.PERIODIC:
+                    return "Response to FC11";
+            }
+
+            string rxClass = string.IsNullOrWhiteSpace(_lastRxFrameClass) ? _currentFlowClass : _lastRxFrameClass;
+            if (string.Equals(rxClass, "Class 1", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Response to FC10";
+            }
+
+            if (string.Equals(rxClass, "Class 2", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Response to FC11";
+            }
+
+            return "Unknown";
         }
 
         private static bool ShouldMapToValueViewer(ASDU asdu)

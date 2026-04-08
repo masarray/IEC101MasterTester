@@ -18,5 +18,7 @@ namespace IEC101MasterTester.Models.Soe
         public string ValueText { get; set; }
         public string QualityText { get; set; }
         public string Origin { get; set; }
+        public string DeliveryContext { get; set; }
+        public string ClassContext { get; set; }
     }
 }

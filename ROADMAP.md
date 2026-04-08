@@ -27,6 +27,10 @@ Next:
 Next:
 - continue moving logic toward explicit rule codes
 - keep analyzer verdicts tied to real IEC evidence
+- keep `Class Data` tied to delivery context:
+  - `FC10` -> `Class 1`
+  - `FC11` / `GI` / `BACKGROUND_SCAN` -> `Class 2`
+  - do not treat class as a literal IOA field
 
 ### 3. Point-profile adoption
 
