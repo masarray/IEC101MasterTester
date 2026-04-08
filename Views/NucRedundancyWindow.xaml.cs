@@ -803,8 +803,32 @@ namespace IEC101MasterTester.Views
 
         private void NucValueViewer_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            OpenSelectedNucValueCommandWindow(null, sender as DataGrid);
+        }
+
+        private void OpenSingleCommand_Click(object sender, RoutedEventArgs e)
+        {
+            OpenSelectedNucValueCommandWindow("Single", NucValueViewerGrid);
+        }
+
+        private void OpenDoubleCommand_Click(object sender, RoutedEventArgs e)
+        {
+            OpenSelectedNucValueCommandWindow("Double", NucValueViewerGrid);
+        }
+
+        private void OpenRegulatingCommand_Click(object sender, RoutedEventArgs e)
+        {
+            OpenSelectedNucValueCommandWindow("Regulating", NucValueViewerGrid);
+        }
+
+        private void OpenSetpointCommand_Click(object sender, RoutedEventArgs e)
+        {
+            OpenSelectedNucValueCommandWindow("Setpoint", NucValueViewerGrid);
+        }
+
+        private void OpenSelectedNucValueCommandWindow(string forcedFamily, DataGrid grid)
+        {
             MainViewModel viewModel = DataContext as MainViewModel;
-            DataGrid grid = sender as DataGrid;
             ValueViewerRow selectedRow = null;
             if (viewModel == null)
             {
@@ -840,7 +864,12 @@ namespace IEC101MasterTester.Views
             }
 
             int? relatedCommandIoa = row == null ? null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
-            string family = relatedCommandIoa.HasValue ? "Setpoint" : viewModel.GetSelectedNucValueCommandFamily();
+            string family = forcedFamily;
+            if (string.IsNullOrWhiteSpace(family))
+            {
+                family = relatedCommandIoa.HasValue ? "Setpoint" : viewModel.GetSelectedNucValueCommandFamily();
+            }
+
             if (family == null && row != null)
             {
                 int commandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa();
@@ -858,7 +887,9 @@ namespace IEC101MasterTester.Views
 
             if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
             {
-                int commandIoa = relatedCommandIoa ?? viewModel.GetSelectedNucValueSuggestedCommandIoa();
+                int commandIoa = relatedCommandIoa
+                    ?? OfficialPointProfiles.TryGetDefaultCommandIoa("Setpoint")
+                    ?? viewModel.GetSelectedNucValueSuggestedCommandIoa();
                 int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
                 SetpointCommandWindowModel setpointModel = new SetpointCommandWindowModel
                 {
@@ -884,7 +915,7 @@ namespace IEC101MasterTester.Views
                 Family = family,
                 SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Signal",
                 SignalInfo = row == null ? string.Empty : string.Format("IOA {0} | {1}", row.IOA, row.Type),
-                CommandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa(),
+                CommandIoa = OfficialPointProfiles.TryGetDefaultCommandIoa(family) ?? viewModel.GetSelectedNucValueSuggestedCommandIoa(),
                 CommandLifeMonitor = viewModel.CommandLifeMonitor,
                 UseNucSession = true
             };

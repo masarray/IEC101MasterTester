@@ -56,7 +56,7 @@ namespace IEC101MasterTester.Views
         private async void SendDirect_Click(object sender, RoutedEventArgs e) => await SendAsync(select: false);
         private async void Select_Click(object sender, RoutedEventArgs e) => await SendAsync(select: true);
         private async void Execute_Click(object sender, RoutedEventArgs e) => await SendAsync(select: false);
-        private void Close_Click(object sender, RoutedEventArgs e) => Close();
+        //private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
         private async Task SendAsync(bool select)
         {

@@ -63,7 +63,7 @@
                             <TextBlock FontSize="18"
                                        FontWeight="SemiBold"
                                        Foreground="#F8FAFC"
-                                       Text="POOP Setpoint Command" />
+                                       Text="Setpoint Command" />
                             <TextBlock Margin="0,6,0,0"
                                        Style="{StaticResource DarkPopupTextBlockStyle}"
                                        Text="{Binding SignalName}" />
@@ -164,7 +164,7 @@
                                         Grid.Column="0"
                                         Height="36"
                                         Style="{StaticResource TactilePrimaryButtonStyle}"
-                                        Content="Send Direct"
+                                        Content="Direct Operate"
                                         Click="SendDirect_Click" />
 
                                 <Button Grid.Row="0"
@@ -175,18 +175,11 @@
                                         Click="Select_Click" />
 
                                 <Button Grid.Row="2"
-                                        Grid.Column="0"
-                                        Height="36"
-                                        Style="{StaticResource TactileSecondaryButtonStyle}"
-                                        Content="Execute"
-                                        Click="Execute_Click" />
-
-                                <Button Grid.Row="2"
                                         Grid.Column="2"
                                         Height="36"
                                         Style="{StaticResource TactileSecondaryButtonStyle}"
-                                        Content="Close"
-                                        Click="Close_Click" />
+                                        Content="Operate"
+                                        Click="Execute_Click" Margin="0,0,8,0" />
                             </Grid>
                         </Grid>
                     </Border>
@@ -208,7 +201,7 @@
                             <TextBlock FontSize="14"
                                        FontWeight="SemiBold"
                                        Foreground="#F8FAFC"
-                                       Text="POAQ Feedback" />
+                                       Text="Setpoint Feedback" />
                             <TextBlock Margin="0,4,0,0"
                                        Foreground="#94A3B8"
                                        Text="{Binding FeedbackHeaderText}" />

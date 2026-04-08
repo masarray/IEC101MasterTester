@@ -387,142 +387,142 @@
 
                     <WrapPanel HorizontalAlignment="Right">
 
-                    <Button Width="108"
+                        <Button Width="108"
             Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="ConfigureLinks_Click"
             ToolTip="Configure Links">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionIconPathStyle}"
                   Data="M12 2 L20 6.5 L20 17.5 L12 22 L4 17.5 L4 6.5 Z M9 12 H15 M12 9 V15"/>
-                            <TextBlock Text="Configure"
+                                <TextBlock Text="Configure"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="108"
+                        <Button Width="108"
         Margin="0,0,6,0"
         IsEnabled="{Binding CanStartNucRedundancySessionButton}"
         Click="StartSession_Click"
         ToolTip="Start Session"
         RenderTransformOrigin="0.5,0.5">
-                        <Button.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Button.RenderTransform>
+                            <Button.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Button.RenderTransform>
 
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ActionPrimaryButtonStyle}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="RenderTransform">
-                                            <Setter.Value>
-                                                <ScaleTransform ScaleX="1.03" ScaleY="1.03" />
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter Property="RenderTransform">
-                                            <Setter.Value>
-                                                <ScaleTransform ScaleX="0.985" ScaleY="0.985" />
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionPrimaryIconPathStyle}"
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ActionPrimaryButtonStyle}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <ScaleTransform ScaleX="1.03" ScaleY="1.03" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <ScaleTransform ScaleX="0.985" ScaleY="0.985" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionPrimaryIconPathStyle}"
       Data="M12 17 V21 M8 21 H16 M15 9.5 L10.5 12.2 V6.8 L15 9.5 M4 3 H20 A2 2 0 0 1 22 5 V15 A2 2 0 0 1 20 17 H4 A2 2 0 0 1 2 15 V5 A2 2 0 0 1 4 3 Z"/>
-                            <TextBlock Text="Start Session"
+                                <TextBlock Text="Start Session"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="108"
+                        <Button Width="108"
             Margin="0,0,6,0"
             Style="{StaticResource ActionDangerButtonStyle}"
             IsEnabled="{Binding CanStopNucRedundancySessionButton}"
             Click="StopSession_Click"
             ToolTip="Stop Session">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionDangerIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionDangerIconPathStyle}"
                   Data="M14.5 12.5 L9.5 7.5 M9.5 12.5 L14.5 7.5 M12 17 V21 M8 21 H16 M4 3 H20 A2 2 0 0 1 22 5 V15 A2 2 0 0 1 20 17 H4 A2 2 0 0 1 2 15 V5 A2 2 0 0 1 4 3 Z"/>
-                            <TextBlock Text="Stop Session"
+                                <TextBlock Text="Stop Session"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="94"
+                        <Button Width="94"
             Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             IsEnabled="{Binding CanStopNucRedundancySessionButton}"
             Click="SendGi_Click"
             ToolTip="Send General Interrogation">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionIconPathStyle}"
                   Data="M6 4 H18 M6 9 H18 M6 14 H12 M14 18 L17 21 L22 15"/>
-                            <TextBlock Text="Send GI"
+                                <TextBlock Text="Send GI"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="94"
+                        <Button Width="94"
             Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="OpenAvailabilityDashboard_Click"
             ToolTip="Open Availability Dashboard">
-                        <StackPanel Orientation="Vertical">
-                            <Viewbox Width="20" Height="20">
-                                <Canvas Width="24" Height="24">
-                                    <Path Style="{StaticResource ActionGaugePathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Viewbox Width="20" Height="20">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Style="{StaticResource ActionGaugePathStyle}"
                           Data="M12 14 L16 10"/>
-                                    <Path Style="{StaticResource ActionGaugePathStyle}"
+                                        <Path Style="{StaticResource ActionGaugePathStyle}"
                           Data="M3.34 19 A10 10 0 1 1 20.66 19"/>
-                                </Canvas>
-                            </Viewbox>
-                            <TextBlock Text="Availability"
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock Text="Availability"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="94"
+                        <Button Width="94"
             Margin="0,0,6,0"
             Style="{StaticResource ActionDangerButtonStyle}"
             Click="ClearBufferEventStatistic_Click"
             ToolTip="Clear Buffer, Event, and Statistic">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionDangerIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionDangerIconPathStyle}"
                   Data="M5 7 H19 M9 7 V5 H15 V7 M8 10 V17 M12 10 V17 M16 10 V17 M7 7 L8 20 H16 L17 7"/>
-                            <TextBlock Text="Clear Runtime"
+                                <TextBlock Text="Clear Runtime"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    
-                    <Button Width="90"
+
+                        <Button Width="90"
             Margin="0,0,6,0"
             Style="{StaticResource ActionButtonStyle}"
             Click="OpenLinkTrace_Click"
             ToolTip="Open Link Trace">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionIconPathStyle}"
                   Data="M3 16 H7 L9 9 L12 14 L15 6 L18 12 H21 M4 4 H20 V20 H4 Z"/>
-                            <TextBlock Text="Link Trace"
+                                <TextBlock Text="Link Trace"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
-                    <Button Width="90"
+                        <Button Width="90"
             Style="{StaticResource ActionButtonStyle}"
             Click="OpenSoeAudit_Click"
             ToolTip="Open SOE Audit">
-                        <StackPanel Orientation="Vertical">
-                            <Path Style="{StaticResource ActionIconPathStyle}"
+                            <StackPanel Orientation="Vertical">
+                                <Path Style="{StaticResource ActionIconPathStyle}"
                   Data="M7 4 H17 M7 8 H17 M7 12 H13 M5 3 H19 V21 H5 Z"/>
-                            <TextBlock Text="SOE Audit"
+                                <TextBlock Text="SOE Audit"
                        Style="{StaticResource ActionButtonLabelStyle}" />
-                        </StackPanel>
-                    </Button>
+                            </StackPanel>
+                        </Button>
 
                         <Button Width="98"
         Margin="0,0,6,0"
@@ -1164,7 +1164,23 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Value Viewer" Style="{StaticResource SectionTitleStyle}" />
+                    <DockPanel LastChildFill="False">
+                        <TextBlock Text="Value Viewer" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
+                        <WrapPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
+                            <Button Margin="0,0,6,0" Padding="10,4" MinWidth="108" Style="{StaticResource ActionButtonStyle}" Click="OpenSingleCommand_Click" Height="20">
+                                <TextBlock Text="Single Command" FontSize="9" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center" />
+                            </Button>
+                            <Button Margin="0,0,6,0" Padding="10,4" MinWidth="108" Style="{StaticResource ActionButtonStyle}" Click="OpenDoubleCommand_Click" Height="20">
+                                <TextBlock Text="Double Command" FontSize="9" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center" />
+                            </Button>
+                            <Button Margin="0,0,6,0" Padding="10,4" MinWidth="122" Style="{StaticResource ActionButtonStyle}" Click="OpenRegulatingCommand_Click" Height="20">
+                                <TextBlock Text="Regulating Command" FontSize="9" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center" />
+                            </Button>
+                            <Button Padding="10,4" MinWidth="116" Style="{StaticResource ActionButtonStyle}" Click="OpenSetpointCommand_Click" Height="20" FontSize="8">
+                                <TextBlock Text="Setpoint Command" FontSize="9" FontWeight="SemiBold" Foreground="#E2E8F0" HorizontalAlignment="Center" />
+                            </Button>
+                        </WrapPanel>
+                    </DockPanel>
                     <DataGrid Grid.Row="1"
                               x:Name="NucValueViewerGrid"
                               Margin="0,12,0,0"
