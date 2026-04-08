@@ -7,6 +7,7 @@
         MinHeight="760"
         MinWidth="1220"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="#0B1220"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>

@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Setpoint Command"
         Width="900"
-        Height="430"
+        Height="520"
         MinWidth="860"
-        MinHeight="420"
+        MinHeight="500"
         WindowStartupLocation="CenterOwner"
         Background="#0F172A"
         ResizeMode="NoResize">
@@ -55,7 +55,7 @@
                         <RowDefinition Height="10" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="10" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <Border Grid.Row="0" Style="{StaticResource SectionHeaderCardStyle}">

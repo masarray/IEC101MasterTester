@@ -805,27 +805,60 @@ namespace IEC101MasterTester.Views
         {
             MainViewModel viewModel = DataContext as MainViewModel;
             DataGrid grid = sender as DataGrid;
+            ValueViewerRow selectedRow = null;
             if (viewModel == null)
             {
                 return;
             }
 
-            if (grid != null && grid.SelectedItem is ValueViewerRow selectedRow)
+            if (grid != null && grid.SelectedItem is ValueViewerRow rowFromGrid)
             {
-                viewModel.SelectedNucValue = selectedRow;
+                selectedRow = rowFromGrid;
+                viewModel.SelectedNucValue = rowFromGrid;
             }
 
-            if (!viewModel.CanOpenSelectedNucValueCommand)
+            ValueViewerRow row = selectedRow ?? viewModel.SelectedNucValue;
+            if (row != null && row.IOA == 790449)
+            {
+                SetpointCommandWindowModel poopModel = new SetpointCommandWindowModel
+                {
+                    SignalName = OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name),
+                    SignalInfo = string.Format("Feedback IOA {0} | {1}", row.IOA, row.Type),
+                    CommandIoa = 70537,
+                    FeedbackIoa = 790449,
+                    FeedbackName = OfficialPointProfiles.GetDisplayNameOrDefault(790449, "POAQ"),
+                    CommandLifeMonitor = viewModel.CommandLifeMonitor,
+                    UseNucSession = true
+                };
+
+                SetpointCommandWindow poopWindow = new SetpointCommandWindow(viewModel, poopModel)
+                {
+                    Owner = this
+                };
+                poopWindow.ShowDialog();
+                return;
+            }
+
+            int? relatedCommandIoa = row == null ? null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
+            string family = relatedCommandIoa.HasValue ? "Setpoint" : viewModel.GetSelectedNucValueCommandFamily();
+            if (family == null && row != null)
+            {
+                int commandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa();
+                if (commandIoa != row.IOA)
+                {
+                    family = "Setpoint";
+                }
+            }
+
+            if (family == null)
             {
                 MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "NUC Redundancy", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            string family = viewModel.GetSelectedNucValueCommandFamily();
-            ValueViewerRow row = viewModel.SelectedNucValue;
             if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
             {
-                int commandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa();
+                int commandIoa = relatedCommandIoa ?? viewModel.GetSelectedNucValueSuggestedCommandIoa();
                 int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
                 SetpointCommandWindowModel setpointModel = new SetpointCommandWindowModel
                 {

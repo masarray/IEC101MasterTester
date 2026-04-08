@@ -439,6 +439,12 @@ namespace IEC101MasterTester
 
         private void ValueViewer_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            DataGrid grid = sender as DataGrid;
+            if (grid != null && grid.SelectedItem is ValueViewerRow selectedRow)
+            {
+                _viewModel.SelectedValue = selectedRow;
+            }
+
             OpenSelectedSignalCommandWindow();
         }
 
@@ -449,16 +455,38 @@ namespace IEC101MasterTester
 
         private void OpenSelectedSignalCommandWindow()
         {
-            if (!_viewModel.CanOpenSelectedValueCommand)
+            ValueViewerRow row = _viewModel.SelectedValue;
+            if (row != null && row.IOA == 790449)
+            {
+                SetpointCommandWindowModel poopModel = BuildExplicitSetpointCommandModel(row, 70537, false);
+                SetpointCommandWindow poopWindow = new SetpointCommandWindow(_viewModel, poopModel)
+                {
+                    Owner = this
+                };
+                poopWindow.ShowDialog();
+                return;
+            }
+
+            int? relatedCommandIoa = row == null ? null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
+            string family = relatedCommandIoa.HasValue ? "Setpoint" : _viewModel.GetSelectedValueCommandFamily();
+            if (family == null && row != null)
+            {
+                int commandIoa = _viewModel.GetSelectedValueSuggestedCommandIoa();
+                if (commandIoa != row.IOA)
+                {
+                    family = "Setpoint";
+                }
+            }
+
+            if (family == null)
             {
                 MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "IEC101MasterTester", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
-            string family = _viewModel.GetSelectedValueCommandFamily();
             if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
             {
-                SetpointCommandWindowModel setpointModel = BuildSetpointCommandModel(false);
+                SetpointCommandWindowModel setpointModel = BuildSetpointCommandModel(false, relatedCommandIoa);
                 SetpointCommandWindow setpointWindow = new SetpointCommandWindow(_viewModel, setpointModel)
                 {
                     Owner = this
@@ -475,11 +503,18 @@ namespace IEC101MasterTester
             window.ShowDialog();
         }
 
-        private SetpointCommandWindowModel BuildSetpointCommandModel(bool useNucSession)
+        private SetpointCommandWindowModel BuildSetpointCommandModel(bool useNucSession, int? explicitCommandIoa = null)
         {
             ValueViewerRow row = _viewModel.SelectedValue;
-            int commandIoa = _viewModel.GetSelectedValueSuggestedCommandIoa();
+            int commandIoa = explicitCommandIoa ?? _viewModel.GetSelectedValueSuggestedCommandIoa();
             int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
+
+            return BuildExplicitSetpointCommandModel(row, commandIoa, useNucSession, feedbackIoa);
+        }
+
+        private SetpointCommandWindowModel BuildExplicitSetpointCommandModel(ValueViewerRow row, int commandIoa, bool useNucSession, int? explicitFeedbackIoa = null)
+        {
+            int feedbackIoa = explicitFeedbackIoa ?? OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
 
             return new SetpointCommandWindowModel
             {
