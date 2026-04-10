@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace IEC101MasterTester.Views
 {
     public partial class SetpointCommandWindow : Window
     {
+        private static readonly Dictionary<string, int> LastCommandIoaByKey = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private readonly MainViewModel _viewModel;
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
         private readonly DispatcherTimer _feedbackTimer;
@@ -21,6 +23,7 @@ namespace IEC101MasterTester.Views
             InitializeComponent();
             _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
             Model = model ?? throw new ArgumentNullException(nameof(model));
+            RestoreLastCommandIoa();
             DataContext = Model;
 
             _feedbackTimer = new DispatcherTimer
@@ -43,6 +46,7 @@ namespace IEC101MasterTester.Views
 
         private void SetpointCommandWindow_Closed(object sender, EventArgs e)
         {
+            RememberLastCommandIoa();
             _feedbackTimer.Stop();
             _feedbackTimer.Tick -= FeedbackTimer_Tick;
             _sendLock.Dispose();
@@ -71,6 +75,7 @@ namespace IEC101MasterTester.Views
             try
             {
                 await _sendLock.WaitAsync();
+                RememberLastCommandIoa();
                 Cursor = System.Windows.Input.Cursors.Wait;
                 await _viewModel.SendSetpointCommandAsync(Model.CommandIoa, normalizedValue, select, Model.UseNucSession);
             }
@@ -101,6 +106,37 @@ namespace IEC101MasterTester.Views
             {
                 Model.SetpointPercentText = (normalizedValue * 100d).ToString("0.###", CultureInfo.InvariantCulture);
             }
+        }
+
+        private void RestoreLastCommandIoa()
+        {
+            if (Model.CommandIoa > 0)
+            {
+                return;
+            }
+
+            string cacheKey = BuildCacheKey();
+            int commandIoa;
+            if (!string.IsNullOrWhiteSpace(cacheKey) && LastCommandIoaByKey.TryGetValue(cacheKey, out commandIoa))
+            {
+                Model.CommandIoa = commandIoa;
+            }
+        }
+
+        private void RememberLastCommandIoa()
+        {
+            string cacheKey = BuildCacheKey();
+            if (string.IsNullOrWhiteSpace(cacheKey) || Model.CommandIoa <= 0)
+            {
+                return;
+            }
+
+            LastCommandIoaByKey[cacheKey] = Model.CommandIoa;
+        }
+
+        private string BuildCacheKey()
+        {
+            return string.Format("{0}|Setpoint", Model.UseNucSession ? "NUC" : "MAIN");
         }
     }
 

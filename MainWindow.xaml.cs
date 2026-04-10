@@ -16,6 +16,13 @@ namespace IEC101MasterTester
 {
     public partial class MainWindow : Window
     {
+        private sealed class PusertifCommandBinding
+        {
+            public string Family { get; set; }
+            public int CommandIoa { get; set; }
+            public int FeedbackIoa { get; set; }
+        }
+
         private readonly JsonSettingsStore _settingsStore;
         private readonly Iec101MasterService _masterService;
         private readonly MainViewModel _viewModel;
@@ -456,27 +463,11 @@ namespace IEC101MasterTester
         private void OpenSelectedSignalCommandWindow()
         {
             ValueViewerRow row = _viewModel.SelectedValue;
-            if (row != null && row.IOA == 790449)
-            {
-                SetpointCommandWindowModel poopModel = BuildExplicitSetpointCommandModel(row, 70537, false);
-                SetpointCommandWindow poopWindow = new SetpointCommandWindow(_viewModel, poopModel)
-                {
-                    Owner = this
-                };
-                poopWindow.ShowDialog();
-                return;
-            }
-
-            int? relatedCommandIoa = row == null ? null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
-            string family = relatedCommandIoa.HasValue ? "Setpoint" : _viewModel.GetSelectedValueCommandFamily();
-            if (family == null && row != null)
-            {
-                int commandIoa = _viewModel.GetSelectedValueSuggestedCommandIoa();
-                if (commandIoa != row.IOA)
-                {
-                    family = "Setpoint";
-                }
-            }
+            PusertifCommandBinding binding = ResolvePusertifCommandBinding(row);
+            int? relatedCommandIoa = binding != null
+                ? binding.CommandIoa
+                : (row == null ? (int?)null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA));
+            string family = binding != null ? binding.Family : _viewModel.GetSelectedValueCommandFamily();
 
             if (family == null)
             {
@@ -506,8 +497,11 @@ namespace IEC101MasterTester
         private SetpointCommandWindowModel BuildSetpointCommandModel(bool useNucSession, int? explicitCommandIoa = null)
         {
             ValueViewerRow row = _viewModel.SelectedValue;
-            int commandIoa = explicitCommandIoa ?? _viewModel.GetSelectedValueSuggestedCommandIoa();
-            int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
+            PusertifCommandBinding binding = ResolvePusertifCommandBinding(row);
+            int commandIoa = explicitCommandIoa ?? (binding != null ? binding.CommandIoa : _viewModel.GetSelectedValueSuggestedCommandIoa());
+            int feedbackIoa = binding != null
+                ? binding.FeedbackIoa
+                : (OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0));
 
             return BuildExplicitSetpointCommandModel(row, commandIoa, useNucSession, feedbackIoa);
         }
@@ -531,12 +525,13 @@ namespace IEC101MasterTester
         private SignalCommandWindowModel BuildSignalCommandModel(string family)
         {
             ValueViewerRow row = _viewModel.SelectedValue;
+            PusertifCommandBinding binding = ResolvePusertifCommandBinding(row);
             SignalCommandWindowModel model = new SignalCommandWindowModel
             {
                 Family = family,
                 SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Signal",
                 SignalInfo = row == null ? string.Empty : string.Format("IOA {0} | {1}", row.IOA, row.Type),
-                CommandIoa = _viewModel.GetSelectedValueSuggestedCommandIoa(),
+                CommandIoa = binding != null ? binding.CommandIoa : _viewModel.GetSelectedValueSuggestedCommandIoa(),
                 CommandLifeMonitor = _viewModel.CommandLifeMonitor
             };
 
@@ -575,6 +570,35 @@ namespace IEC101MasterTester
             }
 
             return model;
+        }
+
+        private static PusertifCommandBinding ResolvePusertifCommandBinding(ValueViewerRow row)
+        {
+            if (row == null)
+            {
+                return null;
+            }
+
+            switch (row.IOA)
+            {
+                case 790449:
+                case 70537:
+                    return new PusertifCommandBinding { Family = "Setpoint", CommandIoa = 70537, FeedbackIoa = 790449 };
+                case 16712689:
+                case 68542:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68542, FeedbackIoa = 16712689 };
+                case 16712686:
+                case 68539:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68539, FeedbackIoa = 16712686 };
+                case 16712704:
+                case 68550:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68550, FeedbackIoa = 16712704 };
+                case 790448:
+                case 74537:
+                    return new PusertifCommandBinding { Family = "Regulating", CommandIoa = 74537, FeedbackIoa = 790448 };
+                default:
+                    return null;
+            }
         }
 
         private void ShowLineMonitorWindow()

@@ -16,6 +16,13 @@ namespace IEC101MasterTester.Views
 {
     public partial class NucRedundancyWindow : Window
     {
+        private sealed class PusertifCommandBinding
+        {
+            public string Family { get; set; }
+            public int CommandIoa { get; set; }
+            public int FeedbackIoa { get; set; }
+        }
+
         private bool _allowClose;
         private bool _closeInProgress;
         private NucSoeAuditWindow _nucSoeAuditWindow;
@@ -842,46 +849,23 @@ namespace IEC101MasterTester.Views
             }
 
             ValueViewerRow row = selectedRow ?? viewModel.SelectedNucValue;
-            if (row != null && row.IOA == 790449)
+            PusertifCommandBinding binding = ResolvePusertifCommandBinding(row);
+            if (binding == null && string.IsNullOrWhiteSpace(forcedFamily))
             {
-                SetpointCommandWindowModel poopModel = new SetpointCommandWindowModel
-                {
-                    SignalName = OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name),
-                    SignalInfo = string.Format("Feedback IOA {0} | {1}", row.IOA, row.Type),
-                    CommandIoa = 70537,
-                    FeedbackIoa = 790449,
-                    FeedbackName = OfficialPointProfiles.GetDisplayNameOrDefault(790449, "POAQ"),
-                    CommandLifeMonitor = viewModel.CommandLifeMonitor,
-                    UseNucSession = true
-                };
-
-                SetpointCommandWindow poopWindow = new SetpointCommandWindow(viewModel, poopModel)
-                {
-                    Owner = this
-                };
-                poopWindow.ShowDialog();
                 return;
             }
 
-            int? relatedCommandIoa = row == null ? null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA);
+            int? relatedCommandIoa = binding != null
+                ? binding.CommandIoa
+                : (row == null ? (int?)null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA));
             string family = forcedFamily;
             if (string.IsNullOrWhiteSpace(family))
             {
-                family = relatedCommandIoa.HasValue ? "Setpoint" : viewModel.GetSelectedNucValueCommandFamily();
-            }
-
-            if (family == null && row != null)
-            {
-                int commandIoa = viewModel.GetSelectedNucValueSuggestedCommandIoa();
-                if (commandIoa != row.IOA)
-                {
-                    family = "Setpoint";
-                }
+                family = binding != null ? binding.Family : viewModel.GetSelectedNucValueCommandFamily();
             }
 
             if (family == null)
             {
-                MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "NUC Redundancy", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -890,7 +874,9 @@ namespace IEC101MasterTester.Views
                 int commandIoa = relatedCommandIoa
                     ?? OfficialPointProfiles.TryGetDefaultCommandIoa("Setpoint")
                     ?? viewModel.GetSelectedNucValueSuggestedCommandIoa();
-                int feedbackIoa = OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0);
+                int feedbackIoa = binding != null
+                    ? binding.FeedbackIoa
+                    : (OfficialPointProfiles.TryGetRelatedFeedbackIoa(commandIoa) ?? (row != null ? row.IOA : 0));
                 SetpointCommandWindowModel setpointModel = new SetpointCommandWindowModel
                 {
                     SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Setpoint",
@@ -915,7 +901,9 @@ namespace IEC101MasterTester.Views
                 Family = family,
                 SignalName = row != null ? OfficialPointProfiles.GetDisplayNameOrDefault(row.IOA, row.Name) : "Signal",
                 SignalInfo = row == null ? string.Empty : string.Format("IOA {0} | {1}", row.IOA, row.Type),
-                CommandIoa = OfficialPointProfiles.TryGetDefaultCommandIoa(family) ?? viewModel.GetSelectedNucValueSuggestedCommandIoa(),
+                CommandIoa = binding != null
+                    ? binding.CommandIoa
+                    : (OfficialPointProfiles.TryGetDefaultCommandIoa(family) ?? viewModel.GetSelectedNucValueSuggestedCommandIoa()),
                 CommandLifeMonitor = viewModel.CommandLifeMonitor,
                 UseNucSession = true
             };
@@ -959,6 +947,35 @@ namespace IEC101MasterTester.Views
                 Owner = this
             };
             window.ShowDialog();
+        }
+
+        private static PusertifCommandBinding ResolvePusertifCommandBinding(ValueViewerRow row)
+        {
+            if (row == null)
+            {
+                return null;
+            }
+
+            switch (row.IOA)
+            {
+                case 790449:
+                case 70537:
+                    return new PusertifCommandBinding { Family = "Setpoint", CommandIoa = 70537, FeedbackIoa = 790449 };
+                case 16712689:
+                case 68542:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68542, FeedbackIoa = 16712689 };
+                case 16712686:
+                case 68539:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68539, FeedbackIoa = 16712686 };
+                case 16712704:
+                case 68550:
+                    return new PusertifCommandBinding { Family = "Double", CommandIoa = 68550, FeedbackIoa = 16712704 };
+                case 790448:
+                case 74537:
+                    return new PusertifCommandBinding { Family = "Regulating", CommandIoa = 74537, FeedbackIoa = 790448 };
+                default:
+                    return null;
+            }
         }
 
         private void OpenSoeAudit_Click(object sender, RoutedEventArgs e)

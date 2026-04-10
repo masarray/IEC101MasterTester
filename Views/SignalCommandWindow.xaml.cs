@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,6 +11,7 @@ namespace IEC101MasterTester.Views
 {
     public partial class SignalCommandWindow : Window
     {
+        private static readonly Dictionary<string, int> LastCommandIoaByKey = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private readonly MainViewModel _viewModel;
         private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
         private string _lastSendSignature;
@@ -20,7 +22,9 @@ namespace IEC101MasterTester.Views
             InitializeComponent();
             _viewModel = viewModel;
             Model = model;
+            RestoreLastCommandIoa();
             DataContext = Model;
+            Closed += SignalCommandWindow_Closed;
         }
 
         public SignalCommandWindowModel Model { get; }
@@ -59,6 +63,7 @@ namespace IEC101MasterTester.Views
 
                 _lastSendSignature = signature;
                 _lastSendAtUtc = nowUtc;
+                RememberLastCommandIoa();
                 Cursor = System.Windows.Input.Cursors.Wait;
 
                 if (Model.UseNucSession)
@@ -79,6 +84,43 @@ namespace IEC101MasterTester.Views
                 Cursor = System.Windows.Input.Cursors.Arrow;
                 _sendLock.Release();
             }
+        }
+
+        private void SignalCommandWindow_Closed(object sender, EventArgs e)
+        {
+            RememberLastCommandIoa();
+            _sendLock.Dispose();
+        }
+
+        private void RestoreLastCommandIoa()
+        {
+            if (Model.CommandIoa > 0)
+            {
+                return;
+            }
+
+            string cacheKey = BuildCacheKey();
+            int commandIoa;
+            if (!string.IsNullOrWhiteSpace(cacheKey) && LastCommandIoaByKey.TryGetValue(cacheKey, out commandIoa))
+            {
+                Model.CommandIoa = commandIoa;
+            }
+        }
+
+        private void RememberLastCommandIoa()
+        {
+            string cacheKey = BuildCacheKey();
+            if (string.IsNullOrWhiteSpace(cacheKey) || Model.CommandIoa <= 0)
+            {
+                return;
+            }
+
+            LastCommandIoaByKey[cacheKey] = Model.CommandIoa;
+        }
+
+        private string BuildCacheKey()
+        {
+            return string.Format("{0}|{1}", Model.UseNucSession ? "NUC" : "MAIN", Model.Family ?? "Signal");
         }
     }
 
