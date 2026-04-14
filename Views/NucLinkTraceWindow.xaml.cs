@@ -32,7 +32,7 @@ namespace IEC101MasterTester.Views
         private bool _isPaused;
         private bool _followRight = true;
         private bool _suppressGridSelectionSync;
-        private int _rowLimit = 50;
+        private int _rowLimit = 15;
         private float _laneAPrev = 0.08f;
         private float _laneBPrev = 0.08f;
         private DateTime? _lastSampleTime;
@@ -44,6 +44,8 @@ namespace IEC101MasterTester.Views
         private DateTime? _inspectWindowEndTime;
         private DateTime? _inspectBucketStartTime;
         private DateTime? _selectedAnchorTime;
+        private DateTime? _lastRulerStart;
+        private DateTime? _lastRulerEnd;
 
         public NucLinkTraceWindow()
         {
@@ -52,7 +54,7 @@ namespace IEC101MasterTester.Views
             LinkAGrid.ItemsSource = _linkAViewRows;
             LinkBGrid.ItemsSource = _linkBViewRows;
 
-            _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
             _refreshTimer.Tick += RefreshTimer_Tick;
 
             Loaded += (s, e) =>
@@ -160,13 +162,13 @@ namespace IEC101MasterTester.Views
             {
                 DateTime anchorTime = _selectedAnchorTime ?? _selectedTime.Value;
                 DateTime bucketStart = _inspectBucketStartTime ?? GetBucketStart(windowStart, anchorTime);
-                ReplaceRows(_linkAViewRows, TakeInspectRows(parsedA, bucketStart, anchorTime, _rowLimit));
-                ReplaceRows(_linkBViewRows, TakeInspectRows(parsedB, bucketStart, anchorTime, _rowLimit));
+                ReplaceRowsIfChanged(_linkAViewRows, TakeInspectRows(parsedA, bucketStart, anchorTime, _rowLimit));
+                ReplaceRowsIfChanged(_linkBViewRows, TakeInspectRows(parsedB, bucketStart, anchorTime, _rowLimit));
             }
             else
             {
-                ReplaceRows(_linkAViewRows, TakeWindow(parsedA, windowStart, windowEnd, _rowLimit));
-                ReplaceRows(_linkBViewRows, TakeWindow(parsedB, windowStart, windowEnd, _rowLimit));
+                ReplaceRowsIfChanged(_linkAViewRows, TakeWindow(parsedA, windowStart, windowEnd, _rowLimit));
+                ReplaceRowsIfChanged(_linkBViewRows, TakeWindow(parsedB, windowStart, windowEnd, _rowLimit));
             }
 
             TimelineTape.WindowStart = windowStart;
@@ -176,7 +178,15 @@ namespace IEC101MasterTester.Views
             TimelineTape.IsLaneBActive = IsLinkBActive(vm);
             TimelineTape.SetBuffers(_laneABuffer, _laneBBuffer);
 
-            DrawRuler(windowStart, windowEnd);
+            if (!_lastRulerStart.HasValue
+                || !_lastRulerEnd.HasValue
+                || _lastRulerStart.Value != windowStart
+                || _lastRulerEnd.Value != windowEnd)
+            {
+                DrawRuler(windowStart, windowEnd);
+                _lastRulerStart = windowStart;
+                _lastRulerEnd = windowEnd;
+            }
             NavigatorStartLabel.Text = windowStart.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
             NavigatorEndLabel.Text = windowEnd.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
             UpdateReadout();
@@ -280,13 +290,48 @@ namespace IEC101MasterTester.Views
                 || detail.IndexOf("link-layer test function", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
-        private static void ReplaceRows(ObservableCollection<LineMonitorRow> target, IEnumerable<LineMonitorRow> rows)
+        private static void ReplaceRowsIfChanged(ObservableCollection<LineMonitorRow> target, IEnumerable<LineMonitorRow> rows)
         {
+            List<LineMonitorRow> nextRows = rows == null ? new List<LineMonitorRow>() : rows.ToList();
+            if (HasSameRows(target, nextRows))
+            {
+                return;
+            }
+
             target.Clear();
-            foreach (LineMonitorRow row in rows)
+            foreach (LineMonitorRow row in nextRows)
             {
                 target.Add(row);
             }
+        }
+
+        private static bool HasSameRows(IList<LineMonitorRow> current, IList<LineMonitorRow> next)
+        {
+            if (current == null || next == null)
+            {
+                return false;
+            }
+
+            if (current.Count != next.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < current.Count; i++)
+            {
+                LineMonitorRow a = current[i];
+                LineMonitorRow b = next[i];
+                if (!string.Equals(a.Time, b.Time, StringComparison.Ordinal)
+                    || !string.Equals(a.Direction, b.Direction, StringComparison.Ordinal)
+                    || !string.Equals(a.FrameType, b.FrameType, StringComparison.Ordinal)
+                    || !string.Equals(a.Summary, b.Summary, StringComparison.Ordinal)
+                    || !string.Equals(a.Detail, b.Detail, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static IEnumerable<LineMonitorRow> TakeWindow(IEnumerable<RowWithTime> rows, DateTime start, DateTime end, int rowLimit)
@@ -464,6 +509,8 @@ namespace IEC101MasterTester.Views
             _selectedTime = null;
             _windowStartTime = null;
             _windowEndTime = null;
+            _lastRulerStart = null;
+            _lastRulerEnd = null;
             ClearInspectState();
             TimelineRulerCanvas.Children.Clear();
             TimelineTape.SetBuffers(null, null);

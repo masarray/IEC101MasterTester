@@ -505,7 +505,11 @@
                     <ComboBox x:Name="RowLimitComboBox"
               Style="{StaticResource AnalyzerComboBoxStyle}"
               SelectionChanged="RowLimitComboBox_SelectionChanged">
-                        <ComboBoxItem Content="50" IsSelected="True" />
+                        <ComboBoxItem Content="5" />
+                        <ComboBoxItem Content="10" />
+                        <ComboBoxItem Content="15" IsSelected="True" />
+                        <ComboBoxItem Content="20" />
+                        <ComboBoxItem Content="50" />
                         <ComboBoxItem Content="100" />
                         <ComboBoxItem Content="200" />
                     </ComboBox>

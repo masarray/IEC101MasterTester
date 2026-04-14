@@ -464,16 +464,15 @@ namespace IEC101MasterTester
         {
             ValueViewerRow row = _viewModel.SelectedValue;
             PusertifCommandBinding binding = ResolvePusertifCommandBinding(row);
+            if (binding == null)
+            {
+                return;
+            }
+
             int? relatedCommandIoa = binding != null
                 ? binding.CommandIoa
                 : (row == null ? (int?)null : OfficialPointProfiles.TryGetRelatedCommandIoa(row.IOA));
             string family = binding != null ? binding.Family : _viewModel.GetSelectedValueCommandFamily();
-
-            if (family == null)
-            {
-                MessageBox.Show(this, "Pilih signal yang memiliki command IEC-101 terlebih dahulu.", "IEC101MasterTester", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
 
             if (string.Equals(family, "Setpoint", StringComparison.OrdinalIgnoreCase))
             {

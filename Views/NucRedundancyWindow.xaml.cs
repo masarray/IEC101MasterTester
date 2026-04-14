@@ -44,7 +44,7 @@ namespace IEC101MasterTester.Views
         private double _mainFlowDurationSeconds = 1.2;
         private double _backupFlowDurationSeconds = 1.2;
         private bool _isLineMonitorCollapsed;
-        private double _lineMonitorExpandedHeight = 280;
+        private double _lineMonitorExpandedHeight = 160;
         private const double CollapsedLineMonitorHeight = 56;
         private const double MinZoomScale = 0.80;
         private const double MaxZoomScale = 1.35;
@@ -550,7 +550,7 @@ namespace IEC101MasterTester.Views
                 return;
             }
 
-            double expandedHeight = Math.Max(180, _lineMonitorExpandedHeight);
+            double expandedHeight = Math.Max(120, _lineMonitorExpandedHeight);
             LineMonitorDockRow.Height = new GridLength(expandedHeight);
 
             if (LineMonitorContentGrid != null)

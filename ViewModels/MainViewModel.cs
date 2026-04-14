@@ -34,7 +34,7 @@ namespace IEC101MasterTester.ViewModels
         private const int MaxNucEventLogRows = 1000;
         private const int MaxNucSoeAuditRows = 1000;
         private const int NucSoeForensicCapacity = 8000;
-        private const int MaxNucLineMonitorRows = 120;
+        private const int MaxNucLineMonitorRows = 5;
         private const int MaxNucTraceRows = 5000;
         private const int MaxNucValueRows = 400;
         private const int MaxAvailabilityTimelineRows = 120;
