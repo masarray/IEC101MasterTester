@@ -769,7 +769,7 @@ Represent such items as:
 7. `D:\CODEX\NewEx\IEC101MasterTester\MainWindow.xaml.cs`
 8. `D:\CODEX\NewEx\IEC101MasterTester\Models`
 9. `D:\CODEX\NewEx\IEC101MasterTester\Views`
-10. `D:\CODEX\NewEx\IEC101MasterTester\DocTestReference`
+10. External PLN/vendor reference documents are no longer tracked in git. If needed, place local copies under `DocTestReference` manually; the folder is ignored.
 
 ## Current known UX/logic decisions
 - `SignalCommandWindow` has compact command tracker on the right
@@ -786,7 +786,7 @@ Represent such items as:
   - `command`
 
 ## Current important caveat
-PDF extraction from `DocTestReference` was not reliably available in this environment.
+PDF extraction from `DocTestReference` was not reliably available in this environment, and the reference PDFs are no longer tracked in git to keep the GitHub repo source-focused.
 
 Treat the design direction in this file as the working aligned roadmap based on:
 - project decisions made in this thread

@@ -12,7 +12,8 @@ The priority order is:
 Do not sacrifice protocol correctness for architecture experiments.
 
 ## Hard rules for Codex
-- All IEC-101 communication must go through `lib60870.NET` only.
+- Active production IEC-101 communication must go through `lib60870.NET` until the native C# stack has passed the migration gates in `ROADMAP.md`.
+- Native IEC-101 work is allowed only under the explicit migration plan in `ROADMAP.md`: start passive, compare against known-good traces, then introduce an opt-in experimental engine. Do not silently replace the active communication path.
 - Analyzer/UI code must be passive. It may read callbacks and infer diagnostics, but it must not create its own communication routine.
 - Do not invent custom IEC-101 framing, serial protocol logic, reflection-based link hacks, or analyzer-driven polling.
 - When including vendor source trees such as `Vendor\lib60870\**\*.cs`, always exclude generated/build artifact folders:
@@ -36,6 +37,8 @@ Do not sacrifice protocol correctness for architecture experiments.
   - create `CS101Master(serialPort, LinkLayerMode.UNBALANCED, ...)`
   - use `PollSingleSlave(...)` and `Run()`
 - Do not re-introduce `SerialPortStream` or reflection-based link-layer hacks into the active IEC-101 path unless explicitly requested.
+- For native-stack migration, use clean-room project-owned code. Do not copy implementation code from `lib60870.NET` or other GPL/commercial stacks. Public documentation, interoperability guides, and project-owned raw traces may be used as behavioral references.
+- Keep `lib60870.NET` available as the oracle/baseline until the native stack is proven build-clean, trace-compatible, and field-stable.
 - For this project, unbalanced IEC-101 behavior is the main priority. Balanced mode is secondary.
 - UI/operator-facing labels should be simple. Avoid dumping raw protocol enums into main panels if a short operator label is enough.
 - `Line Monitor` is technical. `Event Log` and `Status History` are operator-facing.
@@ -54,6 +57,37 @@ Do not sacrifice protocol correctness for architecture experiments.
   - `Busy Backoff = 150 ms`
   - `GI Startup Delay = 800 ms`
 
+## Native IEC-101 stack migration gates
+Goal: remove the vendor `lib60870.NET` dependency without sacrificing protocol correctness.
+
+Required sequence:
+1. Add internal neutral protocol models (`Iec101Frame`, `Iec101ControlField`, `Iec101Asdu`, `Iec101InformationObject`, `Iec101CauseOfTransmission`, `Iec101TypeId`, `Iec101QualityDescriptor`, `Iec101ApplicationProfile`).
+2. Build a passive FT1.2/raw-frame decoder first:
+   - single control character `0xE5`
+   - fixed frame `0x10 ... 0x16`
+   - variable frame `0x68 L L 0x68 ... checksum 0x16`
+   - checksum validation
+   - settings-driven link address length
+   - secondary `ACD/DFC` from actual control bits only
+3. Build an ASDU decoder/encoder around the internal model:
+   - Type ID, VSQ, COT, optional originator, CASDU, IOA
+   - COT length, CASDU length, and IOA length from active settings/profile
+   - CP24Time2a and CP56Time2a timestamp parsing
+   - unknown/unsupported ASDUs remain visible as `Unknown` with raw bytes preserved
+4. Move UI mappers to internal models before changing the active master engine.
+5. Add `lib60870 -> internal model` adapter so current behavior can be compared against native parsing.
+6. Add an opt-in native engine only after decoder tests exist:
+   - initial target is unbalanced master only
+   - reset link / reset FCB
+   - request status
+   - Class 1 priority when `ACD=1`
+   - Class 2 background polling
+   - one-shot startup/manual GI
+   - command queue for GI, clock sync, single/double/step command, normalized setpoint
+   - retry, timeout, `DFC=1` busy backoff, and FCB/FCV handling
+7. Keep engine selection explicit (`Lib60870`, `NativeExperimental`, later `NativeStable`).
+8. Remove `Vendor\lib60870` only after native mode passes golden trace tests, simulator tests, MSBuild verification, and real RTU/field validation.
+
 ## Important files
 - `D:\CodexCrut\NewEx\IEC101MasterTester\Services\Iec101\Iec101MasterService.cs`
 - `D:\CodexCrut\NewEx\IEC101MasterTester\Services\Iec101\Iec101DataMapper.cs`
@@ -67,6 +101,6 @@ Do not sacrifice protocol correctness for architecture experiments.
 Use MSBuild for verification:
 `D:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe IEC101MasterTester.csproj /t:Build /p:Configuration=Debug /p:UseSharedCompilation=false`
 
-## When user says “lanjutkan progress”
+## When user says "lanjutkan progress"
 Start from `CODEX_HANDOFF.md`, inspect the files listed there, and continue from the current state without asking for a full intro.
 
