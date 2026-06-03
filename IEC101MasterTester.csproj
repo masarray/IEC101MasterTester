@@ -99,10 +99,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="SharedUi\DemoModeAlert.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Views\ConnectionSetupWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -178,11 +174,8 @@
     <Compile Include="Models\Export\EventLogExportRequest.cs" />
     <Compile Include="Models\FindingRow.cs" />
     <Compile Include="Models\Iec101ChannelOperationMode.cs" />
+    <Compile Include="Models\Iec101MasterEngine.cs" />
     <Compile Include="Models\LineMonitorRow.cs" />
-    <Compile Include="Models\Licensing\DemoAlertMode.cs" />
-    <Compile Include="Models\Licensing\LicenseSnapshot.cs" />
-    <Compile Include="Models\Licensing\LicenseState.cs" />
-    <Compile Include="Models\Licensing\PersistedLicensePayload.cs" />
     <Compile Include="Models\Soe\SoeForensicRow.cs" />
     <Compile Include="Models\NucChannelRole.cs" />
     <Compile Include="Models\NucChannelSnapshot.cs" />
@@ -200,18 +193,28 @@
     <Compile Include="Models\StatusHistoryRow.cs" />
     <Compile Include="Models\SlaveAvailabilityState.cs" />
     <Compile Include="Models\ValueViewerRow.cs" />
+    <Compile Include="Services\Iec101\Native\Iec101ApplicationProfile.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101Asdu.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101AsduCodec.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101CauseOfTransmission.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101InformationObject.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101QualityDescriptor.cs" />
+    <Compile Include="Services\Iec101\Native\Asdu\Iec101TypeId.cs" />
+    <Compile Include="Services\Iec101\Native\Frames\Iec101ControlField.cs" />
+    <Compile Include="Services\Iec101\Native\Frames\Iec101Frame.cs" />
+    <Compile Include="Services\Iec101\Native\Frames\Iec101FrameCodec.cs" />
+    <Compile Include="Services\Iec101\Native\Frames\Iec101FrameType.cs" />
+    <Compile Include="Services\Iec101\Native\Frames\Iec101PrimaryLinkFrameFactory.cs" />
+    <Compile Include="Services\Iec101\Native\Master\NativeIec101MasterService.cs" />
     <Compile Include="Services\Iec101\Iec101DataMapper.cs" />
+    <Compile Include="Services\Iec101\Iec101MasterServiceRouter.cs" />
+    <Compile Include="Services\Diagnostics\BoundedUiBuffer.cs" />
     <Compile Include="Services\Export\EventLogExportService.cs" />
     <Compile Include="Services\Iec101\Iec101MasterService.cs" />
     <Compile Include="Services\Iec101\IIec101MasterService.cs" />
     <Compile Include="Services\Iec101\LineMonitorFormatter.cs" />
-    <Compile Include="Services\Licensing\HardwareFingerprintService.cs" />
-    <Compile Include="Services\Licensing\LicenseCryptoService.cs" />
-    <Compile Include="Services\Licensing\LicenseManager.cs" />
-    <Compile Include="Services\Licensing\LicenseStore.cs" />
     <Compile Include="Services\Profiles\OfficialPointProfile.cs" />
     <Compile Include="Services\Profiles\OfficialPointProfiles.cs" />
-    <Compile Include="Services\Licensing\TrialPolicyEvaluator.cs" />
     <Compile Include="Services\Redundancy\INucRedundancyService.cs" />
     <Compile Include="Services\Redundancy\INucLinkChannel.cs" />
     <Compile Include="Services\Redundancy\NucIec101LinkChannel.cs" />
@@ -222,9 +225,6 @@
     <Compile Include="Services\Settings\JsonNucRedundancySettingsStore.cs" />
     <Compile Include="Services\Settings\JsonSettingsStore.cs" />
     <Compile Include="Services\Soe\NucSoeForensicJournal.cs" />
-    <Compile Include="SharedUi\DemoModeAlert.xaml.cs">
-      <DependentUpon>DemoModeAlert.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ViewModels\ConnectionSetupViewModel.cs" />
     <Compile Include="ViewModels\CommandLifeTrackerEngine.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />

@@ -74,6 +74,9 @@ namespace IEC101MasterTester.Models
         [DataMember(Order = 23)]
         public Iec101ChannelOperationMode ChannelOperationMode { get; set; }
 
+        [DataMember(Order = 24)]
+        public Iec101MasterEngine MasterEngine { get; set; }
+
         public string SerialSummary
         {
             get
@@ -108,7 +111,8 @@ namespace IEC101MasterTester.Models
                 Class1PollIntervalMs = Class1PollIntervalMs,
                 BusyBackoffMs = BusyBackoffMs,
                 GiStartupDelayMs = GiStartupDelayMs,
-                ChannelOperationMode = ChannelOperationMode
+                ChannelOperationMode = ChannelOperationMode,
+                MasterEngine = MasterEngine
             };
         }
 
@@ -138,7 +142,8 @@ namespace IEC101MasterTester.Models
                 Class1PollIntervalMs = 100,
                 BusyBackoffMs = 150,
                 GiStartupDelayMs = 800,
-                ChannelOperationMode = Iec101ChannelOperationMode.FullActive
+                ChannelOperationMode = Iec101ChannelOperationMode.FullActive,
+                MasterEngine = Iec101MasterEngine.Lib60870
             };
         }
     }

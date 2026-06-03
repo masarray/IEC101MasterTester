@@ -3,6 +3,9 @@ using System.Linq;
 using System.Text;
 using lib60870.CS101;
 using IEC101MasterTester.Models;
+using IEC101MasterTester.Services.Iec101.Native;
+using IEC101MasterTester.Services.Iec101.Native.Asdu;
+using IEC101MasterTester.Services.Iec101.Native.Frames;
 
 namespace IEC101MasterTester.Services.Iec101
 {
@@ -10,8 +13,20 @@ namespace IEC101MasterTester.Services.Iec101
     {
         public LineMonitorRow FromRawMessage(string direction, byte[] message, int messageSize)
         {
+            return FromRawMessage(direction, message, messageSize, null);
+        }
+
+        public LineMonitorRow FromRawMessage(string direction, byte[] message, int messageSize, ConnectionSettings settings)
+        {
             byte[] payload = message ?? Array.Empty<byte>();
             int length = Math.Max(0, Math.Min(messageSize, payload.Length));
+
+            LineMonitorRow nativeRow = TryCreateNativeRawRow(direction, payload, length, settings);
+            if (nativeRow != null)
+            {
+                return nativeRow;
+            }
+
             string frameType = DetectFrameType(payload, length);
 
             return new LineMonitorRow
@@ -29,6 +44,77 @@ namespace IEC101MasterTester.Services.Iec101
                 IOA = TryExtractIoaFromRawMessage(payload, length),
                 RawHex = ToHex(payload, length),
                 Detail = BuildRawDetail(payload, length)
+            };
+        }
+
+        private static LineMonitorRow TryCreateNativeRawRow(string direction, byte[] payload, int length, ConnectionSettings settings)
+        {
+            Iec101ApplicationProfile profile = settings == null
+                ? Iec101ApplicationProfile.DefaultPln101()
+                : Iec101ApplicationProfile.FromSettings(settings);
+
+            Iec101Frame frame;
+            string error;
+            if (!Iec101FrameCodec.TryParse(payload, length, profile, out frame, out error))
+            {
+                if (length <= 0)
+                {
+                    return null;
+                }
+
+                return new LineMonitorRow
+                {
+                    Time = DateTime.Now.ToString("HH:mm:ss.fff"),
+                    Direction = direction,
+                    FrameType = DetectFrameType(payload, length),
+                    Summary = "Native decode warning",
+                    ControlFc = "-",
+                    ACD = "-",
+                    DFC = "-",
+                    AsduType = "-",
+                    COT = "-",
+                    CASDU = "-",
+                    IOA = "-",
+                    RawHex = ToHex(payload, length),
+                    Detail = error ?? "Unknown native decode error"
+                };
+            }
+
+            Iec101Asdu nativeAsdu = null;
+            string asduError = null;
+            byte[] asduBytes = frame.GetAsduBytesOrEmpty();
+            if (asduBytes.Length > 0)
+            {
+                Iec101AsduCodec.TryParse(asduBytes, profile, out nativeAsdu, out asduError);
+            }
+
+            string frameType = ToFrameTypeText(frame.FrameType);
+            string linkText = frame.LinkAddress.HasValue ? frame.LinkAddress.Value.ToString() : "-";
+            string controlText = frame.Control == null ? "-" : frame.Control.Describe();
+            Iec101InformationObject firstObject = nativeAsdu != null && nativeAsdu.Objects.Count > 0 ? nativeAsdu.Objects[0] : null;
+            string ioa = firstObject == null ? "-" : firstObject.ObjectAddress.ToString();
+            string asduType = nativeAsdu == null ? "-" : nativeAsdu.TypeId.ToString();
+            string cot = nativeAsdu == null ? "-" : ToNativeCotText(nativeAsdu);
+            string casdu = nativeAsdu == null ? "-" : nativeAsdu.CommonAddress.ToString();
+
+            string summary = BuildNativeSummary(frameType, frame, nativeAsdu, firstObject);
+            string detail = BuildNativeDetail(length, linkText, nativeAsdu, firstObject, asduError);
+
+            return new LineMonitorRow
+            {
+                Time = DateTime.Now.ToString("HH:mm:ss.fff"),
+                Direction = direction,
+                FrameType = frameType,
+                Summary = summary,
+                ControlFc = controlText,
+                ACD = frame.Control != null && !frame.Control.IsPrimary ? (frame.Control.Acd ? "1" : "0") : "-",
+                DFC = frame.Control != null && !frame.Control.IsPrimary ? (frame.Control.Dfc ? "1" : "0") : "-",
+                AsduType = asduType,
+                COT = cot,
+                CASDU = casdu,
+                IOA = ioa,
+                RawHex = ToHex(payload, length),
+                Detail = detail
             };
         }
 
@@ -118,6 +204,97 @@ namespace IEC101MasterTester.Services.Iec101
                 default:
                     return "Unknown";
             }
+        }
+
+        private static string ToFrameTypeText(Iec101FrameType frameType)
+        {
+            switch (frameType)
+            {
+                case Iec101FrameType.SingleCharacterAck:
+                    return "Single Char";
+                case Iec101FrameType.Fixed:
+                    return "Fixed";
+                case Iec101FrameType.Variable:
+                    return "Variable";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        private static string BuildNativeSummary(string frameType, Iec101Frame frame, Iec101Asdu asdu, Iec101InformationObject firstObject)
+        {
+            if (frame == null)
+            {
+                return "No data";
+            }
+
+            if (frame.FrameType == Iec101FrameType.SingleCharacterAck)
+            {
+                return "Single-character ACK";
+            }
+
+            if (asdu != null)
+            {
+                string objectText = asdu.ObjectCount == 1 ? "1 object" : asdu.ObjectCount + " objects";
+                string valueText = firstObject == null || string.IsNullOrWhiteSpace(firstObject.ValueText)
+                    ? string.Empty
+                    : ", " + firstObject.ValueText;
+                return string.Format("{0}, {1}, COT={2}, CA={3}{4}", asdu.TypeId, objectText, ToNativeCotText(asdu), asdu.CommonAddress, valueText);
+            }
+
+            string linkText = frame.LinkAddress.HasValue ? " to link " + frame.LinkAddress.Value : string.Empty;
+            string controlText = frame.Control == null ? "-" : frame.Control.Describe();
+            return string.Format("{0} frame{1}, {2}", frameType, linkText, controlText);
+        }
+
+        private static string BuildNativeDetail(int length, string linkAddress, Iec101Asdu asdu, Iec101InformationObject firstObject, string asduError)
+        {
+            StringBuilder detail = new StringBuilder();
+            detail.Append("NativeDecode=1");
+            detail.Append(", Length=").Append(length);
+            detail.Append(", LinkAddress=").Append(linkAddress);
+
+            if (asdu != null)
+            {
+                detail.Append(", VSQ=0x").Append(asdu.VariableStructureQualifier.ToString("X2"));
+                detail.Append(", Sequence=").Append(asdu.IsSequence ? 1 : 0);
+                detail.Append(", OA=").Append(asdu.OriginatorAddress);
+                detail.Append(", TEST=").Append(asdu.IsTest ? 1 : 0);
+                detail.Append(", NEG=").Append(asdu.IsNegativeConfirm ? 1 : 0);
+            }
+
+            if (firstObject != null)
+            {
+                detail.Append(", IOA ").Append(firstObject.ObjectAddress);
+                if (firstObject.Quality != null)
+                {
+                    detail.Append(", Quality=").Append(firstObject.Quality.ToOperatorText());
+                }
+
+                if (firstObject.TimestampUtc.HasValue)
+                {
+                    detail.Append(", TimestampUtc=").Append(firstObject.TimestampUtc.Value.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(asduError))
+            {
+                detail.Append(", ASDUWarning=").Append(asduError);
+            }
+
+            return detail.ToString();
+        }
+
+        private static string ToNativeCotText(Iec101Asdu asdu)
+        {
+            if (asdu == null)
+            {
+                return "-";
+            }
+
+            return asdu.Cause == Iec101CauseOfTransmission.Unknown
+                ? "COT" + asdu.CauseRaw
+                : asdu.Cause.ToString();
         }
 
         private static string BuildRawSummary(string frameType, byte[] message, int length)

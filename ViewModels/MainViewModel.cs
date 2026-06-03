@@ -1,4 +1,5 @@
 using IEC101MasterTester.Models;
+using IEC101MasterTester.Services.Diagnostics;
 using IEC101MasterTester.Services.Iec101;
 using IEC101MasterTester.Services.Profiles;
 using IEC101MasterTester.Services.Redundancy;
@@ -38,6 +39,10 @@ namespace IEC101MasterTester.ViewModels
         private const int MaxNucTraceRows = 5000;
         private const int MaxNucValueRows = 400;
         private const int MaxAvailabilityTimelineRows = 120;
+        private const int MaxLineRawHexChars = 640;
+        private const int MaxLineDetailChars = 900;
+        private const int MaxNucTraceRawHexChars = 384;
+        private const int MaxNucTraceDetailChars = 640;
 
         private readonly IIec101MasterService _masterService;
         private readonly ISettingsStore _settingsStore;
@@ -1312,14 +1317,11 @@ namespace IEC101MasterTester.ViewModels
             {
                 NormalizeLine(e);
 
-                LineMonitor.Insert(0, e);
+                LineMonitorRow snapshot = BoundedUiBuffer.CreateLineSnapshot(e, e.Channel, MaxLineRawHexChars, MaxLineDetailChars);
+                BoundedUiBuffer.InsertNewest(LineMonitor, snapshot, MaxLineMonitorRows);
                 if (string.Equals(e.Direction, "TX", StringComparison.OrdinalIgnoreCase) || string.Equals(e.Direction, "RX", StringComparison.OrdinalIgnoreCase))
                 {
                     PulseTraffic(e.Direction);
-                }
-                while (LineMonitor.Count > MaxLineMonitorRows)
-                {
-                    LineMonitor.RemoveAt(LineMonitor.Count - 1);
                 }
 
                 ProcessTimedOutCommandTransactions();
@@ -1952,12 +1954,8 @@ namespace IEC101MasterTester.ViewModels
 
             if (_activeFindingKeys.Add(key))
             {
-                Findings.Insert(0, finding);
+                BoundedUiBuffer.InsertNewest(Findings, finding, MaxFindingRows);
                 HasUnreadFindings = true;
-                while (Findings.Count > MaxFindingRows)
-                {
-                    Findings.RemoveAt(Findings.Count - 1);
-                }
                 return;
             }
 
@@ -2093,14 +2091,10 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
-            EventLog.Insert(0, row);
+            BoundedUiBuffer.InsertNewest(EventLog, row, MaxEventLogRows);
             ReindexEventLogRows(EventLog);
             _availabilityObservedEventCount++;
             RefreshAvailabilityTelemetry();
-            while (EventLog.Count > MaxEventLogRows)
-            {
-                EventLog.RemoveAt(EventLog.Count - 1);
-            }
             ReindexEventLogRows(EventLog);
         }
 
@@ -2170,11 +2164,7 @@ namespace IEC101MasterTester.ViewModels
 
             _lastNucEventLogKey = signature;
 
-            NucEventLog.Insert(0, row);
-            while (NucEventLog.Count > MaxNucEventLogRows)
-            {
-                NucEventLog.RemoveAt(NucEventLog.Count - 1);
-            }
+            BoundedUiBuffer.InsertNewest(NucEventLog, row, MaxNucEventLogRows);
         }
 
         private void AddNucSoeAuditRow(EventLogRow row)
@@ -2207,11 +2197,7 @@ namespace IEC101MasterTester.ViewModels
 
             _lastNucSoeAuditKey = signature;
 
-            NucSoeAuditLog.Insert(0, row);
-            while (NucSoeAuditLog.Count > MaxNucSoeAuditRows)
-            {
-                NucSoeAuditLog.RemoveAt(NucSoeAuditLog.Count - 1);
-            }
+            BoundedUiBuffer.InsertNewest(NucSoeAuditLog, row, MaxNucSoeAuditRows);
         }
 
         private void AppendNucSoeForensicRow(SoeForensicRow row)
@@ -2351,28 +2337,13 @@ namespace IEC101MasterTester.ViewModels
 
             _lastNucLineMonitorKey = signature;
 
-            NucLineMonitor.Insert(0, new LineMonitorRow
+            LineMonitorRow snapshot = BoundedUiBuffer.CreateLineSnapshot(row, channelName, MaxNucTraceRawHexChars, MaxNucTraceDetailChars);
+            if (snapshot != null && string.IsNullOrWhiteSpace(snapshot.Summary))
             {
-                Time = row.Time,
-                Direction = row.Direction,
-                FrameType = row.FrameType,
-                Summary = string.IsNullOrWhiteSpace(row.Summary) ? channelName : row.Summary,
-                ControlFc = row.ControlFc,
-                ACD = row.ACD,
-                DFC = row.DFC,
-                AsduType = row.AsduType,
-                COT = row.COT,
-                CASDU = row.CASDU,
-                IOA = row.IOA,
-                RawHex = row.RawHex,
-                Detail = row.Detail,
-                DataClass = row.DataClass
-            });
-
-            while (NucLineMonitor.Count > MaxNucLineMonitorRows)
-            {
-                NucLineMonitor.RemoveAt(NucLineMonitor.Count - 1);
+                snapshot.Summary = channelName;
             }
+
+            BoundedUiBuffer.InsertNewest(NucLineMonitor, snapshot, MaxNucLineMonitorRows);
         }
 
         private void AddNucTraceRow(LineMonitorRow row, string channelName)
@@ -2386,29 +2357,10 @@ namespace IEC101MasterTester.ViewModels
                 ? NucTraceLinkB
                 : NucTraceLinkA;
 
-            target.Insert(0, new LineMonitorRow
-            {
-                Time = row.Time,
-                Channel = channelName,
-                Direction = row.Direction,
-                FrameType = row.FrameType,
-                Summary = row.Summary,
-                ControlFc = row.ControlFc,
-                ACD = row.ACD,
-                DFC = row.DFC,
-                AsduType = row.AsduType,
-                COT = row.COT,
-                CASDU = row.CASDU,
-                IOA = row.IOA,
-                RawHex = row.RawHex,
-                Detail = row.Detail,
-                DataClass = row.DataClass
-            });
-
-            while (target.Count > MaxNucTraceRows)
-            {
-                target.RemoveAt(target.Count - 1);
-            }
+            BoundedUiBuffer.InsertNewest(
+                target,
+                BoundedUiBuffer.CreateLineSnapshot(row, channelName, MaxNucTraceRawHexChars, MaxNucTraceDetailChars),
+                MaxNucTraceRows);
         }
 
         private bool ShouldCoalesceNucStandbyLineMonitorRow(LineMonitorRow row, string channelName)
@@ -2741,11 +2693,7 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
-            StatusHistory.Insert(0, row);
-            while (StatusHistory.Count > MaxStatusHistoryRows)
-            {
-                StatusHistory.RemoveAt(StatusHistory.Count - 1);
-            }
+            BoundedUiBuffer.InsertNewest(StatusHistory, row, MaxStatusHistoryRows);
         }
 
         private bool ShouldSuppressEmptyClass1BurstSummaryDuringGi(DateTime nowUtc)
@@ -2942,11 +2890,7 @@ namespace IEC101MasterTester.ViewModels
                 });
             }
 
-            BufferReplaySessions.Insert(0, _activeBufferReplaySession);
-            while (BufferReplaySessions.Count > MaxBufferReplaySessions)
-            {
-                BufferReplaySessions.RemoveAt(BufferReplaySessions.Count - 1);
-            }
+            BoundedUiBuffer.InsertNewest(BufferReplaySessions, _activeBufferReplaySession, MaxBufferReplaySessions);
 
             BufferReplayStatusText = "Replay session finalized";
             BufferReplaySummaryText = _activeBufferReplaySession.FinalVerdict;
@@ -3927,7 +3871,7 @@ namespace IEC101MasterTester.ViewModels
 
         private void AddRedundancyTimeline(string time, string channel, string redundancyEvent, string state, string detail, string giObservation)
         {
-            RedundancyTimeline.Insert(0, new RedundancyTimelineRow
+            BoundedUiBuffer.InsertNewest(RedundancyTimeline, new RedundancyTimelineRow
             {
                 Time = time,
                 Channel = channel,
@@ -3935,28 +3879,18 @@ namespace IEC101MasterTester.ViewModels
                 State = state,
                 Detail = detail,
                 GiObservation = giObservation
-            });
-
-            while (RedundancyTimeline.Count > MaxRedundancyTimelineRows)
-            {
-                RedundancyTimeline.RemoveAt(RedundancyTimeline.Count - 1);
-            }
+            }, MaxRedundancyTimelineRows);
         }
 
         private void AddRedundancyJournal(string time, string channel, string journalEvent, string detail)
         {
-            RedundancyEventJournal.Insert(0, new RedundancyEventJournalRow
+            BoundedUiBuffer.InsertNewest(RedundancyEventJournal, new RedundancyEventJournalRow
             {
                 Time = time,
                 Channel = channel,
                 Event = journalEvent,
                 Detail = detail
-            });
-
-            while (RedundancyEventJournal.Count > MaxRedundancyJournalRows)
-            {
-                RedundancyEventJournal.RemoveAt(RedundancyEventJournal.Count - 1);
-            }
+            }, MaxRedundancyJournalRows);
         }
 
         private void AddRedundancyOperationalJournal(string time, string channel, string journalEvent, string detail)
@@ -5779,19 +5713,14 @@ namespace IEC101MasterTester.ViewModels
 
         private void AddAvailabilityTimeline(string time, string category, string availabilityEvent, string detail, string metric)
         {
-            AvailabilityTimeline.Insert(0, new AvailabilityTimelineRow
+            BoundedUiBuffer.InsertNewest(AvailabilityTimeline, new AvailabilityTimelineRow
             {
                 Time = time,
                 Category = category,
                 Event = availabilityEvent,
                 Detail = detail,
                 Metric = metric
-            });
-
-            while (AvailabilityTimeline.Count > MaxAvailabilityTimelineRows)
-            {
-                AvailabilityTimeline.RemoveAt(AvailabilityTimeline.Count - 1);
-            }
+            }, MaxAvailabilityTimelineRows);
         }
 
         private static bool TryParseEventTimestampUtc(string timestamp, out DateTime parsedUtc)
@@ -6441,7 +6370,7 @@ namespace IEC101MasterTester.ViewModels
             {
                 transaction.ResponsePublishedAtUtc = DateTime.UtcNow;
             }
-            CommandLifeMonitor.Insert(0, new CommandLifeMonitorRow
+            BoundedUiBuffer.InsertNewest(CommandLifeMonitor, new CommandLifeMonitorRow
             {
                 TimeText = BuildCommandLifeMonitorTime(transaction, resultShort),
                 IoaText = string.IsNullOrWhiteSpace(transaction.CommandIoa) ? "-" : transaction.CommandIoa,
@@ -6450,12 +6379,7 @@ namespace IEC101MasterTester.ViewModels
                 ResultShort = string.IsNullOrWhiteSpace(resultShort) ? "-" : resultShort,
                 LatencyText = BuildCommandLifeLatencyText(transaction, resultShort),
                 FeedbackText = ResolveCommandFeedbackValue(transaction.CommandIoa)
-            });
-
-            while (CommandLifeMonitor.Count > MaxCommandLifeMonitorRows)
-            {
-                CommandLifeMonitor.RemoveAt(CommandLifeMonitor.Count - 1);
-            }
+            }, MaxCommandLifeMonitorRows);
         }
 
         private static string BuildCommandLifeMonitorTime(CommandTransaction transaction, string resultShort)
@@ -6772,15 +6696,11 @@ namespace IEC101MasterTester.ViewModels
 
             if (_activeFindingKeys.Add(key))
             {
-                Findings.Insert(0, finding);
+                BoundedUiBuffer.InsertNewest(Findings, finding, MaxFindingRows);
                 HasUnreadFindings = true;
                 RefreshRedundancyFindingsDashboard();
                 RefreshAvailabilityTelemetry();
                 AddAvailabilityTimeline(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"), "Finding", finding.RuleCode ?? finding.Title ?? "Finding", finding.Detail ?? string.Empty, finding.Severity ?? "-");
-                while (Findings.Count > MaxFindingRows)
-                {
-                    Findings.RemoveAt(Findings.Count - 1);
-                }
                 return;
             }
 

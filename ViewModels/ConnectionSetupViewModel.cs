@@ -27,6 +27,7 @@ namespace IEC101MasterTester.ViewModels
         private int _class1PollIntervalMs;
         private int _busyBackoffMs;
         private int _giStartupDelayMs;
+        private Iec101MasterEngine _masterEngine;
         private bool _useGeneralInterrogationOnConnect;
         private bool _useClockSyncOnConnect;
         private bool _useSingleCharAck;
@@ -43,6 +44,7 @@ namespace IEC101MasterTester.ViewModels
             LinkAddressLengthOptions = new ObservableCollection<int>(new[] { 1, 2 });
             CasduLengthOptions = new ObservableCollection<int>(new[] { 1, 2 });
             IoaLengthOptions = new ObservableCollection<int>(new[] { 1, 2, 3 });
+            MasterEngineOptions = new ObservableCollection<Iec101MasterEngine>(new[] { Iec101MasterEngine.Lib60870, Iec101MasterEngine.NativeExperimental });
 
             _serialPort = settings.SerialPort;
             _baudRate = settings.BaudRate;
@@ -63,6 +65,7 @@ namespace IEC101MasterTester.ViewModels
             _class1PollIntervalMs = settings.Class1PollIntervalMs;
             _busyBackoffMs = settings.BusyBackoffMs;
             _giStartupDelayMs = settings.GiStartupDelayMs;
+            _masterEngine = settings.MasterEngine;
             _useGeneralInterrogationOnConnect = settings.UseGeneralInterrogationOnConnect;
             _useClockSyncOnConnect = settings.UseClockSyncOnConnect;
             _useSingleCharAck = settings.UseSingleCharAck;
@@ -79,6 +82,7 @@ namespace IEC101MasterTester.ViewModels
         public ObservableCollection<int> LinkAddressLengthOptions { get; }
         public ObservableCollection<int> CasduLengthOptions { get; }
         public ObservableCollection<int> IoaLengthOptions { get; }
+        public ObservableCollection<Iec101MasterEngine> MasterEngineOptions { get; }
 
         public string SerialPort { get => _serialPort; set => SetProperty(ref _serialPort, value); }
         public int BaudRate { get => _baudRate; set => SetProperty(ref _baudRate, value); }
@@ -99,6 +103,7 @@ namespace IEC101MasterTester.ViewModels
         public int Class1PollIntervalMs { get => _class1PollIntervalMs; set => SetProperty(ref _class1PollIntervalMs, value); }
         public int BusyBackoffMs { get => _busyBackoffMs; set => SetProperty(ref _busyBackoffMs, value); }
         public int GiStartupDelayMs { get => _giStartupDelayMs; set => SetProperty(ref _giStartupDelayMs, value); }
+        public Iec101MasterEngine MasterEngine { get => _masterEngine; set => SetProperty(ref _masterEngine, value); }
         public bool UseGeneralInterrogationOnConnect { get => _useGeneralInterrogationOnConnect; set => SetProperty(ref _useGeneralInterrogationOnConnect, value); }
         public bool UseClockSyncOnConnect { get => _useClockSyncOnConnect; set => SetProperty(ref _useClockSyncOnConnect, value); }
         public bool UseSingleCharAck { get => _useSingleCharAck; set => SetProperty(ref _useSingleCharAck, value); }
@@ -249,6 +254,7 @@ namespace IEC101MasterTester.ViewModels
                 Class1PollIntervalMs = Class1PollIntervalMs,
                 BusyBackoffMs = BusyBackoffMs,
                 GiStartupDelayMs = GiStartupDelayMs,
+                MasterEngine = MasterEngine,
                 UseGeneralInterrogationOnConnect = UseGeneralInterrogationOnConnect,
                 UseClockSyncOnConnect = UseClockSyncOnConnect,
                 UseSingleCharAck = UseSingleCharAck

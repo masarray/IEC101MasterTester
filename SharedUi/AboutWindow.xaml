@@ -327,11 +327,9 @@ In real FAT and troubleshooting environments, communication issues often consume
 
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel>
-                            <TextBlock Text="License and Access" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="Open Source Status" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Style="{StaticResource BodyTextStyle}">
-Free Edition is available with a maximum runtime of 30 minutes per session.
-
-For full version access, update support, new feature requests, or maintenance discussion, please contact:
+This project is being prepared as an open-source IEC-60870 engineering tool. Demo mode, trial counters, activation keys, hardware fingerprinting, and runtime license restrictions have been removed from the application.
                             </TextBlock>
 
                             <Border Margin="0,14,0,0"
@@ -340,9 +338,10 @@ For full version access, update support, new feature requests, or maintenance di
                                     BorderThickness="1"
                                     CornerRadius="10"
                                     Padding="14">
-                                <TextBlock Text="admin@arisulistiono.com"
+                                <TextBlock Text="Target license: Apache-2.0 after GPL vendor code is fully removed"
                                            Foreground="{StaticResource TextMain}"
-                                           FontSize="16"
+                                           FontSize="13"
+                                           TextWrapping="Wrap"
                                            FontWeight="SemiBold"/>
                             </Border>
 
@@ -358,14 +357,14 @@ For full version access, update support, new feature requests, or maintenance di
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="License State" Style="{StaticResource LabelMiniStyle}" />
-                                    <TextBlock x:Name="LicenseStateTextBlock" Grid.Row="0" Grid.Column="1" Text="-" Style="{StaticResource ValueMiniStyle}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Access" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Unrestricted" Style="{StaticResource ValueMiniStyle}" />
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,0,0" Text="Trial Counter" Style="{StaticResource LabelMiniStyle}" />
-                                    <TextBlock x:Name="TrialCounterTextBlock" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="-" Style="{StaticResource ValueMiniStyle}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,0,0" Text="Demo Mode" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="Removed" Style="{StaticResource ValueMiniStyle}" />
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,0,0" Text="Trial Start" Style="{StaticResource LabelMiniStyle}" />
-                                    <TextBlock x:Name="TrialStartTextBlock" Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="-" Style="{StaticResource ValueMiniStyle}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,0,0" Text="Native Stack" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="In progress" Style="{StaticResource ValueMiniStyle}" />
                                 </Grid>
                             </Border>
                         </StackPanel>
@@ -413,9 +412,9 @@ Developed with practical field experience in substation automation, industrial c
 
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Full Version and Support" TextWrapping="Wrap" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="Project Support" TextWrapping="Wrap" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Style="{StaticResource BodyTextStyle}" FontSize="12" TextWrapping="Wrap">
-For full version access, update support, new feature requests, or maintenance discussion, please contact:
+For support, new feature requests, maintenance discussion, or field validation feedback, please contact:
                             </TextBlock>
 
                             <Border Margin="0,14,0,0"

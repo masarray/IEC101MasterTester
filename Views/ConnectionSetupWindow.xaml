@@ -486,6 +486,21 @@
                             Grid.Column="0"
                             Grid.ColumnSpan="3"
                             Margin="0,12,0,0">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="210" SharedSizeGroup="LabelCol" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Style="{StaticResource SetupLabelStyle}"
+                                   Text="Master Engine"/>
+                        <ComboBox Grid.Column="1"
+                                  Style="{StaticResource SetupComboBoxStyle}"
+                                  ItemsSource="{Binding MasterEngineOptions}"
+                                  SelectedItem="{Binding MasterEngine}"/>
+                    </Grid>
+
                     <CheckBox Style="{StaticResource SetupCheckBoxStyle}"
                               IsChecked="{Binding UseGeneralInterrogationOnConnect}"
                               Content="   Use General Interrogation on Connect"/>

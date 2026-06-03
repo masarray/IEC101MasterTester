@@ -10,6 +10,25 @@ The project should stay:
 
 ## Near-Term Priorities
 
+### 0. Lightweight buffer snapshot strategy
+
+Goal:
+- keep long FAT/troubleshooting sessions responsive
+- avoid letting operator-facing grids retain large raw payload strings forever
+- keep deep evidence in explicit forensic/export paths instead of every live UI row
+
+Current implementation:
+- `Services/Diagnostics/BoundedUiBuffer.cs` centralizes bounded `ObservableCollection` insertion/trimming
+- Line Monitor and NUC trace rows now store UI snapshots with capped `RawHex`/`Detail` text
+- Event Log, NUC Event Log, SOE Audit Log, Status History, Findings, Command Life Monitor, Redundancy timelines, Availability timeline, and Buffer Replay sessions now use the shared bounded-buffer helper where possible
+- `NucValues` still trims manually because it must also maintain the IOA index
+
+Next strategy:
+- keep live UI buffers small and snapshot-oriented
+- add a separate protocol evidence ring buffer only when golden trace/export work needs it
+- never use UI buffer rows as the only source of protocol truth for pass/fail verdicts
+- preserve raw frame facts for tests/export through a dedicated evidence sink, not through unbounded WPF grids
+
 ### 1. Native IEC-101 stack migration
 
 Goal:
@@ -98,6 +117,34 @@ Validation gates:
 Clean-room rule:
 - do not copy code from `lib60870.NET` or other GPL/commercial stacks
 - use public protocol documentation, interoperability guides, and project-owned traces as behavioral references
+- target project license may move to Apache-2 only after:
+  - `Vendor\lib60870` is removed
+  - no GPL implementation code has been copied or mechanically ported
+  - third-party assets and bundled code are audited for Apache-2 compatibility
+  - generated/build artifacts remain excluded from git
+
+Open-source cleanup status:
+- demo mode, trial counters, activation keys, hardware fingerprinting, and runtime license restrictions have been removed from the application
+- About window now reports open-source status instead of license/access state
+- clean-room native decoder, ASDU codec, mapper overload, and an opt-in `NativeExperimental` master engine skeleton now build successfully
+- `Lib60870` remains the default master engine and production baseline
+- project is still not Apache-2-ready until `Vendor\lib60870` is fully removed and remaining dependencies/assets are audited
+
+Native stack status as of 2026-06-03:
+- Done:
+  - internal application profile, frame, control-field, ASDU, type, COT, quality, and information-object models
+  - passive FT1.2 raw frame decoder/encoder for single ACK, fixed frame, variable frame, checksum, link address, and secondary `ACD/DFC`
+  - ASDU decoder/encoder for common monitoring, GI, clock sync, single/double/step command, and normalized setpoint paths
+  - native raw-frame integration in `LineMonitorFormatter`
+  - native overload in `Iec101DataMapper`
+  - `NativeIec101MasterService` unbalanced skeleton with reset/status, class polling, GI/clock/command queue, FCB toggling, timeout, and busy backoff basics
+  - `Iec101MasterServiceRouter` and `ConnectionSettings.MasterEngine` so engine choice is explicit
+- Not done:
+  - golden trace tests
+  - simulator/field validation
+  - `lib60870 -> internal model` adapter for factual side-by-side comparison
+  - native redundancy backend replacement
+  - final removal of `Vendor\lib60870`
 
 ### 2. NUC Link Trace trustworthiness
 

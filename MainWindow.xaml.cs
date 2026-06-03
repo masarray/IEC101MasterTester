@@ -24,7 +24,7 @@ namespace IEC101MasterTester
         }
 
         private readonly JsonSettingsStore _settingsStore;
-        private readonly Iec101MasterService _masterService;
+        private readonly IIec101MasterService _masterService;
         private readonly MainViewModel _viewModel;
         private bool _isClosing;
         private LineMonitorWindow _lineMonitorWindow;
@@ -44,7 +44,7 @@ namespace IEC101MasterTester
             InitializeComponent();
 
             _settingsStore = new JsonSettingsStore();
-            _masterService = new Iec101MasterService();
+            _masterService = new Iec101MasterServiceRouter();
             _viewModel = new MainViewModel(_masterService, _settingsStore);
 
             DataContext = _viewModel;
@@ -674,9 +674,40 @@ namespace IEC101MasterTester
                     _nucRedundancyWindow.Show();
                 }
 
+                _nucRedundancyWindow.WindowClosedByUser -= NucRedundancyWindow_WindowClosedByUser;
+                _nucRedundancyWindow.WindowClosedByUser += NucRedundancyWindow_WindowClosedByUser;
                 _nucRedundancyWindow.Activate();
+                if (string.Equals(_viewModel.ConnectionStatus, "Connected", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(_viewModel.ConnectionStatus, "Connecting", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _viewModel.DisconnectForExclusiveWindowAsync();
+                }
+
+                Hide();
                 return;
             }
+
+            foreach (Window window in Application.Current.Windows)
+            {
+                NucRedundancyWindow existing = window as NucRedundancyWindow;
+                if (existing != null && !ReferenceEquals(existing, this))
+                {
+                    _nucRedundancyWindow = existing;
+                    break;
+                }
+            }
+
+            if (_nucRedundancyWindow == null)
+            {
+                _nucRedundancyWindow = new NucRedundancyWindow
+                {
+                    DataContext = _viewModel
+                };
+            }
+
+            _nucRedundancyWindow.WindowClosedByUser += NucRedundancyWindow_WindowClosedByUser;
+            _nucRedundancyWindow.Show();
+            _nucRedundancyWindow.Activate();
 
             if (string.Equals(_viewModel.ConnectionStatus, "Connected", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(_viewModel.ConnectionStatus, "Connecting", StringComparison.OrdinalIgnoreCase))
@@ -685,14 +716,6 @@ namespace IEC101MasterTester
             }
 
             Hide();
-
-            _nucRedundancyWindow = new NucRedundancyWindow
-            {
-                DataContext = _viewModel
-            };
-            _nucRedundancyWindow.WindowClosedByUser += NucRedundancyWindow_WindowClosedByUser;
-            _nucRedundancyWindow.Show();
-            _nucRedundancyWindow.Activate();
         }
 
         private void NucRedundancyWindow_WindowClosedByUser(object sender, EventArgs e)

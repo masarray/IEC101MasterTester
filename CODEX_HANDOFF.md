@@ -1,5 +1,57 @@
 # CODEX_HANDOFF.md
 
+## Latest local handoff - 2026-06-03
+
+Current branch:
+- `codex/link-trace-restore`
+
+Current migration direction:
+- remove demo/license system
+- build a clean-room project-owned IEC-60870-5-101 stack
+- keep `lib60870.NET` as default production baseline until native stack passes roadmap gates
+- target Apache-2 only after `Vendor\lib60870` is removed and remaining dependencies/assets are audited
+
+Latest completed work:
+- removed runtime demo/trial/license/fingerprint system from app startup and project compile list
+- changed About content to open-source status messaging
+- added native protocol model/code under `Services\Iec101\Native`
+- added passive FT1.2 decoder/encoder and ASDU decoder/encoder
+- integrated native raw frame decode into `LineMonitorFormatter`
+- added native mapper overload to `Iec101DataMapper`
+- added `NativeIec101MasterService` as an opt-in experimental unbalanced master skeleton
+- added `Iec101MasterEngine` and `ConnectionSettings.MasterEngine`
+- added `Iec101MasterServiceRouter` so `Lib60870` remains default and `NativeExperimental` must be selected explicitly in Connection Setup
+- added `Services\Diagnostics\BoundedUiBuffer.cs` and started the lightweight buffer snapshot strategy for live UI grids
+- capped Line Monitor / NUC trace raw payload text in UI snapshots while keeping protocol facts visible
+
+Latest verification:
+- `2026-06-03`: MSBuild succeeded with `0 Warning(s)` and `0 Error(s)` after native decoder/mapper/engine work
+- `2026-06-03`: MSBuild succeeded with `0 Warning(s)` and `0 Error(s)` after engine router and Connection Setup engine selector
+
+Files to inspect first for native-stack continuation:
+- `C:\Git\IEC101MasterTester\ROADMAP.md`
+- `C:\Git\IEC101MasterTester\AGENTS.md`
+- `C:\Git\IEC101MasterTester\Models\ConnectionSettings.cs`
+- `C:\Git\IEC101MasterTester\Models\Iec101MasterEngine.cs`
+- `C:\Git\IEC101MasterTester\Services\Iec101\Iec101MasterServiceRouter.cs`
+- `C:\Git\IEC101MasterTester\Services\Iec101\Native`
+- `C:\Git\IEC101MasterTester\Services\Iec101\LineMonitorFormatter.cs`
+- `C:\Git\IEC101MasterTester\Services\Iec101\Iec101DataMapper.cs`
+- `C:\Git\IEC101MasterTester\Services\Iec101\Iec101MasterService.cs`
+- `C:\Git\IEC101MasterTester\ViewModels\ConnectionSetupViewModel.cs`
+- `C:\Git\IEC101MasterTester\Views\ConnectionSetupWindow.xaml`
+
+Next safest steps:
+1. Add golden-trace fixtures and tests for FT1.2 + ASDU decode/encode before promoting native mode.
+2. Add `lib60870 -> internal model` adapter to compare vendor callback facts against native parser facts.
+3. Test `NativeExperimental` only against simulator/bench equipment first.
+4. Replace NUC redundancy internals with router/native only after single-link native is stable.
+5. Remove `Vendor\lib60870` only after trace, simulator, build, and field gates pass.
+6. Continue the buffer snapshot strategy by adding a dedicated protocol evidence ring buffer for golden traces/export instead of growing WPF UI collections.
+
+Important local caveat:
+- `MainWindow.xaml.cs` and `Views\NucRedundancyWindow.xaml.cs` had pre-existing dirty changes during this work. Do not revert them unless the user explicitly requests it.
+
 ## Latest local handoff - 2026-03-30
 
 ### Latest protocol/class note - 2026-04-08

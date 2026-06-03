@@ -978,6 +978,12 @@ namespace IEC101MasterTester.Services.Iec101
 
         private bool OnRawMessageReceived(object parameter, byte[] msg, int msgSize)
         {
+            ConnectionSettings settings;
+            lock (_syncRoot)
+            {
+                settings = _settings == null ? ConnectionSettings.CreateDefault() : _settings.Clone();
+            }
+
             bool isVariableFrame = msg != null && msgSize >= 2 && msg[0] == 0x68;
             if (isVariableFrame)
             {
@@ -1000,15 +1006,21 @@ namespace IEC101MasterTester.Services.Iec101
                 });
             }
             ProcessSecondaryFrame(msg, msgSize);
-            RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", msg, msgSize));
+            RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", msg, msgSize, settings));
             return true;
         }
 
         private bool OnRawMessageSent(object parameter, byte[] msg, int msgSize)
         {
+            ConnectionSettings settings;
+            lock (_syncRoot)
+            {
+                settings = _settings == null ? ConnectionSettings.CreateDefault() : _settings.Clone();
+            }
+
             ProcessPrimaryFrame(msg, msgSize);
             TraceTxGiFrame(msg, msgSize);
-            RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", msg, msgSize));
+            RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", msg, msgSize, settings));
             return true;
         }
 
