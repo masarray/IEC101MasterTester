@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IEC101 Master Tester for SCADA FAT Evidence | MasArray</title>
+    <meta
+      name="description"
+      content="Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and clean-room native stack migration."
+    />
+    <meta name="author" content="MasArray" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="canonical" href="https://masarray.github.io/IEC101MasterTester/" />
+    <link rel="icon" href="assets/iec60870-icon.png" />
+    <link rel="apple-touch-icon" href="assets/iec60870-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MasArray IEC101 Master Tester" />
+    <meta property="og:title" content="IEC101 Master Tester for SCADA FAT Evidence" />
+    <meta property="og:description" content="IEC-60870-5-101 master tester with analyzer views, SOE audit, NUC redundancy observation, protocol evidence capture, and native C# stack migration." />
+    <meta property="og:url" content="https://masarray.github.io/IEC101MasterTester/" />
+    <meta property="og:image" content="https://masarray.github.io/IEC101MasterTester/assets/iec60870-icon.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="IEC101 Master Tester by MasArray" />
+    <meta name="twitter:description" content="Windows IEC-101 master tester for FAT, troubleshooting, redundancy observation, and protocol evidence." />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "IEC101 Master Tester",
+        "alternateName": "MasArray IEC101MasterTester",
+        "description": "Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and native C# stack migration.",
+        "url": "https://masarray.github.io/IEC101MasterTester/",
+        "codeRepository": "https://github.com/masarray/IEC101MasterTester",
+        "operatingSystem": "Windows",
+        "applicationCategory": "DeveloperApplication",
+        "author": {
+          "@type": "Organization",
+          "name": "MasArray",
+          "url": "https://github.com/masarray"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "MasArray",
+          "url": "https://github.com/masarray"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="IEC101 Master Tester">
+        <img src="assets/iec60870-icon.png" width="44" height="44" alt="" />
+        <span>
+          <strong>IEC101 Master Tester</strong>
+          <small>FAT evidence and analyzer workspace</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#value">Value</a>
+        <a href="#stack">Stack</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#download">Source</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">IEC-60870-5-101 master testing - FAT evidence - Native stack migration</p>
+          <h1>IEC101 testing that keeps protocol facts visible.</h1>
+          <p class="lead">
+            A Windows desktop tool for SCADA FAT, gateway troubleshooting, NUC redundancy observation,
+            SOE replay audit, and traceable IEC-101 evidence. The project is moving toward a clean-room
+            native C# stack while keeping lib60870.NET as the known-good baseline until validation gates pass.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/masarray/IEC101MasterTester">View source</a>
+            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/codex/link-trace-restore/ROADMAP.md">Migration roadmap</a>
+          </div>
+          <div class="trust-strip" aria-label="Core capabilities">
+            <span>ACD evidence</span>
+            <span>COT-safe analyzer</span>
+            <span>SOE replay audit</span>
+            <span>NUC redundancy</span>
+            <span>Golden trace foundation</span>
+          </div>
+        </div>
+
+        <aside class="hero-panel reveal delay-1" aria-label="Application preview">
+          <div class="panel-header">
+            <img src="assets/iec60870-icon.png" width="76" height="76" alt="" />
+            <div>
+              <span class="live-pill">Lib60870 baseline</span>
+              <h2>NativeExperimental ready</h2>
+            </div>
+          </div>
+          <div class="monitor-frame" aria-label="Protocol monitor preview">
+            <div class="monitor-topbar">
+              <span></span><span></span><span></span>
+              <strong>Line Monitor</strong>
+            </div>
+            <div class="trace-row tx"><b>TX</b><span>FC=11 request class 2</span><em>COT -</em></div>
+            <div class="trace-row rx"><b>RX</b><span>M_SP_NA_1, ACD=1</span><em>Spontaneous</em></div>
+            <div class="trace-row rx"><b>RX</b><span>M_ME_NC_1, CA=105</span><em>Interrogated</em></div>
+            <div class="trace-row tx"><b>TX</b><span>C_IC_NA_1 activation</span><em>GI</em></div>
+          </div>
+          <div class="metric-row">
+            <div><span>Profile</span><strong>1200 8E1</strong></div>
+            <div><span>Address</span><strong>CA 105</strong></div>
+            <div><span>Evidence</span><strong>Bounded</strong></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="ticker" aria-label="Workflow highlights">
+        <div class="ticker-track">
+          <span>Class 1 / Class 2 evidence</span>
+          <span>ACD and DFC from control bits</span>
+          <span>General interrogation review</span>
+          <span>Command lifecycle</span>
+          <span>SOE replay audit</span>
+          <span>Availability telemetry</span>
+          <span>Native stack validation</span>
+          <span>Protocol evidence CSV</span>
+          <span>Class 1 / Class 2 evidence</span>
+          <span>ACD and DFC from control bits</span>
+          <span>General interrogation review</span>
+          <span>Command lifecycle</span>
+          <span>SOE replay audit</span>
+          <span>Availability telemetry</span>
+          <span>Native stack validation</span>
+          <span>Protocol evidence CSV</span>
+        </div>
+      </section>
+
+      <section class="section" id="value">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Why it exists</p>
+          <h2>Built for field-facing FAT work, not abstract protocol demos.</h2>
+          <p>
+            IEC101 Master Tester focuses on observable behavior: what went on the wire,
+            what the RTU returned, what the operator can trust, and what should be preserved
+            as evidence.
+          </p>
+        </div>
+        <div class="value-grid">
+          <article class="value-card reveal">
+            <span class="value-index">01</span>
+            <h3>Protocol facts first</h3>
+            <p>COT comes from callback/ASDU facts, ACD/DFC from secondary frame control bits, and unknowns stay unknown.</p>
+          </article>
+          <article class="value-card reveal delay-1">
+            <span class="value-index">02</span>
+            <h3>Operator-ready windows</h3>
+            <p>Main values, event log, status history, line monitor, findings, SOE audit, and availability views stay separated.</p>
+          </article>
+          <article class="value-card reveal delay-2">
+            <span class="value-index">03</span>
+            <h3>Redundancy observation</h3>
+            <p>NUC workflows track link activity, switchover, continuity, GI observation, and active/standby behavior.</p>
+          </article>
+          <article class="value-card reveal delay-3">
+            <span class="value-index">04</span>
+            <h3>Evidence without UI bloat</h3>
+            <p>Live grids use bounded snapshots while protocol evidence is captured separately for golden trace and export.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section split" id="stack">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Clean-room migration</p>
+          <h2>Native IEC-101 is progressing, but still gated.</h2>
+          <p>
+            The native stack already includes FT1.2 parsing, ASDU parsing/encoding, UI mapper integration,
+            an experimental master engine, and protocol evidence recording. The vendor path remains the
+            production baseline until tests prove compatibility.
+          </p>
+        </div>
+        <div class="status-board reveal delay-1">
+          <div><span>Default engine</span><strong>Lib60870</strong></div>
+          <div><span>Opt-in engine</span><strong>NativeExperimental</strong></div>
+          <div><span>Frame codec</span><strong>FT1.2 ready</strong></div>
+          <div><span>Validation</span><strong>Golden trace next</strong></div>
+        </div>
+      </section>
+
+      <section class="section workflow" id="workflow">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Workflow</p>
+          <h2>From serial session to reviewable evidence.</h2>
+        </div>
+        <ol class="workflow-list">
+          <li class="reveal"><span>Connect</span><p>Use the PLN-style IEC-101 profile or tune serial/link settings for the RTU under test.</p></li>
+          <li class="reveal delay-1"><span>Observe</span><p>Watch values, ACD, COT, traffic class, event log, findings, and status history.</p></li>
+          <li class="reveal delay-2"><span>Audit</span><p>Use SOE replay, availability telemetry, NUC redundancy, and line trace windows for deeper checks.</p></li>
+          <li class="reveal delay-3"><span>Validate</span><p>Capture protocol evidence snapshots to build golden traces for the native stack.</p></li>
+        </ol>
+      </section>
+
+      <section class="section author-band">
+        <div class="author-card reveal">
+          <img src="assets/ari-profile.jpg" width="96" height="96" alt="MasArray profile" />
+          <div>
+            <p class="eyebrow">MasArray engineering tool</p>
+            <h2>A practical IEC-101 workspace for SCADA and substation automation engineers.</h2>
+            <p>
+              The project is intentionally transparent: protocol behavior, migration gates, and known limits
+              are documented so future work can continue without guessing.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section download" id="download">
+        <div class="download-panel reveal">
+          <p class="eyebrow">Source and roadmap</p>
+          <h2>Inspect the code, then follow the migration gates.</h2>
+          <p>
+            The next engineering milestone is golden trace validation: export known-good lib60870 sessions,
+            assert native decoder fields, then harden the experimental engine with simulator and field tests.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/masarray/IEC101MasterTester">GitHub repository</a>
+            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/codex/link-trace-restore/CODEX_HANDOFF.md">Latest handoff</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>IEC101 Master Tester</span>
+      <span>Protocol correctness first. Native stack migration in progress.</span>
+    </footer>
+  </body>
+</html>

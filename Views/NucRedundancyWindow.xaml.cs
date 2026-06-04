@@ -723,12 +723,6 @@ namespace IEC101MasterTester.Views
                 _availabilityDashboardWindow = null;
             }
 
-            if (_legacyMainWindow != null)
-            {
-                _legacyMainWindow.Close();
-                _legacyMainWindow = null;
-            }
-
             WindowClosedByUser?.Invoke(this, EventArgs.Empty);
             base.OnClosed(e);
         }
@@ -1020,13 +1014,12 @@ namespace IEC101MasterTester.Views
             _availabilityDashboardWindow.Activate();
         }
 
-        private void OpenMainWindow_Click(object sender, RoutedEventArgs e)
+        private async void OpenMainWindow_Click(object sender, RoutedEventArgs e)
         {
             if (_legacyMainWindow == null)
             {
                 _legacyMainWindow = new MainWindow
                 {
-                    DataContext = DataContext,
                     Left = Left + 180,
                     Top = Top + 180
                 };
@@ -1039,6 +1032,23 @@ namespace IEC101MasterTester.Views
             }
 
             _legacyMainWindow.Activate();
+            Application.Current.MainWindow = _legacyMainWindow;
+
+            MainViewModel viewModel = DataContext as MainViewModel;
+            if (viewModel != null)
+            {
+                try
+                {
+                    await viewModel.StopNucRedundancySessionAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, ex.Message, "NUC Redundancy", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            Hide();
         }
 
         private void About_Click(object sender, RoutedEventArgs e)
