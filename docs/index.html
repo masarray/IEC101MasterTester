@@ -61,6 +61,7 @@
       <nav class="nav-links" aria-label="Main navigation">
         <a href="#value">Value</a>
         <a href="#stack">Stack</a>
+        <a href="#screens">Screens</a>
         <a href="#workflow">Workflow</a>
         <a href="#download">Source</a>
       </nav>
@@ -97,15 +98,8 @@
               <h2>NativeExperimental ready</h2>
             </div>
           </div>
-          <div class="monitor-frame" aria-label="Protocol monitor preview">
-            <div class="monitor-topbar">
-              <span></span><span></span><span></span>
-              <strong>Line Monitor</strong>
-            </div>
-            <div class="trace-row tx"><b>TX</b><span>FC=11 request class 2</span><em>COT -</em></div>
-            <div class="trace-row rx"><b>RX</b><span>M_SP_NA_1, ACD=1</span><em>Spontaneous</em></div>
-            <div class="trace-row rx"><b>RX</b><span>M_ME_NC_1, CA=105</span><em>Interrogated</em></div>
-            <div class="trace-row tx"><b>TX</b><span>C_IC_NA_1 activation</span><em>GI</em></div>
+          <div class="screen-frame featured-screen" aria-label="Mission control screenshot preview">
+            <img src="assets/screenshot/mission-control.webp" width="1917" height="1002" alt="IEC101 Master Tester mission control screenshot" decoding="async" />
           </div>
           <div class="metric-row">
             <div><span>Profile</span><strong>1200 8E1</strong></div>
@@ -185,6 +179,43 @@
           <div><span>Opt-in engine</span><strong>NativeExperimental</strong></div>
           <div><span>Frame codec</span><strong>FT1.2 ready</strong></div>
           <div><span>Validation</span><strong>Golden trace next</strong></div>
+        </div>
+      </section>
+
+      <section class="section screens-section" id="screens">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Application screens</p>
+          <h2>Focused windows for live operation, trace review, and FAT evidence.</h2>
+          <p>
+            Screenshots are served as WebP assets for faster loading while preserving enough detail
+            for engineers to inspect the workflow before cloning the repository.
+          </p>
+        </div>
+        <div class="screens-grid">
+          <figure class="screen-card wide reveal">
+            <img src="assets/screenshot/mission-control.webp" width="1917" height="1002" alt="Mission control value viewer and analyzer workspace" loading="lazy" decoding="async" />
+            <figcaption><strong>Mission Control</strong><span>Main values, events, command context, status, and analyzer summaries.</span></figcaption>
+          </figure>
+          <figure class="screen-card reveal delay-1">
+            <img src="assets/screenshot/line-monitor.webp" width="1382" height="766" alt="IEC101 line monitor raw traffic screenshot" loading="lazy" decoding="async" />
+            <figcaption><strong>Line Monitor</strong><span>TX/RX trace with control fields, ACD, DFC, COT, CASDU, IOA, and raw frame evidence.</span></figcaption>
+          </figure>
+          <figure class="screen-card reveal delay-2">
+            <img src="assets/screenshot/nuc-redundancy.webp" width="1917" height="996" alt="NUC redundancy observation dashboard screenshot" loading="lazy" decoding="async" />
+            <figcaption><strong>NUC Redundancy</strong><span>Active/standby observation, traffic continuity, link health, and switchover evidence.</span></figcaption>
+          </figure>
+          <figure class="screen-card reveal">
+            <img src="assets/screenshot/soe-buffer-audit.webp" width="1914" height="1005" alt="SOE buffer audit screenshot" loading="lazy" decoding="async" />
+            <figcaption><strong>SOE Buffer Audit</strong><span>Replay counting, duplicate checks, FIFO evidence, and minimum replay capacity tracking.</span></figcaption>
+          </figure>
+          <figure class="screen-card reveal delay-1">
+            <img src="assets/screenshot/availability-dashboard.webp" width="1914" height="1002" alt="Availability dashboard screenshot" loading="lazy" decoding="async" />
+            <figcaption><strong>Availability</strong><span>Long-running session health, reconnect pressure, silent RTU detection, and protocol error trend.</span></figcaption>
+          </figure>
+          <figure class="screen-card reveal delay-2">
+            <img src="assets/screenshot/findings-dashboard.webp" width="1914" height="1001" alt="Findings dashboard screenshot" loading="lazy" decoding="async" />
+            <figcaption><strong>Findings</strong><span>Rule-oriented analyzer findings tied to observable IEC evidence.</span></figcaption>
+          </figure>
         </div>
       </section>
 

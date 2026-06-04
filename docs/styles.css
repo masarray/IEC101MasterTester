@@ -262,10 +262,33 @@ h3 {
   font-weight: 800;
 }
 
-.monitor-frame {
+.monitor-frame,
+.screen-frame {
   padding: 14px;
   border-radius: 8px;
   background: #061210;
+}
+
+.screen-frame {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  cursor: default;
+}
+
+.screen-frame img,
+.screen-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.featured-screen img {
+  aspect-ratio: 1917 / 1002;
+  object-fit: cover;
+  object-position: left top;
 }
 
 .monitor-topbar {
@@ -438,6 +461,49 @@ h3 {
   background: rgba(255, 255, 255, 0.025);
 }
 
+.screens-section {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(39, 211, 182, 0.035));
+}
+
+.screens-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.screen-card {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(7, 24, 22, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.screen-card.wide {
+  grid-column: 1 / -1;
+}
+
+.screen-card img {
+  background: #071816;
+  border-bottom: 1px solid var(--line);
+}
+
+.screen-card figcaption {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+}
+
+.screen-card figcaption strong {
+  font-size: 18px;
+}
+
+.screen-card figcaption span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .workflow-list {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -530,6 +596,7 @@ h3 {
   .hero,
   .split,
   .value-grid,
+  .screens-grid,
   .workflow-list {
     grid-template-columns: 1fr;
   }
