@@ -22,6 +22,8 @@ Latest completed work:
 - added `Iec101MasterEngine` and `ConnectionSettings.MasterEngine`
 - added `Iec101MasterServiceRouter` so `Lib60870` remains default and `NativeExperimental` must be selected explicitly in Connection Setup
 - added `Services\Diagnostics\BoundedUiBuffer.cs` and started the lightweight buffer snapshot strategy for live UI grids
+- added `Services\Diagnostics\ProtocolEvidenceRecorder.cs` for bounded full raw TX/RX capture outside WPF grids
+- added `Services\Diagnostics\ProtocolEvidenceExportService.cs` for CSV golden-trace/export foundation
 - capped Line Monitor / NUC trace raw payload text in UI snapshots while keeping protocol facts visible
 
 Latest verification:
@@ -34,6 +36,8 @@ Files to inspect first for native-stack continuation:
 - `C:\Git\IEC101MasterTester\Models\ConnectionSettings.cs`
 - `C:\Git\IEC101MasterTester\Models\Iec101MasterEngine.cs`
 - `C:\Git\IEC101MasterTester\Services\Iec101\Iec101MasterServiceRouter.cs`
+- `C:\Git\IEC101MasterTester\Services\Diagnostics\ProtocolEvidenceRecorder.cs`
+- `C:\Git\IEC101MasterTester\Services\Diagnostics\ProtocolEvidenceExportService.cs`
 - `C:\Git\IEC101MasterTester\Services\Iec101\Native`
 - `C:\Git\IEC101MasterTester\Services\Iec101\LineMonitorFormatter.cs`
 - `C:\Git\IEC101MasterTester\Services\Iec101\Iec101DataMapper.cs`
@@ -47,7 +51,7 @@ Next safest steps:
 3. Test `NativeExperimental` only against simulator/bench equipment first.
 4. Replace NUC redundancy internals with router/native only after single-link native is stable.
 5. Remove `Vendor\lib60870` only after trace, simulator, build, and field gates pass.
-6. Continue the buffer snapshot strategy by adding a dedicated protocol evidence ring buffer for golden traces/export instead of growing WPF UI collections.
+6. Continue from `ProtocolEvidenceRecorder` by adding golden trace fixture export/import and decoder assertions.
 
 Important local caveat:
 - `MainWindow.xaml.cs` and `Views\NucRedundancyWindow.xaml.cs` had pre-existing dirty changes during this work. Do not revert them unless the user explicitly requests it.

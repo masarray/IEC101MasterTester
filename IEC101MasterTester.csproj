@@ -188,6 +188,7 @@
     <Compile Include="Models\NucRedundancySessionState.cs" />
     <Compile Include="Models\NucRedundancyValueEventArgs.cs" />
     <Compile Include="Models\PointDefinition.cs" />
+    <Compile Include="Models\ProtocolEvidence.cs" />
     <Compile Include="Models\RedundancyTimelineRow.cs" />
     <Compile Include="Models\RedundancyEventJournalRow.cs" />
     <Compile Include="Models\StatusHistoryRow.cs" />
@@ -209,6 +210,8 @@
     <Compile Include="Services\Iec101\Iec101DataMapper.cs" />
     <Compile Include="Services\Iec101\Iec101MasterServiceRouter.cs" />
     <Compile Include="Services\Diagnostics\BoundedUiBuffer.cs" />
+    <Compile Include="Services\Diagnostics\ProtocolEvidenceExportService.cs" />
+    <Compile Include="Services\Diagnostics\ProtocolEvidenceRecorder.cs" />
     <Compile Include="Services\Export\EventLogExportService.cs" />
     <Compile Include="Services\Iec101\Iec101MasterService.cs" />
     <Compile Include="Services\Iec101\IIec101MasterService.cs" />

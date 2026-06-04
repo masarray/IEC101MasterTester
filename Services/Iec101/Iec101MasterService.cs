@@ -4,6 +4,7 @@ using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 using IEC101MasterTester.Models;
+using IEC101MasterTester.Services.Diagnostics;
 using lib60870;
 using lib60870.CS101;
 using lib60870.linklayer;
@@ -1006,6 +1007,7 @@ namespace IEC101MasterTester.Services.Iec101
                 });
             }
             ProcessSecondaryFrame(msg, msgSize);
+            ProtocolEvidenceRecorder.Shared.RecordRaw("Lib60870", "RX", msg, msgSize, settings);
             RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", msg, msgSize, settings));
             return true;
         }
@@ -1020,6 +1022,7 @@ namespace IEC101MasterTester.Services.Iec101
 
             ProcessPrimaryFrame(msg, msgSize);
             TraceTxGiFrame(msg, msgSize);
+            ProtocolEvidenceRecorder.Shared.RecordRaw("Lib60870", "TX", msg, msgSize, settings);
             RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", msg, msgSize, settings));
             return true;
         }

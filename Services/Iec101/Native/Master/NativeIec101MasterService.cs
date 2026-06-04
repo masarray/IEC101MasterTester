@@ -5,6 +5,7 @@ using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 using IEC101MasterTester.Models;
+using IEC101MasterTester.Services.Diagnostics;
 using IEC101MasterTester.Services.Iec101.Native.Asdu;
 using IEC101MasterTester.Services.Iec101.Native.Frames;
 
@@ -371,6 +372,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 try
                 {
                     port.Write(request, 0, request.Length);
+                    ProtocolEvidenceRecorder.Shared.RecordRaw("NativeExperimental", "TX", request, request.Length, settings);
                     RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", request, request.Length, settings));
 
                     if (!expectResponse)
@@ -397,6 +399,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
 
         private void ProcessReceivedFrame(byte[] frameBytes, ConnectionSettings settings)
         {
+            ProtocolEvidenceRecorder.Shared.RecordRaw("NativeExperimental", "RX", frameBytes, frameBytes.Length, settings);
             RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", frameBytes, frameBytes.Length, settings));
 
             Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);

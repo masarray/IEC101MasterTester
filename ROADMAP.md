@@ -19,13 +19,15 @@ Goal:
 
 Current implementation:
 - `Services/Diagnostics/BoundedUiBuffer.cs` centralizes bounded `ObservableCollection` insertion/trimming
+- `Services/Diagnostics/ProtocolEvidenceRecorder.cs` keeps a bounded non-UI ring buffer of full raw TX/RX frames for golden trace/export work
+- `Services/Diagnostics/ProtocolEvidenceExportService.cs` can write the current protocol evidence snapshot to CSV with raw hex and decoded fields
 - Line Monitor and NUC trace rows now store UI snapshots with capped `RawHex`/`Detail` text
 - Event Log, NUC Event Log, SOE Audit Log, Status History, Findings, Command Life Monitor, Redundancy timelines, Availability timeline, and Buffer Replay sessions now use the shared bounded-buffer helper where possible
 - `NucValues` still trims manually because it must also maintain the IOA index
 
 Next strategy:
 - keep live UI buffers small and snapshot-oriented
-- add a separate protocol evidence ring buffer only when golden trace/export work needs it
+- expand the protocol evidence ring buffer into golden trace fixtures/export when validation work starts
 - never use UI buffer rows as the only source of protocol truth for pass/fail verdicts
 - preserve raw frame facts for tests/export through a dedicated evidence sink, not through unbounded WPF grids
 
@@ -139,6 +141,8 @@ Native stack status as of 2026-06-03:
   - native overload in `Iec101DataMapper`
   - `NativeIec101MasterService` unbalanced skeleton with reset/status, class polling, GI/clock/command queue, FCB toggling, timeout, and busy backoff basics
   - `Iec101MasterServiceRouter` and `ConnectionSettings.MasterEngine` so engine choice is explicit
+  - shared `ProtocolEvidenceRecorder` captures bounded full raw TX/RX frames from both `Lib60870` and `NativeExperimental`
+  - protocol evidence CSV export service is available for future golden-trace capture
 - Not done:
   - golden trace tests
   - simulator/field validation
