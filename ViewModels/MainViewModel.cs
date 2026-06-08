@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using lib60870.CS101;
+using IEC101MasterTester.Services.Iec101.Native.Asdu;
 
 namespace IEC101MasterTester.ViewModels
 {
@@ -2303,14 +2303,60 @@ namespace IEC101MasterTester.ViewModels
 
         private static int ParseTypeIdOrDefault(string text)
         {
-            TypeID parsed;
-            return Enum.TryParse(text ?? string.Empty, true, out parsed) ? (int)parsed : 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return 0;
+            }
+
+            string normalized = text.Trim();
+            if (normalized.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                int raw;
+                return int.TryParse(normalized.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out raw) ? raw : 0;
+            }
+
+            Iec101TypeId parsed;
+            return Enum.TryParse(normalized, true, out parsed) ? (int)parsed : 0;
         }
 
         private static int ParseCotOrDefault(string text)
         {
-            CauseOfTransmission parsed;
-            return Enum.TryParse((text ?? string.Empty).Replace(" ", "_"), true, out parsed) ? (int)parsed : 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return 0;
+            }
+
+            string normalized = text.Trim().Replace(" ", string.Empty).Replace("_", string.Empty);
+            int raw;
+            if (normalized.StartsWith("COT", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(normalized.Substring(3), NumberStyles.Integer, CultureInfo.InvariantCulture, out raw))
+            {
+                return raw;
+            }
+
+            switch (normalized.ToUpperInvariant())
+            {
+                case "PERIODIC": return (int)Iec101CauseOfTransmission.Periodic;
+                case "BGSCAN":
+                case "BACKGROUNDSCAN": return (int)Iec101CauseOfTransmission.BackgroundScan;
+                case "SPONT":
+                case "SPONTANEOUS": return (int)Iec101CauseOfTransmission.Spontaneous;
+                case "GI":
+                case "INTERROGATEDBYSTATION": return (int)Iec101CauseOfTransmission.InterrogatedByStation;
+                case "ACT":
+                case "ACTIVATION": return (int)Iec101CauseOfTransmission.Activation;
+                case "ACTCON":
+                case "ACTIVATIONCON": return (int)Iec101CauseOfTransmission.ActivationCon;
+                case "ACTTERM":
+                case "ACTIVATIONTERMINATION": return (int)Iec101CauseOfTransmission.ActivationTermination;
+                case "REQ":
+                case "REQUEST": return (int)Iec101CauseOfTransmission.Request;
+                case "INIT":
+                case "INITIALIZED": return (int)Iec101CauseOfTransmission.Initialized;
+                default:
+                    Iec101CauseOfTransmission parsed;
+                    return Enum.TryParse(text.Trim().Replace(" ", string.Empty), true, out parsed) ? (int)parsed : 0;
+            }
         }
 
         private void AddNucLineMonitorRow(LineMonitorRow row, string channelName)

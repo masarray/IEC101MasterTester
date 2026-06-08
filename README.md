@@ -5,21 +5,26 @@ Windows WPF `.NET Framework 4.8` IEC-60870-5-101 master tester and analyzer for 
 [![Platform](https://img.shields.io/badge/platform-Windows-1f6feb)](#build)
 [![Framework](https://img.shields.io/badge/.NET%20Framework-4.8-512bd4)](#build)
 [![Protocol](https://img.shields.io/badge/protocol-IEC--60870--5--101-0f766e)](#what-it-does)
-[![Native Stack](https://img.shields.io/badge/native%20stack-experimental-f59e0b)](#native-stack-migration)
+[![Stack](https://img.shields.io/badge/IEC--101%20stack-native%20clean--room-16a34a)](#native-clean-room-stack)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [Codex handoff](CODEX_HANDOFF.md)
+[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md)
 
 ![IEC101 Master Tester mission control](docs/assets/screenshot/mission-control.webp)
 
 ## Current Status
 
-This project is moving toward a clean-room native C# IEC-101 stack, but the production baseline still keeps `lib60870.NET` as the known-good engine until the migration gates pass.
+This repository now uses a **project-owned native clean-room IEC-101 communication stack** for the main tester path. The previous `lib60870.NET` vendor source tree has been removed from the source tree and from the project build.
 
-- `Lib60870` remains the default production communication engine.
-- `NativeExperimental` is available as an explicit opt-in engine.
-- Native FT1.2 frame parsing, ASDU parsing/encoding, mapper integration, and bounded protocol evidence capture are in place.
-- Demo/trial/license restrictions have been removed.
-- The project is not Apache-2-ready until `Vendor/lib60870` and incompatible dependency paths are fully removed.
+Current state:
+
+- `NativeCleanRoom` is the default communication engine.
+- `NativeExperimental` remains as a compatibility enum value for older saved settings and controlled bench testing.
+- The main WPF app, NUC redundancy channels, data mapper, line monitor formatter, and simulator no longer compile against `lib60870.NET` namespaces.
+- The native stack includes FT1.2 fixed/variable frame codec, ASDU codec, IEC-101 profile handling, unbalanced master service, command encoding, GI/polling flow, line monitor integration, and protocol evidence capture.
+- The native simulator has also been migrated to project-owned IEC-101 frame/ASDU code.
+
+Important validation note: this migration pass removes the vendor dependency at source level, but the project still needs Windows MSBuild/Visual Studio validation and bench testing against real RTU/gateway/simulator before it should be called field-stable.
 
 ## What It Does
 
@@ -58,41 +63,57 @@ The default IEC-101 profile follows the working PLN/Pusertif-style baseline used
 - link address `105`
 - CASDU `105`
 
-## Native Stack Migration
+## Native Clean-Room Stack
 
-The native stack is being developed as clean-room project-owned code under:
+The native stack lives under:
 
-- `Services/Iec101/Native`
+- `Services/Iec101/Native/Frames`
+- `Services/Iec101/Native/Asdu`
+- `Services/Iec101/Native/Master`
 - `Services/Diagnostics/ProtocolEvidenceRecorder.cs`
 - `Services/Diagnostics/ProtocolEvidenceExportService.cs`
 
-Migration rule: do not remove `lib60870.NET` until native mode passes golden trace tests, simulator tests, MSBuild verification, and real RTU/field validation.
+Implemented in this migration pass:
 
-Current migration foundation:
+- FT1.2 fixed frame, variable frame, and single-character ACK handling.
+- Configurable link address, CASDU, IOA, and originator-address lengths.
+- ASDU decode/encode for key monitor and command types used by FAT workflows.
+- GI, Class 1/Class 2 polling, link-layer test, reset-link style startup, clock sync, and command queue flow.
+- Native mapping into existing `ValueViewerRow` and `LineMonitorRow` models.
+- Protocol evidence export path for raw TX/RX validation.
+- Native simulator response path for repeatable bench testing without vendor protocol code.
 
-- Passive FT1.2 frame decoder and encoder.
-- Internal ASDU model and ASDU codec.
-- Native mapper path for value rows.
-- `NativeExperimental` unbalanced master skeleton.
-- Bounded protocol evidence recorder for side-by-side validation.
+Still required before declaring field-stable:
+
+- Windows MSBuild validation.
+- Golden trace tests for FT1.2 and ASDU codec.
+- Simulator interoperability test.
+- Real RTU/gateway test covering GI, spontaneous/event retrieval, Class 1/Class 2 polling, command confirmation, select-before-operate, setpoint, and clock sync.
+- Longer NUC redundancy soak test.
 
 ## Repository Guide
 
-- `AGENTS.md` - contributor and Codex rules.
-- `ROADMAP.md` - native-stack and product roadmap.
-- `CODEX_HANDOFF.md` - latest cross-laptop continuation context.
+- `ROADMAP.md` - product and native-stack validation roadmap.
+- `docs/NATIVE_CLEANROOM_MIGRATION.md` - migration notes and validation checklist.
 - `USER_MANUAL.md` - operator notes.
 - `PROJECT_STRUCTURE.md` - source map.
 - `docs/` - GitHub Pages landing page.
+- `AGENTS.md` - contributor/development rules.
 
 ## Build
 
-Use MSBuild:
+Use MSBuild on Windows with Visual Studio Build Tools / Visual Studio Community:
 
 ```powershell
 & 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' IEC101MasterTester.csproj /t:Build /p:Configuration=Debug /p:UseSharedCompilation=false
 ```
 
-## License Direction
+Release build:
 
-The intended direction is Apache-2 after vendor code is removed and dependencies/assets are audited. Until then, treat the repository as migration-in-progress and do not assume the final open-source license posture is complete.
+```powershell
+& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false
+```
+
+## License
+
+The repository is prepared for **Apache-2.0** after the removal of the previous GPL/commercial vendor protocol source tree. Before publishing a formal release, perform a final asset and dependency audit, especially for screenshots, icons, and any files copied from external sources.

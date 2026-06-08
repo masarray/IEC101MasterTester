@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using lib60870.CS101;
 using IEC101MasterTester.Models;
 using IEC101MasterTester.Services.Iec101.Native;
 using IEC101MasterTester.Services.Iec101.Native.Asdu;
@@ -51,7 +50,7 @@ namespace IEC101MasterTester.Services.Iec101
         {
             Iec101ApplicationProfile profile = settings == null
                 ? Iec101ApplicationProfile.DefaultPln101()
-                : Iec101ApplicationProfile.FromSettings(settings);
+                : Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
 
             Iec101Frame frame;
             string error;
@@ -114,54 +113,6 @@ namespace IEC101MasterTester.Services.Iec101
                 CASDU = casdu,
                 IOA = ioa,
                 RawHex = ToHex(payload, length),
-                Detail = detail
-            };
-        }
-
-        public LineMonitorRow FromAsdu(string direction, ASDU asdu)
-        {
-            byte[] bytes = asdu.AsByteArray() ?? Array.Empty<byte>();
-
-            string ioa = "-";
-            string detail = string.Format("Sequence={0}, Elements={1}", asdu.IsSequence ? "1" : "0", asdu.NumberOfElements);
-
-            try
-            {
-                if (asdu.NumberOfElements > 0)
-                {
-                    InformationObject informationObject = asdu.GetElement(0);
-                    if (informationObject != null)
-                    {
-                        ioa = informationObject.ObjectAddress.ToString();
-                        detail += ", IOA " + ioa;
-
-                        string commandInfo = TryDescribeCommandInformation(asdu, informationObject);
-                        if (!string.IsNullOrWhiteSpace(commandInfo))
-                        {
-                            detail += ", " + commandInfo;
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // keep formatter safe
-            }
-
-            return new LineMonitorRow
-            {
-                Time = DateTime.Now.ToString("HH:mm:ss.fff"),
-                Direction = direction,
-                FrameType = "ASDU",
-                Summary = string.Format("{0}, {1} object(s), COT={2}, CA={3}", ToReadableType(asdu.TypeId), asdu.NumberOfElements, ToReadableCot(asdu.Cot), asdu.Ca),
-                ControlFc = string.Format("OA={0}, NEG={1}, TEST={2}", asdu.Oa, asdu.IsNegative ? "1" : "0", asdu.IsTest ? "1" : "0"),
-                ACD = "-",
-                DFC = "-",
-                AsduType = asdu.TypeId.ToString(),
-                COT = ToReadableCot(asdu.Cot),
-                CASDU = asdu.Ca.ToString(),
-                IOA = ioa,
-                RawHex = ToHex(bytes, bytes.Length),
                 Detail = detail
             };
         }
@@ -453,9 +404,9 @@ namespace IEC101MasterTester.Services.Iec101
             }
 
             byte rawType = message[typeIndex];
-            if (Enum.IsDefined(typeof(TypeID), (int)rawType))
+            if (Enum.IsDefined(typeof(Iec101TypeId), (int)rawType))
             {
-                return ((TypeID)rawType).ToString();
+                return ((Iec101TypeId)rawType).ToString();
             }
 
             return "0x" + rawType.ToString("X2");
@@ -468,69 +419,9 @@ namespace IEC101MasterTester.Services.Iec101
             return "-";
         }
 
-        private static string TryDescribeCommandInformation(ASDU asdu, InformationObject informationObject)
-        {
-            if (asdu == null || informationObject == null)
-            {
-                return string.Empty;
-            }
-
-            try
-            {
-                if (asdu.TypeId == TypeID.C_SC_NA_1)
-                {
-                    SingleCommand cmd = informationObject as SingleCommand;
-                    if (cmd != null)
-                    {
-                        return string.Format("ON={0}, Select={1}", cmd.State ? 1 : 0, cmd.Select ? 1 : 0);
-                    }
-                }
-
-                if (asdu.TypeId == TypeID.C_DC_NA_1)
-                {
-                    DoubleCommand cmd = informationObject as DoubleCommand;
-                    if (cmd != null)
-                    {
-                        string state = cmd.State == DoubleCommand.ON ? "CLOSE" :
-                                       cmd.State == DoubleCommand.OFF ? "OPEN" : cmd.State.ToString();
-                        return string.Format("State={0}, Select={1}", state, cmd.Select ? 1 : 0);
-                    }
-                }
-
-                if (asdu.TypeId == TypeID.C_RC_NA_1)
-                {
-                    StepCommand cmd = informationObject as StepCommand;
-                    if (cmd != null)
-                    {
-                        string state = cmd.State == StepCommandValue.HIGHER ? "RAISE" :
-                                       cmd.State == StepCommandValue.LOWER ? "LOWER" : cmd.State.ToString();
-                        return string.Format("State={0}, Select={1}", state, cmd.Select ? 1 : 0);
-                    }
-                }
-
-                if (asdu.TypeId == TypeID.C_SE_NA_1)
-                {
-                    SetpointCommandNormalized cmd = informationObject as SetpointCommandNormalized;
-                    if (cmd != null)
-                    {
-                        return string.Format(
-                            System.Globalization.CultureInfo.InvariantCulture,
-                            "Value={0:0.###}, Select={1}",
-                            cmd.NormalizedValue,
-                            cmd.QOS.Select ? 1 : 0);
-                    }
-                }
-            }
-            catch
-            {
-            }
-
-            return string.Empty;
-        }
-
         private static bool LooksLikeTypeId(byte value)
         {
-            return Enum.IsDefined(typeof(TypeID), (int)value);
+            return Enum.IsDefined(typeof(Iec101TypeId), (int)value);
         }
 
         private static string DescribePrimaryFunction(int fc)
@@ -561,33 +452,6 @@ namespace IEC101MasterTester.Services.Iec101
                 case 11: return "Link status";
                 default: return "FC=" + fc;
             }
-        }
-
-        private static string ToReadableType(TypeID type)
-        {
-            switch (type)
-            {
-                case TypeID.M_SP_NA_1: return "Single-point";
-                case TypeID.M_DP_NA_1: return "Double-point";
-                case TypeID.M_ME_NA_1: return "Measured normalized";
-                case TypeID.M_ME_NB_1: return "Measured scaled";
-                case TypeID.M_ME_NC_1: return "Measured short";
-                case TypeID.M_ME_TE_1: return "Measured scaled CP56Time2a";
-                case TypeID.M_ME_TF_1: return "Measured short CP56Time2a";
-                case TypeID.M_SP_TB_1: return "Single-point CP56Time2a";
-                case TypeID.M_IT_NA_1: return "Integrated totals";
-                case TypeID.C_IC_NA_1: return "General interrogation command";
-                case TypeID.C_CS_NA_1: return "Clock sync command";
-                case TypeID.C_SC_NA_1: return "Single command";
-                case TypeID.C_DC_NA_1: return "Double command";
-                case TypeID.C_RC_NA_1: return "Regulating command";
-                default: return type.ToString();
-            }
-        }
-
-        private static string ToReadableCot(CauseOfTransmission cot)
-        {
-            return cot.ToString().Replace('_', ' ');
         }
 
         private static string ToHex(byte[] data, int length)

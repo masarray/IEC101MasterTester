@@ -44,7 +44,7 @@ namespace IEC101MasterTester.ViewModels
             LinkAddressLengthOptions = new ObservableCollection<int>(new[] { 1, 2 });
             CasduLengthOptions = new ObservableCollection<int>(new[] { 1, 2 });
             IoaLengthOptions = new ObservableCollection<int>(new[] { 1, 2, 3 });
-            MasterEngineOptions = new ObservableCollection<Iec101MasterEngine>(new[] { Iec101MasterEngine.Lib60870, Iec101MasterEngine.NativeExperimental });
+            MasterEngineOptions = new ObservableCollection<Iec101MasterEngine>(new[] { Iec101MasterEngine.NativeCleanRoom, Iec101MasterEngine.NativeExperimental });
 
             _serialPort = settings.SerialPort;
             _baudRate = settings.BaudRate;

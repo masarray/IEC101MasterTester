@@ -142,7 +142,7 @@ namespace IEC101MasterTester.ViewModels
         public int BusyBackoffMs { get => _busyBackoffMs; set => SetProperty(ref _busyBackoffMs, value); }
         public int GiStartupDelayMs { get => _giStartupDelayMs; set => SetProperty(ref _giStartupDelayMs, value); }
         public bool UseSingleCharAck { get => _useSingleCharAck; set => SetProperty(ref _useSingleCharAck, value); }
-        public string CotLengthText => "2 bytes (lib60870 default)";
+        public string CotLengthText => "2 bytes (IEC-101 native default)";
 
         public string ValidationMessage
         {

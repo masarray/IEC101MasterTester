@@ -13,7 +13,7 @@ namespace IEC101MasterTester
         private async void App_Startup(object sender, StartupEventArgs e)
         {
             JsonSettingsStore settingsStore = new JsonSettingsStore();
-            Iec101MasterService masterService = new Iec101MasterService();
+            IIec101MasterService masterService = new Iec101MasterServiceRouter();
             _sharedViewModel = new MainViewModel(masterService, settingsStore);
 
             await _sharedViewModel.InitializeAsync();

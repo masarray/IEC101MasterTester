@@ -143,7 +143,7 @@ namespace IEC101MasterTester.Models
                 BusyBackoffMs = 150,
                 GiStartupDelayMs = 800,
                 ChannelOperationMode = Iec101ChannelOperationMode.FullActive,
-                MasterEngine = Iec101MasterEngine.Lib60870
+                MasterEngine = Iec101MasterEngine.NativeCleanRoom
             };
         }
     }

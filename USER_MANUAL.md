@@ -18,7 +18,7 @@ Use it to:
 ### NUC Link Trace
 
 File:
-- [Views/NucLinkTraceWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/NucLinkTraceWindow.xaml)
+- `Views/NucLinkTraceWindow.xaml`
 
 Current behavior:
 - fixed 60-second tape view

@@ -1,98 +1,58 @@
-# PROJECT_STRUCTURE.md
+# Project Structure
 
-## Top Level
+## Root
 
-- [AGENTS.md](D:/CODEX/NewEx/IEC101MasterTester/AGENTS.md): repo rules and constraints
-- [README.md](D:/CODEX/NewEx/IEC101MasterTester/README.md): project entry summary
-- [CODEX_HANDOFF.md](D:/CODEX/NewEx/IEC101MasterTester/CODEX_HANDOFF.md): latest implementation handoff
-- [PROJECT_OVERVIEW_FOR_AI.md](D:/CODEX/NewEx/IEC101MasterTester/PROJECT_OVERVIEW_FOR_AI.md): AI continuity overview
-- [AI_QUICK_MAP.md](D:/CODEX/NewEx/IEC101MasterTester/AI_QUICK_MAP.md): compact AI file map
+- `README.md` - public project overview.
+- `ROADMAP.md` - native-stack validation and release roadmap.
+- `LICENSE` - Apache-2.0 license text.
+- `NOTICE` - project notice.
+- `THIRD_PARTY_NOTICES.md` - dependency and asset audit notes.
+- `IEC101MasterTester.csproj` - WPF .NET Framework 4.8 application project.
+- `IEC101MasterTester.slnx` - Visual Studio solution file.
+- `App.xaml` / `App.xaml.cs` - application startup.
+- `MainWindow.xaml` / `MainWindow.xaml.cs` - main WPF shell.
 
-## Main Application
+## Native IEC-101 Stack
 
-- [App.xaml](D:/CODEX/NewEx/IEC101MasterTester/App.xaml)
-- [App.xaml.cs](D:/CODEX/NewEx/IEC101MasterTester/App.xaml.cs)
+- `Services/Iec101/Native/Iec101ApplicationProfile.cs` - IEC-101 profile lengths and defaults.
+- `Services/Iec101/Native/Frames/` - FT1.2 frame model, control field, encoder/decoder, primary frame factory.
+- `Services/Iec101/Native/Asdu/` - ASDU model, Type ID/COT enums, information object model, quality descriptor, codec.
+- `Services/Iec101/Native/Master/NativeIec101MasterService.cs` - native unbalanced master service.
+- `Services/Iec101/Iec101MasterServiceRouter.cs` - app-facing master service router.
+- `Services/Iec101/IIec101MasterService.cs` - master service interface.
+- `Services/Iec101/Iec101DataMapper.cs` - native ASDU to UI value mapping.
+- `Services/Iec101/LineMonitorFormatter.cs` - native frame/ASDU line monitor rows.
 
-## Communication Truth
+## Diagnostics and Evidence
 
-Reference IEC-101 baseline:
-- `1200 bps`
-- `8E1`
-- `Link Address Length = 2`
-- `CAASDU Length = 2`
-- `IOA Length = 3`
-- `Link Address = 105`
-- `CAASDU = 105`
+- `Services/Diagnostics/BoundedUiBuffer.cs` - bounded live UI collection helper.
+- `Services/Diagnostics/ProtocolEvidenceRecorder.cs` - raw TX/RX evidence ring buffer.
+- `Services/Diagnostics/ProtocolEvidenceExportService.cs` - evidence export to CSV.
+- `Services/Soe/` - SOE replay and audit logic.
+- `Services/Redundancy/` - NUC redundancy orchestration.
 
-`Class Data` note:
-- not a literal IOA field
-- inferred from polling/request context
-- use `FC10/FC11`, `COT`, GI state, and frame direction
-- `BACKGROUND_SCAN` and `INTERROGATED_BY_STATION` belong to `Class 2` delivery path
+## UI and View Models
 
-## UI Layers
+- `ViewModels/MainViewModel.cs` - main application coordinator.
+- `ViewModels/ConnectionSetupViewModel.cs` - connection/profile settings.
+- `ViewModels/CommandLifeTrackerEngine.cs` - command lifecycle tracking.
+- `Views/` - WPF feature windows.
+- `SharedUi/` - shared About window and common UI pieces.
+- `Controls/` - custom controls.
 
-- [MainWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/MainWindow.xaml)
-- [MainWindow.xaml.cs](D:/CODEX/NewEx/IEC101MasterTester/MainWindow.xaml.cs)
-- [Views](D:/CODEX/NewEx/IEC101MasterTester/Views)
-- [SharedUi](D:/CODEX/NewEx/IEC101MasterTester/SharedUi)
-- [Controls](D:/CODEX/NewEx/IEC101MasterTester/Controls)
+## Simulator
 
-Important views:
-- [Views/NucRedundancyWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/NucRedundancyWindow.xaml)
-- [Views/NucLinkTraceWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/NucLinkTraceWindow.xaml)
-- [Views/BufferedEventAuditWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/BufferedEventAuditWindow.xaml)
-- [Views/AvailabilityDashboardWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/AvailabilityDashboardWindow.xaml)
-- [Views/FindingsWindow.xaml](D:/CODEX/NewEx/IEC101MasterTester/Views/FindingsWindow.xaml)
+- `IecSlaveSimulator/` - native IEC-101 slave simulator used for bench/demo validation.
+- `IecSlaveSimulator/Services/Iec101SlaveService.cs` - native simulator runtime.
 
-Important custom control:
-- [Controls/NucLinkTraceTapeControl.cs](D:/CODEX/NewEx/IEC101MasterTester/Controls/NucLinkTraceTapeControl.cs)
+## GitHub Pages
 
-## ViewModels
+- `docs/index.html` - landing page.
+- `docs/styles.css` - landing visual system.
+- `docs/script.js` - reveal/interaction script.
+- `docs/assets/` - screenshots and web assets.
+- `docs/NATIVE_CLEANROOM_MIGRATION.md` - native migration notes.
 
-- [ViewModels/MainViewModel.cs](D:/CODEX/NewEx/IEC101MasterTester/ViewModels/MainViewModel.cs): central state coordinator
-- [ViewModels/CommandLifeTrackerEngine.cs](D:/CODEX/NewEx/IEC101MasterTester/ViewModels/CommandLifeTrackerEngine.cs): command lifecycle logic
+## Removed Vendor Code
 
-## Services
-
-- [Services/Iec101](D:/CODEX/NewEx/IEC101MasterTester/Services/Iec101): IEC-101 communication services
-- [Services/Redundancy](D:/CODEX/NewEx/IEC101MasterTester/Services/Redundancy): dual-link orchestration
-- [Services/Profiles](D:/CODEX/NewEx/IEC101MasterTester/Services/Profiles): official point profile metadata
-- [Services/Export](D:/CODEX/NewEx/IEC101MasterTester/Services/Export)
-- [Services/Settings](D:/CODEX/NewEx/IEC101MasterTester/Services/Settings)
-- [Services/Soe](D:/CODEX/NewEx/IEC101MasterTester/Services/Soe)
-
-Most important service files:
-- [Services/Iec101/Iec101MasterService.cs](D:/CODEX/NewEx/IEC101MasterTester/Services/Iec101/Iec101MasterService.cs)
-- [Services/Iec101/Iec101DataMapper.cs](D:/CODEX/NewEx/IEC101MasterTester/Services/Iec101/Iec101DataMapper.cs)
-- [Services/Redundancy/NucRedundancyService.cs](D:/CODEX/NewEx/IEC101MasterTester/Services/Redundancy/NucRedundancyService.cs)
-
-## Models
-
-- [Models](D:/CODEX/NewEx/IEC101MasterTester/Models): shared data contracts
-
-Common examples:
-- `LineMonitorRow`
-- `EventLogRow`
-- `FindingRow`
-- `BufferReplaySession`
-- `NucRedundancySettings`
-- `PointDefinition`
-
-## Vendor
-
-- [Vendor/lib60870](D:/CODEX/NewEx/IEC101MasterTester/Vendor/lib60870): vendor source tree
-
-Rule:
-- do not compile vendor `obj/bin` artifacts
-
-## Slave Simulator
-
-- [IecSlaveSimulator](D:/CODEX/NewEx/IEC101MasterTester/IecSlaveSimulator): separate simulator workspace inside the same repo
-
-## Current Hot Files
-
-These are the best files to inspect first for current NUC link trace work:
-- [Views/NucLinkTraceWindow.xaml.cs](D:/CODEX/NewEx/IEC101MasterTester/Views/NucLinkTraceWindow.xaml.cs)
-- [Controls/NucLinkTraceTapeControl.cs](D:/CODEX/NewEx/IEC101MasterTester/Controls/NucLinkTraceTapeControl.cs)
-- [Views/NucRedundancyWindow.xaml.cs](D:/CODEX/NewEx/IEC101MasterTester/Views/NucRedundancyWindow.xaml.cs)
+The previous `Vendor/lib60870` source tree is intentionally absent. Do not re-add vendor protocol source or build includes unless the repository license strategy is deliberately changed and documented.

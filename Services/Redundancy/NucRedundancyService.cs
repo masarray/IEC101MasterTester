@@ -25,8 +25,8 @@ namespace IEC101MasterTester.Services.Redundancy
 
         public NucRedundancyService()
             : this(
-                new NucIec101LinkChannel("Main", new Iec101MasterService()),
-                new NucIec101LinkChannel("Backup", new Iec101MasterService()))
+                new NucIec101LinkChannel("Main", new Iec101MasterServiceRouter()),
+                new NucIec101LinkChannel("Backup", new Iec101MasterServiceRouter()))
         {
         }
 

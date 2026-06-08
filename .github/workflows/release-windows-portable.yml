@@ -1,0 +1,61 @@
+name: Release Windows Portable
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build portable release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore packages
+        shell: pwsh
+        run: |
+          nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
+
+      - name: Build Release
+        shell: pwsh
+        run: |
+          msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
+
+      - name: Create portable package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { 'manual' }
+          $outDir = 'artifacts'
+          $packageDir = Join-Path $outDir 'IEC101MasterTester-windows-portable'
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          Copy-Item -Path 'bin\Release\*' -Destination $packageDir -Recurse -Force
+          Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md' -Destination $packageDir -Force
+          $zipPath = Join-Path $outDir "IEC101MasterTester-$version-windows-portable.zip"
+          Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
+          Get-FileHash $zipPath -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $zipPath -Leaf)" } | Set-Content (Join-Path $outDir "IEC101MasterTester-$version-windows-portable.sha256")
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IEC101MasterTester-windows-portable
+          path: artifacts/*
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/*.zip
+            artifacts/*.sha256
+          generate_release_notes: true

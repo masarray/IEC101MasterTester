@@ -120,12 +120,12 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                     _commandFollowUpUntil = 0;
                 }
 
-                Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);
+                Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
                 ExecuteLinkExchange(Iec101PrimaryLinkFrameFactory.ResetRemoteLink(settings.LinkAddress, profile), settings, true);
                 ExecuteLinkExchange(Iec101PrimaryLinkFrameFactory.RequestLinkStatus(settings.LinkAddress, profile), settings, true);
 
                 RaiseConnectionState(ConnectionStatusInfo.Connected);
-                RaiseLine(_lineMonitorFormatter.CreateSystemRow("STATE", "Native master ready", "NativeExperimental unbalanced engine is active."));
+                RaiseLine(_lineMonitorFormatter.CreateSystemRow("STATE", "Native master ready", "NativeCleanRoom unbalanced engine is active."));
 
                 if (settings.UseGeneralInterrogationOnConnect)
                 {
@@ -224,7 +224,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
         public Task<bool> SendLinkLayerTestFunctionAsync()
         {
             ConnectionSettings settings = GetSettingsSnapshot();
-            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);
+            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
             return Task.Run(() => ExecuteLinkExchange(Iec101PrimaryLinkFrameFactory.TestLink(settings.LinkAddress, profile), settings, true));
         }
 
@@ -269,7 +269,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
 
         private void RunWorker(ConnectionSettings settings, CancellationToken cancellationToken)
         {
-            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);
+            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -372,7 +372,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 try
                 {
                     port.Write(request, 0, request.Length);
-                    ProtocolEvidenceRecorder.Shared.RecordRaw("NativeExperimental", "TX", request, request.Length, settings);
+                    ProtocolEvidenceRecorder.Shared.RecordRaw("NativeCleanRoom", "TX", request, request.Length, settings);
                     RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", request, request.Length, settings));
 
                     if (!expectResponse)
@@ -399,10 +399,10 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
 
         private void ProcessReceivedFrame(byte[] frameBytes, ConnectionSettings settings)
         {
-            ProtocolEvidenceRecorder.Shared.RecordRaw("NativeExperimental", "RX", frameBytes, frameBytes.Length, settings);
+            ProtocolEvidenceRecorder.Shared.RecordRaw("NativeCleanRoom", "RX", frameBytes, frameBytes.Length, settings);
             RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", frameBytes, frameBytes.Length, settings));
 
-            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);
+            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
             Iec101Frame frame;
             string frameError;
             if (!Iec101FrameCodec.TryParse(frameBytes, frameBytes.Length, profile, out frame, out frameError))

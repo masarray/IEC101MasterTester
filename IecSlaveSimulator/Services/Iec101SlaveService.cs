@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using IecSlaveSimulator.Models;
-using lib60870;
-using lib60870.CS101;
-using lib60870.linklayer;
+using IEC101MasterTester.Services.Iec101.Native;
+using IEC101MasterTester.Services.Iec101.Native.Asdu;
+using IEC101MasterTester.Services.Iec101.Native.Frames;
 
 namespace IecSlaveSimulator.Services
 {
@@ -17,9 +18,10 @@ namespace IecSlaveSimulator.Services
         private readonly object _sync = new object();
         private readonly Dictionary<int, SignalDefinition> _runtimeSignals = new Dictionary<int, SignalDefinition>();
         private readonly Dictionary<int, CommandIntent> _selectedCommandIntents = new Dictionary<int, CommandIntent>();
+        private readonly Queue<byte[]> _class1Queue = new Queue<byte[]>();
+        private readonly Queue<byte[]> _class2Queue = new Queue<byte[]>();
 
         private SerialPort _serialPort;
-        private CS101Slave _slave;
         private CancellationTokenSource _cts;
         private Task _worker;
         private DateTime _lastBackgroundPublishAt = DateTime.MinValue;
@@ -27,6 +29,7 @@ namespace IecSlaveSimulator.Services
         private SlaveRuntimeConfig _config;
         private long _workerTickCount;
         private DateTime _lastWorkerPulseUtc = DateTime.MinValue;
+        private Iec101ApplicationProfile _profile = Iec101ApplicationProfile.DefaultPln101();
 
         public Action<string, string> StatusLogged { get; set; }
         public Action<string, string> LinkActivityLogged { get; set; }
@@ -39,20 +42,29 @@ namespace IecSlaveSimulator.Services
         public void Start(SlaveRuntimeConfig config, IEnumerable<SignalDefinition> runtimeSignals)
         {
             if (config == null)
+            {
                 throw new ArgumentNullException(nameof(config));
+            }
 
             if (string.IsNullOrWhiteSpace(config.PortName))
+            {
                 throw new InvalidOperationException("COM port belum dipilih.");
+            }
 
             Stop();
 
             _config = config;
+            _profile = Iec101ApplicationProfile.FromValues(2, 2, 3, 0);
             lock (_sync)
             {
                 _runtimeSignals.Clear();
                 _selectedCommandIntents.Clear();
+                _class1Queue.Clear();
+                _class2Queue.Clear();
                 foreach (SignalDefinition signal in runtimeSignals ?? Enumerable.Empty<SignalDefinition>())
+                {
                     _runtimeSignals[signal.Ioa] = CloneSignal(signal);
+                }
             }
 
             _serialPort = new SerialPort
@@ -64,40 +76,24 @@ namespace IecSlaveSimulator.Services
                 StopBits = ParseStopBits(config.StopBits),
                 Handshake = Handshake.None,
                 ReadTimeout = Math.Max(10, config.RunLoopDelayMs),
-                WriteTimeout = Math.Max(100, config.RunLoopDelayMs * 5)
+                WriteTimeout = Math.Max(100, config.RunLoopDelayMs * 5),
+                DtrEnable = false,
+                RtsEnable = false
             };
             _serialPort.Open();
             _serialPort.DiscardInBuffer();
             _serialPort.DiscardOutBuffer();
-
-            LinkLayerParameters linkLayerParameters = new LinkLayerParameters
-            {
-                AddressLength = 2,
-                UseSingleCharACK = true,
-                TimeoutForACK = Math.Max(100, config.ResponseTimeoutMs),
-                TimeoutRepeat = Math.Max(100, config.ResponseTimeoutMs),
-                TimeoutLinkState = Math.Max(100, config.ResponseTimeoutMs)
-            };
-
-            _slave = new CS101Slave(_serialPort, linkLayerParameters);
-            _slave.LinkLayerMode = LinkLayerMode.UNBALANCED;
-            _slave.LinkLayerAddress = config.LinkAddress;
-            _slave.Parameters.SizeOfCA = 2;
-            _slave.Parameters.SizeOfIOA = 3;
-            _slave.SetUserDataQueueSizes(Math.Max(1024, config.Class1QueueSize), 200);
-            _slave.SetInterrogationHandler(HandleInterrogation, null);
-            _slave.SetASDUHandler(HandleAsdu, null);
-            _slave.SetReceivedRawMessageHandler(HandleRawRx, null);
-            _slave.SetSentRawMessageHandler(HandleRawTx, null);
 
             _cts = new CancellationTokenSource();
             _workerTickCount = 0;
             _lastWorkerPulseUtc = DateTime.UtcNow;
             _worker = Task.Run(() => WorkerLoop(_cts.Token), _cts.Token);
 
-            LogStatus("RUN", string.Format("IEC-101 slave started on {0} {1}bps, link {2}, CA {3}.", config.PortName, config.BaudRate, config.LinkAddress, config.CommonAddress));
+            LogStatus("RUN", string.Format("Native IEC-101 slave started on {0} {1}bps, link {2}, CA {3}.", config.PortName, config.BaudRate, config.LinkAddress, config.CommonAddress));
             if (ConnectionStateChanged != null)
+            {
                 ConnectionStateChanged(true, "Started");
+            }
         }
 
         public void Stop()
@@ -109,31 +105,26 @@ namespace IecSlaveSimulator.Services
             _worker = null;
 
             if (cts != null)
+            {
                 cts.Cancel();
+            }
 
             try
             {
                 if (worker != null)
+                {
                     worker.Wait(1500);
+                }
             }
             catch
             {
             }
 
-            if (_slave != null)
-            {
-                try
-                {
-                    _slave.Stop();
-                }
-                catch
-                {
-                }
-            }
-
             lock (_sync)
             {
                 _selectedCommandIntents.Clear();
+                _class1Queue.Clear();
+                _class2Queue.Clear();
             }
 
             if (_serialPort != null)
@@ -141,7 +132,9 @@ namespace IecSlaveSimulator.Services
                 try
                 {
                     if (_serialPort.IsOpen)
+                    {
                         _serialPort.Close();
+                    }
                 }
                 catch
                 {
@@ -150,19 +143,24 @@ namespace IecSlaveSimulator.Services
                 _serialPort.Dispose();
             }
 
-            _slave = null;
             _serialPort = null;
             if (cts != null)
+            {
                 cts.Dispose();
+            }
 
             if (ConnectionStateChanged != null)
+            {
                 ConnectionStateChanged(false, "Stopped");
+            }
         }
 
         public void UpdateSignal(SignalDefinition signal)
         {
             if (signal == null)
+            {
                 return;
+            }
 
             SignalDefinition clone = CloneSignal(signal);
             lock (_sync)
@@ -170,11 +168,15 @@ namespace IecSlaveSimulator.Services
                 _runtimeSignals[clone.Ioa] = clone;
             }
 
-            if (_slave == null || !clone.IsEnabled || !IsApplicationTrafficEnabled())
+            if (_serialPort == null || !clone.IsEnabled || !IsApplicationTrafficEnabled())
+            {
                 return;
+            }
 
             if (clone.SpontaneousEnabled || string.Equals(clone.LiveCot, "CmdFb", StringComparison.OrdinalIgnoreCase))
+            {
                 EnqueueSignal(clone, ResolveCot(clone.LiveCot), true);
+            }
         }
 
         public bool EnqueueBufferedEvent(SharedBufferEvent entry, SignalDefinition signal)
@@ -199,18 +201,18 @@ namespace IecSlaveSimulator.Services
                 _runtimeSignals[clone.Ioa] = CloneSignal(clone);
             }
 
-            if (_slave == null || !clone.IsEnabled || !IsApplicationTrafficEnabled())
+            if (_serialPort == null || !clone.IsEnabled || !IsApplicationTrafficEnabled())
             {
                 return false;
             }
 
-            ASDU asdu = CreateSingleSignalAsdu(_slave.Parameters, clone, ResolveCot(entry.Cot), entry.TimestampUtc);
+            byte[] asdu = CreateSingleSignalAsdu(clone, ResolveCot(entry.Cot), entry.TimestampUtc);
             if (asdu == null)
             {
                 return false;
             }
 
-            _slave.EnqueueUserDataClass1(asdu);
+            EnqueueAsdu(asdu, true);
             return true;
         }
 
@@ -236,18 +238,20 @@ namespace IecSlaveSimulator.Services
                     if ((DateTime.UtcNow - _lastWorkerPulseUtc).TotalSeconds >= 5)
                     {
                         _lastWorkerPulseUtc = DateTime.UtcNow;
-                        LogStatus("LOOP", string.Format("Worker alive on {0}. ticks={1}", _config.PortName, _workerTickCount));
+                        LogStatus("LOOP", string.Format("Native worker alive on {0}. ticks={1}", _config.PortName, _workerTickCount));
                     }
+
                     if (WorkerPulseObserved != null)
                     {
                         WorkerPulseObserved();
                     }
-                    _slave.Run();
+
+                    ProcessIncomingFrameIfAvailable();
                     PublishBackgroundSignalsIfDue();
                 }
                 catch (Exception ex)
                 {
-                    LogStatus("ERR", "Slave worker error: " + ex.Message);
+                    LogStatus("ERR", "Native slave worker error: " + ex.Message);
                     Thread.Sleep(250);
                 }
 
@@ -255,50 +259,161 @@ namespace IecSlaveSimulator.Services
             }
         }
 
-        private void PublishBackgroundSignalsIfDue()
+        private void ProcessIncomingFrameIfAvailable()
         {
-            if (!IsApplicationTrafficEnabled())
-                return;
-
-            DateTime now = DateTime.UtcNow;
-            if ((now - _lastBackgroundPublishAt).TotalMilliseconds < _config.BackgroundPublishIntervalMs)
-                return;
-
-            _lastBackgroundPublishAt = now;
-
-            List<SignalDefinition> snapshot;
-            lock (_sync)
+            SerialPort port = _serialPort;
+            if (port == null || !port.IsOpen || port.BytesToRead <= 0)
             {
-                snapshot = _runtimeSignals.Values.Select(CloneSignal).ToList();
+                return;
             }
 
-            foreach (SignalDefinition signal in snapshot)
+            byte[] raw = ReadFrame(port);
+            if (raw == null || raw.Length == 0)
             {
-                if (!signal.IsEnabled || !signal.BackgroundEnabled)
-                    continue;
+                return;
+            }
 
-                if (!_config.EnableMeasurementStreaming && signal.IsMeasurement)
-                    continue;
+            LogRawRx(raw);
 
-                EnqueueSignal(signal, CauseOfTransmission.BACKGROUND_SCAN, false);
+            Iec101Frame frame;
+            string error;
+            if (!Iec101FrameCodec.TryParse(raw, raw.Length, _profile, out frame, out error))
+            {
+                LogStatus("WARN", "Native slave ignored invalid frame: " + error);
+                return;
+            }
+
+            if (frame.FrameType == Iec101FrameType.Fixed && frame.Control != null && frame.Control.IsPrimary)
+            {
+                HandlePrimaryFixed(frame);
+                return;
+            }
+
+            if (frame.FrameType == Iec101FrameType.Variable && frame.Control != null && frame.Control.IsPrimary)
+            {
+                HandlePrimaryVariable(frame);
             }
         }
 
-        private bool HandleInterrogation(object parameter, IMasterConnection connection, ASDU asdu, byte qoi)
+        private byte[] ReadFrame(SerialPort port)
         {
+            int first = ReadByte(port);
+            if (first < 0)
+            {
+                return null;
+            }
+
+            if (first == Iec101FrameCodec.SingleCharacterAck)
+            {
+                return new byte[] { (byte)first };
+            }
+
+            if (first == Iec101FrameCodec.FixedStart)
+            {
+                byte[] frame = new byte[6];
+                frame[0] = (byte)first;
+                ReadExact(port, frame, 1, frame.Length - 1);
+                return frame;
+            }
+
+            if (first == Iec101FrameCodec.VariableStart)
+            {
+                byte[] header = new byte[4];
+                header[0] = (byte)first;
+                ReadExact(port, header, 1, 3);
+                int dataLength = header[1];
+                byte[] frame = new byte[6 + dataLength];
+                Buffer.BlockCopy(header, 0, frame, 0, header.Length);
+                ReadExact(port, frame, 4, dataLength + 2);
+                return frame;
+            }
+
+            return new byte[] { (byte)first };
+        }
+
+        private void HandlePrimaryFixed(Iec101Frame frame)
+        {
+            int fc = frame.Control.FunctionCode;
+            switch (fc)
+            {
+                case 0: // reset remote link
+                case 2: // test link
+                case 8: // reset FCB
+                    SendFixedSecondary(0);
+                    break;
+                case 9: // request link status
+                    SendFixedSecondary(11);
+                    break;
+                case 10: // request class 1
+                    SendQueuedAsduOrNoData(true);
+                    break;
+                case 11: // request class 2
+                    SendQueuedAsduOrNoData(false);
+                    break;
+                default:
+                    SendFixedSecondary(1);
+                    break;
+            }
+        }
+
+        private void HandlePrimaryVariable(Iec101Frame frame)
+        {
+            byte[] asduBytes = frame.GetAsduBytesOrEmpty();
+            if (asduBytes.Length == 0)
+            {
+                SendFixedSecondary(0);
+                return;
+            }
+
+            Iec101Asdu asdu;
+            string error;
+            if (!Iec101AsduCodec.TryParse(asduBytes, _profile, out asdu, out error))
+            {
+                LogStatus("WARN", "Native slave ASDU parse failed: " + error);
+                SendFixedSecondary(1);
+                return;
+            }
+
+            SendFixedSecondary(0);
             if (!IsApplicationTrafficEnabled())
             {
-                LogStatus("GI", "GI deferred on standby port.");
-                return false;
+                LogStatus("APP", "Application ASDU deferred on standby port.");
+                return;
             }
 
-            if (asdu.Ca != _config.CommonAddress)
+            switch (asdu.TypeId)
             {
-                connection.SendACT_CON(asdu, true);
-                return true;
+                case Iec101TypeId.C_IC_NA_1:
+                    HandleInterrogation(asdu);
+                    break;
+                case Iec101TypeId.C_SC_NA_1:
+                    HandleSingleCommand(asdu);
+                    break;
+                case Iec101TypeId.C_DC_NA_1:
+                    HandleDoubleCommand(asdu);
+                    break;
+                case Iec101TypeId.C_SE_NA_1:
+                    HandleNormalizedSetpointCommand(asdu);
+                    break;
+                case Iec101TypeId.C_CS_NA_1:
+                    EnqueueCommandConfirmation(asdu, false);
+                    LogStatus("CLOCK", "Clock sync command acknowledged by native slave.");
+                    break;
+                default:
+                    LogStatus("APP", "Unsupported ASDU received: " + asdu.TypeId);
+                    break;
+            }
+        }
+
+        private void HandleInterrogation(Iec101Asdu asdu)
+        {
+            if (asdu.CommonAddress != _config.CommonAddress)
+            {
+                EnqueueCommandConfirmation(asdu, true);
+                return;
             }
 
-            connection.SendACT_CON(asdu, false);
+            EnqueueCommandConfirmation(asdu, false);
 
             List<SignalDefinition> snapshot;
             lock (_sync)
@@ -308,42 +423,32 @@ namespace IecSlaveSimulator.Services
 
             foreach (SignalDefinition signal in snapshot)
             {
-                ASDU response = CreateSingleSignalAsdu(connection.GetApplicationLayerParameters(), signal, CauseOfTransmission.INTERROGATED_BY_STATION, null);
+                byte[] response = CreateSingleSignalAsdu(signal, Iec101CauseOfTransmission.InterrogatedByStation, null);
                 if (response != null)
-                    connection.SendASDU(response);
+                {
+                    EnqueueAsdu(response, true);
+                }
             }
 
-            connection.SendACT_TERM(asdu);
-            LogStatus("GI", string.Format("GI served with {0} signal(s).", snapshot.Count));
-            return true;
+            byte[] termination = Iec101AsduCodec.EncodeInformationObjectAsdu(
+                Iec101TypeId.C_IC_NA_1,
+                Iec101CauseOfTransmission.ActivationTermination,
+                false,
+                asdu.CommonAddress,
+                GetFirstIoaOrZero(asdu),
+                GetFirstObjectPayloadOrDefault(asdu, new byte[] { 20 }),
+                _profile);
+            EnqueueAsdu(termination, true);
+            LogStatus("GI", string.Format("Native GI served with {0} signal(s).", snapshot.Count));
         }
 
-        private bool HandleAsdu(object parameter, IMasterConnection connection, ASDU asdu)
+        private void HandleSingleCommand(Iec101Asdu asdu)
         {
-            if (!IsApplicationTrafficEnabled())
-            {
-                LogStatus("CMD", "Application ASDU deferred on standby port.");
-                return false;
-            }
-
-            switch (asdu.TypeId)
-            {
-                case TypeID.C_SC_NA_1:
-                    return HandleSingleCommand(connection, asdu);
-                case TypeID.C_DC_NA_1:
-                    return HandleDoubleCommand(connection, asdu);
-                case TypeID.C_SE_NA_1:
-                    return HandleNormalizedSetpointCommand(connection, asdu);
-                default:
-                    return false;
-            }
-        }
-
-        private bool HandleSingleCommand(IMasterConnection connection, ASDU asdu)
-        {
-            SingleCommand command = asdu.GetElement(0) as SingleCommand;
+            Iec101InformationObject command = GetFirstObject(asdu);
             if (command == null)
-                return false;
+            {
+                return;
+            }
 
             SignalDefinition commandSignal;
             SignalDefinition targetSignal;
@@ -356,23 +461,31 @@ namespace IecSlaveSimulator.Services
             }
 
             if (commandSignal == null || targetSignal == null)
-                return RejectCommand(connection, asdu, "Single command rejected: binding not found.");
+            {
+                RejectCommand(asdu, "Single command rejected: binding not found.");
+                return;
+            }
 
-            CommandIntent intent = command.State ? CommandIntent.On : CommandIntent.Off;
-            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, intent, command.Select, "Single command"))
-                return true;
+            CommandIntent intent = string.Equals(command.ValueText, "ON", StringComparison.OrdinalIgnoreCase) ? CommandIntent.On : CommandIntent.Off;
+            bool isSelect = command.Select.HasValue && command.Select.Value;
+            if (!ValidateAndTrackCommand(asdu, commandSignal, intent, isSelect, "Single command"))
+            {
+                return;
+            }
 
-            if (!command.Select)
+            if (!isSelect)
+            {
                 ApplyCommandToTarget(commandSignal, targetSignal, intent);
-
-            return true;
+            }
         }
 
-        private bool HandleDoubleCommand(IMasterConnection connection, ASDU asdu)
+        private void HandleDoubleCommand(Iec101Asdu asdu)
         {
-            DoubleCommand command = asdu.GetElement(0) as DoubleCommand;
+            Iec101InformationObject command = GetFirstObject(asdu);
             if (command == null)
-                return false;
+            {
+                return;
+            }
 
             SignalDefinition commandSignal;
             SignalDefinition targetSignal;
@@ -385,24 +498,57 @@ namespace IecSlaveSimulator.Services
             }
 
             if (commandSignal == null || targetSignal == null)
-                return RejectCommand(connection, asdu, "Double command rejected: binding not found.");
+            {
+                RejectCommand(asdu, "Double command rejected: binding not found.");
+                return;
+            }
 
-            CommandIntent intent = command.State == DoubleCommand.ON ? CommandIntent.Close : CommandIntent.Open;
-            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, intent, command.Select, "Double command"))
-                return true;
+            CommandIntent intent = string.Equals(command.ValueText, "ON", StringComparison.OrdinalIgnoreCase) ? CommandIntent.Close : CommandIntent.Open;
+            bool isSelect = command.Select.HasValue && command.Select.Value;
+            if (!ValidateAndTrackCommand(asdu, commandSignal, intent, isSelect, "Double command"))
+            {
+                return;
+            }
 
-            if (!command.Select)
+            if (!isSelect)
             {
                 ApplyCommandToTarget(commandSignal, targetSignal, intent);
             }
-
-            return true;
         }
 
-        private void ApplyCommandToTarget(SignalDefinition commandSignal, SignalDefinition targetSignal, CommandIntent intent)
+        private void HandleNormalizedSetpointCommand(Iec101Asdu asdu)
         {
+            Iec101InformationObject command = GetFirstObject(asdu);
+            if (command == null)
+            {
+                return;
+            }
+
+            SignalDefinition commandSignal;
+            SignalDefinition targetSignal;
+            lock (_sync)
+            {
+                _runtimeSignals.TryGetValue(command.ObjectAddress, out commandSignal);
+                targetSignal = commandSignal != null && commandSignal.LinkedStatusIoa > 0 && _runtimeSignals.ContainsKey(commandSignal.LinkedStatusIoa)
+                    ? _runtimeSignals[commandSignal.LinkedStatusIoa]
+                    : null;
+            }
+
+            if (commandSignal == null || targetSignal == null)
+            {
+                RejectCommand(asdu, "Normalized setpoint rejected: binding not found.");
+                return;
+            }
+
+            bool isSelect = command.Select.HasValue && command.Select.Value;
+            if (!ValidateAndTrackCommand(asdu, commandSignal, CommandIntent.On, isSelect, "Normalized setpoint"))
+            {
+                return;
+            }
+
             SignalDefinition updatedTarget = CloneSignal(targetSignal);
-            updatedTarget.ApplyBoundCommand(intent);
+            updatedTarget.RuntimeValue = (command.NumericValue.HasValue ? command.NumericValue.Value : 0d).ToString("0.###", CultureInfo.InvariantCulture);
+            updatedTarget.LiveCot = updatedTarget.ResolveBindingCot();
 
             lock (_sync)
             {
@@ -410,22 +556,25 @@ namespace IecSlaveSimulator.Services
             }
 
             if (RuntimeSignalUpdated != null)
+            {
                 RuntimeSignalUpdated(updatedTarget.Ioa, updatedTarget.RuntimeValue, updatedTarget.LiveCot);
+            }
 
-            LogStatus("CMD", string.Format("Master command on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
+            LogStatus("CMD", string.Format("Normalized setpoint on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
 
-            if (updatedTarget.SpontaneousEnabled || string.Equals(updatedTarget.LiveCot, "CmdFb", StringComparison.OrdinalIgnoreCase))
-                EnqueueSignal(updatedTarget, ResolveCot(updatedTarget.LiveCot), true);
+            SignalDefinition publishSignal = CloneSignal(updatedTarget);
+            publishSignal.LiveCot = "CmdFb";
+            EnqueueSignal(publishSignal, ResolveCot(publishSignal.LiveCot), true);
         }
 
-        private bool ValidateAndTrackCommand(IMasterConnection connection, ASDU asdu, SignalDefinition commandSignal, CommandIntent intent, bool isSelect, string label)
+        private bool ValidateAndTrackCommand(Iec101Asdu asdu, SignalDefinition commandSignal, CommandIntent intent, bool isSelect, string label)
         {
             switch (commandSignal.CommandOperateMode)
             {
                 case CommandOperateMode.DirectOperate:
                     if (isSelect)
                     {
-                        RejectCommand(connection, asdu, label + " rejected: point is configured for DO only.");
+                        RejectCommand(asdu, label + " rejected: point is configured for DO only.");
                         return false;
                     }
                     break;
@@ -438,7 +587,7 @@ namespace IecSlaveSimulator.Services
                             _selectedCommandIntents[commandSignal.Ioa] = intent;
                         }
 
-                        AcknowledgeCommand(connection, asdu, label + " SBO select accepted.");
+                        AcknowledgeCommand(asdu, label + " SBO select accepted.");
                         return false;
                     }
 
@@ -447,14 +596,14 @@ namespace IecSlaveSimulator.Services
                         CommandIntent selectedIntent;
                         if (!_selectedCommandIntents.TryGetValue(commandSignal.Ioa, out selectedIntent))
                         {
-                            RejectCommand(connection, asdu, label + " rejected: execute received without prior select.");
+                            RejectCommand(asdu, label + " rejected: execute received without prior select.");
                             return false;
                         }
 
                         if (selectedIntent != intent)
                         {
                             _selectedCommandIntents.Remove(commandSignal.Ioa);
-                            RejectCommand(connection, asdu, label + " rejected: execute does not match selected operation.");
+                            RejectCommand(asdu, label + " rejected: execute does not match selected operation.");
                             return false;
                         }
 
@@ -470,7 +619,7 @@ namespace IecSlaveSimulator.Services
                             _selectedCommandIntents[commandSignal.Ioa] = intent;
                         }
 
-                        AcknowledgeCommand(connection, asdu, label + " SBO select accepted.");
+                        AcknowledgeCommand(asdu, label + " SBO select accepted.");
                         return false;
                     }
 
@@ -481,35 +630,14 @@ namespace IecSlaveSimulator.Services
                     break;
             }
 
-            AcknowledgeCommand(connection, asdu, label + " execute accepted.");
+            AcknowledgeCommand(asdu, label + " execute accepted.");
             return true;
         }
 
-        private bool HandleNormalizedSetpointCommand(IMasterConnection connection, ASDU asdu)
+        private void ApplyCommandToTarget(SignalDefinition commandSignal, SignalDefinition targetSignal, CommandIntent intent)
         {
-            SetpointCommandNormalized command = asdu.GetElement(0) as SetpointCommandNormalized;
-            if (command == null)
-                return false;
-
-            SignalDefinition commandSignal;
-            SignalDefinition targetSignal;
-            lock (_sync)
-            {
-                _runtimeSignals.TryGetValue(command.ObjectAddress, out commandSignal);
-                targetSignal = commandSignal != null && commandSignal.LinkedStatusIoa > 0 && _runtimeSignals.ContainsKey(commandSignal.LinkedStatusIoa)
-                    ? _runtimeSignals[commandSignal.LinkedStatusIoa]
-                    : null;
-            }
-
-            if (commandSignal == null || targetSignal == null)
-                return RejectCommand(connection, asdu, "Normalized setpoint rejected: binding not found.");
-
-            if (!ValidateAndTrackCommand(connection, asdu, commandSignal, CommandIntent.On, command.QOS.Select, "Normalized setpoint"))
-                return true;
-
             SignalDefinition updatedTarget = CloneSignal(targetSignal);
-            updatedTarget.RuntimeValue = command.NormalizedValue.ToString("0.###", CultureInfo.InvariantCulture);
-            updatedTarget.LiveCot = updatedTarget.ResolveBindingCot();
+            updatedTarget.ApplyBoundCommand(intent);
 
             lock (_sync)
             {
@@ -517,51 +645,321 @@ namespace IecSlaveSimulator.Services
             }
 
             if (RuntimeSignalUpdated != null)
+            {
                 RuntimeSignalUpdated(updatedTarget.Ioa, updatedTarget.RuntimeValue, updatedTarget.LiveCot);
+            }
 
-            LogStatus("CMD", string.Format("Normalized setpoint on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
+            LogStatus("CMD", string.Format("Master command on IOA {0} updated IOA {1} -> {2}.", commandSignal.Ioa, updatedTarget.Ioa, updatedTarget.RuntimeValue));
 
-            SignalDefinition publishSignal = CloneSignal(updatedTarget);
-            publishSignal.LiveCot = "CmdFb";
-            EnqueueSignal(publishSignal, ResolveCot(publishSignal.LiveCot), true);
-
-            return true;
+            if (updatedTarget.SpontaneousEnabled || string.Equals(updatedTarget.LiveCot, "CmdFb", StringComparison.OrdinalIgnoreCase))
+            {
+                EnqueueSignal(updatedTarget, ResolveCot(updatedTarget.LiveCot), true);
+            }
         }
 
-        private bool AcknowledgeCommand(IMasterConnection connection, ASDU asdu, string message)
+        private bool AcknowledgeCommand(Iec101Asdu asdu, string message)
         {
-            asdu.Cot = CauseOfTransmission.ACTIVATION_CON;
-            asdu.IsNegative = false;
-            connection.SendASDU(asdu);
+            EnqueueCommandConfirmation(asdu, false);
             LogStatus("CMD", message);
             return true;
         }
 
-        private bool RejectCommand(IMasterConnection connection, ASDU asdu, string message)
+        private bool RejectCommand(Iec101Asdu asdu, string message)
         {
-            asdu.Cot = CauseOfTransmission.ACTIVATION_CON;
-            asdu.IsNegative = true;
-            connection.SendASDU(asdu);
+            EnqueueCommandConfirmation(asdu, true);
             LogStatus("CMD", message);
             return true;
         }
 
-        private bool HandleRawTx(object parameter, byte[] message, int messageSize)
+        private void EnqueueCommandConfirmation(Iec101Asdu asdu, bool negative)
         {
-            LogLink("TX", BitConverter.ToString(message, 0, messageSize).Replace("-", " "));
-            LogStatus("RAW", string.Format("TX {0} bytes on {1}: {2}", messageSize, _config != null ? _config.PortName : "-", DescribeFrame(message, messageSize)));
+            if (asdu == null)
+            {
+                return;
+            }
+
+            Iec101InformationObject obj = GetFirstObject(asdu);
+            byte[] payload = obj == null ? new byte[0] : GetObjectPayload(obj);
+            byte[] response = Iec101AsduCodec.EncodeInformationObjectAsdu(
+                asdu.TypeId,
+                Iec101CauseOfTransmission.ActivationCon,
+                negative,
+                asdu.CommonAddress,
+                obj == null ? 0 : obj.ObjectAddress,
+                payload,
+                _profile);
+            EnqueueAsdu(response, true);
+        }
+
+        private void SendQueuedAsduOrNoData(bool class1)
+        {
+            byte[] asdu = null;
+            lock (_sync)
+            {
+                Queue<byte[]> queue = class1 ? _class1Queue : _class2Queue;
+                if (queue.Count > 0)
+                {
+                    asdu = queue.Dequeue();
+                }
+            }
+
+            if (asdu == null)
+            {
+                SendFixedSecondary(9);
+                return;
+            }
+
+            SendVariableSecondary(asdu);
+        }
+
+        private void EnqueueSignal(SignalDefinition signal, Iec101CauseOfTransmission cot, bool forceClass1)
+        {
+            if (_serialPort == null || !IsApplicationTrafficEnabled())
+            {
+                return;
+            }
+
+            byte[] asdu = CreateSingleSignalAsdu(signal, cot, null);
+            if (asdu == null)
+            {
+                return;
+            }
+
+            EnqueueAsdu(asdu, forceClass1 || signal.SignalClass == SignalClass.Class1);
+        }
+
+        private void EnqueueAsdu(byte[] asdu, bool class1)
+        {
+            if (asdu == null || asdu.Length == 0)
+            {
+                return;
+            }
+
+            lock (_sync)
+            {
+                if (class1)
+                {
+                    _class1Queue.Enqueue(asdu);
+                }
+                else
+                {
+                    _class2Queue.Enqueue(asdu);
+                }
+            }
+        }
+
+        private byte[] CreateSingleSignalAsdu(SignalDefinition signal, Iec101CauseOfTransmission cot, DateTime? originalTimestampUtc)
+        {
+            if (signal == null)
+            {
+                return null;
+            }
+
+            Iec101TypeId typeId;
+            byte[] payload;
+            if (!TryBuildSignalPayload(signal, originalTimestampUtc, out typeId, out payload))
+            {
+                return null;
+            }
+
+            return Iec101AsduCodec.EncodeInformationObjectAsdu(typeId, cot, false, signal.Casdu, signal.Ioa, payload, _profile);
+        }
+
+        private bool TryBuildSignalPayload(SignalDefinition signal, DateTime? originalTimestampUtc, out Iec101TypeId typeId, out byte[] payload)
+        {
+            typeId = Iec101TypeId.Unknown;
+            payload = null;
+
+            DateTime timestampSource = originalTimestampUtc.HasValue
+                ? (originalTimestampUtc.Value.Kind == DateTimeKind.Utc ? originalTimestampUtc.Value : originalTimestampUtc.Value.ToUniversalTime())
+                : DateTime.UtcNow;
+            byte qds = BuildQualityByte(signal.Quality);
+            bool withTimestamp = signal.UseTimestamp;
+            List<byte> bytes = new List<byte>();
+
+            switch (signal.SignalType)
+            {
+                case SlaveSignalType.SinglePoint:
+                    typeId = withTimestamp ? Iec101TypeId.M_SP_TB_1 : Iec101TypeId.M_SP_NA_1;
+                    bytes.Add((byte)((ParseOnOff(signal.RuntimeValue) ? 0x01 : 0x00) | qds));
+                    break;
+                case SlaveSignalType.DoublePoint:
+                    typeId = withTimestamp ? Iec101TypeId.M_DP_TB_1 : Iec101TypeId.M_DP_NA_1;
+                    bytes.Add((byte)((ParseOnOff(signal.RuntimeValue) ? 0x02 : 0x01) | qds));
+                    break;
+                case SlaveSignalType.MeasuredNormalized:
+                    typeId = withTimestamp ? Iec101TypeId.M_ME_TD_1 : Iec101TypeId.M_ME_NA_1;
+                    short normalizedRaw = (short)Math.Round(Math.Max(-1d, Math.Min(1d, ParseDouble(signal.RuntimeValue, signal.AnalogFrom))) * 32767d, MidpointRounding.AwayFromZero);
+                    bytes.Add((byte)(normalizedRaw & 0xFF));
+                    bytes.Add((byte)((normalizedRaw >> 8) & 0xFF));
+                    bytes.Add(qds);
+                    break;
+                case SlaveSignalType.MeasuredScaled:
+                    typeId = withTimestamp ? Iec101TypeId.M_ME_TE_1 : Iec101TypeId.M_ME_NB_1;
+                    short scaledRaw = (short)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero);
+                    bytes.Add((byte)(scaledRaw & 0xFF));
+                    bytes.Add((byte)((scaledRaw >> 8) & 0xFF));
+                    bytes.Add(qds);
+                    break;
+                case SlaveSignalType.MeasuredShort:
+                    typeId = withTimestamp ? Iec101TypeId.M_ME_TF_1 : Iec101TypeId.M_ME_NC_1;
+                    byte[] shortValue = BitConverter.GetBytes((float)ParseDouble(signal.RuntimeValue, signal.AnalogFrom));
+                    bytes.AddRange(shortValue);
+                    bytes.Add(qds);
+                    break;
+                case SlaveSignalType.StepPosition:
+                    typeId = withTimestamp ? Iec101TypeId.M_ST_TB_1 : Iec101TypeId.M_ST_NA_1;
+                    int step = (int)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero);
+                    bytes.Add((byte)(step & 0x7F));
+                    bytes.Add(qds);
+                    break;
+                default:
+                    return false;
+            }
+
+            if (withTimestamp)
+            {
+                bytes.AddRange(Iec101AsduCodec.EncodeCp56Time(timestampSource));
+            }
+
+            payload = bytes.ToArray();
+            return true;
+        }
+
+        private void SendFixedSecondary(int functionCode)
+        {
+            byte control = BuildSecondaryControl(functionCode, HasClass1Data(), false);
+            byte[] response = Iec101FrameCodec.EncodeFixed(control, _config.LinkAddress, _profile);
+            WriteFrame(response);
+        }
+
+        private void SendVariableSecondary(byte[] asdu)
+        {
+            byte control = BuildSecondaryControl(8, HasClass1Data(), false);
+            byte[] response = Iec101FrameCodec.EncodeVariable(control, _config.LinkAddress, asdu, _profile);
+            WriteFrame(response);
+        }
+
+        private void WriteFrame(byte[] frame)
+        {
+            SerialPort port = _serialPort;
+            if (port == null || !port.IsOpen || frame == null || frame.Length == 0)
+            {
+                return;
+            }
+
+            port.Write(frame, 0, frame.Length);
+            LogRawTx(frame);
+        }
+
+        private bool HasClass1Data()
+        {
+            lock (_sync)
+            {
+                return _class1Queue.Count > 0;
+            }
+        }
+
+        private static byte BuildSecondaryControl(int functionCode, bool acd, bool dfc)
+        {
+            int control = functionCode & 0x0F;
+            if (acd)
+            {
+                control |= 0x20;
+            }
+
+            if (dfc)
+            {
+                control |= 0x10;
+            }
+
+            return (byte)control;
+        }
+
+        private void PublishBackgroundSignalsIfDue()
+        {
+            if (!IsApplicationTrafficEnabled())
+            {
+                return;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            if ((now - _lastBackgroundPublishAt).TotalMilliseconds < _config.BackgroundPublishIntervalMs)
+            {
+                return;
+            }
+
+            _lastBackgroundPublishAt = now;
+
+            List<SignalDefinition> snapshot;
+            lock (_sync)
+            {
+                snapshot = _runtimeSignals.Values.Select(CloneSignal).ToList();
+            }
+
+            foreach (SignalDefinition signal in snapshot)
+            {
+                if (!signal.IsEnabled || !signal.BackgroundEnabled)
+                {
+                    continue;
+                }
+
+                if (!_config.EnableMeasurementStreaming && signal.IsMeasurement)
+                {
+                    continue;
+                }
+
+                EnqueueSignal(signal, Iec101CauseOfTransmission.BackgroundScan, false);
+            }
+        }
+
+        private static Iec101InformationObject GetFirstObject(Iec101Asdu asdu)
+        {
+            return asdu != null && asdu.Objects.Count > 0 ? asdu.Objects[0] : null;
+        }
+
+        private static int GetFirstIoaOrZero(Iec101Asdu asdu)
+        {
+            Iec101InformationObject obj = GetFirstObject(asdu);
+            return obj == null ? 0 : obj.ObjectAddress;
+        }
+
+        private byte[] GetFirstObjectPayloadOrDefault(Iec101Asdu asdu, byte[] fallback)
+        {
+            Iec101InformationObject obj = GetFirstObject(asdu);
+            return obj == null ? fallback : GetObjectPayload(obj);
+        }
+
+        private byte[] GetObjectPayload(Iec101InformationObject obj)
+        {
+            if (obj == null || obj.RawBytes == null || obj.RawBytes.Length <= _profile.IoaLength)
+            {
+                return new byte[0];
+            }
+
+            byte[] payload = new byte[obj.RawBytes.Length - _profile.IoaLength];
+            Buffer.BlockCopy(obj.RawBytes, _profile.IoaLength, payload, 0, payload.Length);
+            return payload;
+        }
+
+        private void LogRawTx(byte[] frame)
+        {
+            LogLink("TX", ToHex(frame));
+            LogStatus("RAW", string.Format("TX {0} bytes on {1}: {2}", frame.Length, _config != null ? _config.PortName : "-", DescribeFrame(frame, frame.Length)));
             if (LinkFrameObserved != null)
+            {
                 LinkFrameObserved(true, false);
-            return true;
+            }
         }
 
-        private bool HandleRawRx(object parameter, byte[] message, int messageSize)
+        private void LogRawRx(byte[] frame)
         {
-            LogLink("RX", BitConverter.ToString(message, 0, messageSize).Replace("-", " "));
-            LogStatus("RAW", string.Format("RX {0} bytes on {1}: {2}", messageSize, _config != null ? _config.PortName : "-", DescribeFrame(message, messageSize)));
+            LogLink("RX", ToHex(frame));
+            LogStatus("RAW", string.Format("RX {0} bytes on {1}: {2}", frame.Length, _config != null ? _config.PortName : "-", DescribeFrame(frame, frame.Length)));
             if (LinkFrameObserved != null)
+            {
                 LinkFrameObserved(false, true);
-            return true;
+            }
         }
 
         private static string DescribeFrame(byte[] message, int messageSize)
@@ -592,84 +990,35 @@ namespace IecSlaveSimulator.Services
             return string.Format("frame start=0x{0:X2}", start);
         }
 
-        private void EnqueueSignal(SignalDefinition signal, CauseOfTransmission cot, bool forceClass1)
-        {
-            if (_slave == null || !IsApplicationTrafficEnabled())
-                return;
-
-            ASDU asdu = CreateSingleSignalAsdu(_slave.Parameters, signal, cot, null);
-            if (asdu == null)
-                return;
-
-            if (forceClass1 || signal.SignalClass == SignalClass.Class1)
-                _slave.EnqueueUserDataClass1(asdu);
-            else
-                _slave.EnqueueUserDataClass2(asdu);
-        }
-
-        private ASDU CreateSingleSignalAsdu(ApplicationLayerParameters parameters, SignalDefinition signal, CauseOfTransmission cot, DateTime? originalTimestampUtc)
-        {
-            InformationObject informationObject = CreateInformationObject(signal, originalTimestampUtc);
-            if (informationObject == null)
-                return null;
-
-            ASDU asdu = new ASDU(parameters, cot, false, false, 0, signal.Casdu, false);
-            asdu.AddInformationObject(informationObject);
-            return asdu;
-        }
-
-        private InformationObject CreateInformationObject(SignalDefinition signal, DateTime? originalTimestampUtc)
-        {
-            QualityDescriptor quality = new QualityDescriptor();
-            DateTime timestampSource = originalTimestampUtc.HasValue
-                ? (originalTimestampUtc.Value.Kind == DateTimeKind.Utc ? originalTimestampUtc.Value.ToLocalTime() : originalTimestampUtc.Value)
-                : DateTime.Now;
-            CP56Time2a timestamp = signal.UseTimestamp ? new CP56Time2a(timestampSource) : null;
-
-            switch (signal.SignalType)
-            {
-                case SlaveSignalType.SinglePoint:
-                    if (timestamp != null)
-                        return new SinglePointWithCP56Time2a(signal.Ioa, ParseOnOff(signal.RuntimeValue), quality, timestamp);
-                    return new SinglePointInformation(signal.Ioa, ParseOnOff(signal.RuntimeValue), quality);
-                case SlaveSignalType.DoublePoint:
-                    if (timestamp != null)
-                        return new DoublePointWithCP56Time2a(signal.Ioa, ParseDoublePoint(signal.RuntimeValue), quality, timestamp);
-                    return new DoublePointInformation(signal.Ioa, ParseDoublePoint(signal.RuntimeValue), quality);
-                case SlaveSignalType.MeasuredNormalized:
-                    if (timestamp != null)
-                        return new MeasuredValueNormalizedWithCP56Time2a(signal.Ioa, (float)ParseDouble(signal.RuntimeValue, signal.AnalogFrom), quality, timestamp);
-                    return new MeasuredValueNormalized(signal.Ioa, (float)ParseDouble(signal.RuntimeValue, signal.AnalogFrom), quality);
-                case SlaveSignalType.MeasuredScaled:
-                    if (timestamp != null)
-                        return new MeasuredValueScaledWithCP56Time2a(signal.Ioa, (int)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero), quality, timestamp);
-                    return new MeasuredValueScaled(signal.Ioa, (int)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero), quality);
-                case SlaveSignalType.MeasuredShort:
-                    if (timestamp != null)
-                        return new MeasuredValueShortWithCP56Time2a(signal.Ioa, (float)ParseDouble(signal.RuntimeValue, signal.AnalogFrom), quality, timestamp);
-                    return new MeasuredValueShort(signal.Ioa, (float)ParseDouble(signal.RuntimeValue, signal.AnalogFrom), quality);
-                case SlaveSignalType.StepPosition:
-                    if (timestamp != null)
-                        return new StepPositionWithCP56Time2a(signal.Ioa, (int)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero), false, quality, timestamp);
-                    return new StepPositionInformation(signal.Ioa, (int)Math.Round(ParseDouble(signal.RuntimeValue, signal.AnalogFrom), MidpointRounding.AwayFromZero), false, quality);
-                default:
-                    return null;
-            }
-        }
-
-        private static CauseOfTransmission ResolveCot(string liveCot)
+        private static Iec101CauseOfTransmission ResolveCot(string liveCot)
         {
             switch (liveCot)
             {
                 case "Spont":
-                    return CauseOfTransmission.SPONTANEOUS;
+                    return Iec101CauseOfTransmission.Spontaneous;
                 case "GI":
-                    return CauseOfTransmission.INTERROGATED_BY_STATION;
+                    return Iec101CauseOfTransmission.InterrogatedByStation;
                 case "CmdFb":
-                    return CauseOfTransmission.ACTIVATION_CON;
+                    return Iec101CauseOfTransmission.ActivationCon;
                 default:
-                    return CauseOfTransmission.BACKGROUND_SCAN;
+                    return Iec101CauseOfTransmission.BackgroundScan;
             }
+        }
+
+        private static byte BuildQualityByte(string quality)
+        {
+            if (string.IsNullOrWhiteSpace(quality))
+            {
+                return 0x00;
+            }
+
+            string normalized = quality.Trim().ToUpperInvariant();
+            if (normalized.Contains("INVALID")) return 0x80;
+            if (normalized.Contains("OLD") || normalized.Contains("NONTOPICAL")) return 0x40;
+            if (normalized.Contains("SUB")) return 0x20;
+            if (normalized.Contains("BLOCK")) return 0x10;
+            if (normalized.Contains("OVER")) return 0x01;
+            return 0x00;
         }
 
         private static bool ParseOnOff(string value)
@@ -680,19 +1029,18 @@ namespace IecSlaveSimulator.Services
                 || string.Equals(value, "1", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static DoublePointValue ParseDoublePoint(string value)
-        {
-            return ParseOnOff(value) ? DoublePointValue.ON : DoublePointValue.OFF;
-        }
-
         private static double ParseDouble(string value, double fallback)
         {
             double parsed;
             if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed))
+            {
                 return parsed;
+            }
 
             if (double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out parsed))
+            {
                 return parsed;
+            }
 
             return fallback;
         }
@@ -700,7 +1048,9 @@ namespace IecSlaveSimulator.Services
         private static SignalDefinition CloneSignal(SignalDefinition signal)
         {
             if (signal == null)
+            {
                 return null;
+            }
 
             return new SignalDefinition
             {
@@ -755,16 +1105,58 @@ namespace IecSlaveSimulator.Services
                 : StopBits.One;
         }
 
+        private static void ReadExact(SerialPort port, byte[] buffer, int offset, int count)
+        {
+            int read = 0;
+            while (read < count)
+            {
+                int value = ReadByte(port);
+                if (value < 0)
+                {
+                    throw new IOException("Serial read ended before frame completed.");
+                }
+
+                buffer[offset + read] = (byte)value;
+                read++;
+            }
+        }
+
+        private static int ReadByte(SerialPort port)
+        {
+            try
+            {
+                return port.ReadByte();
+            }
+            catch (TimeoutException)
+            {
+                return -1;
+            }
+        }
+
+        private static string ToHex(byte[] data)
+        {
+            if (data == null || data.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            return BitConverter.ToString(data).Replace("-", " ");
+        }
+
         private void LogStatus(string category, string message)
         {
             if (StatusLogged != null)
+            {
                 StatusLogged(category, message);
+            }
         }
 
-        private void LogLink(string category, string message)
+        private void LogLink(string direction, string raw)
         {
             if (LinkActivityLogged != null)
-                LinkActivityLogged(category, message);
+            {
+                LinkActivityLogged(direction, raw);
+            }
         }
 
         private bool IsApplicationTrafficEnabled()
@@ -775,7 +1167,9 @@ namespace IecSlaveSimulator.Services
         public void Dispose()
         {
             if (_disposed)
+            {
                 return;
+            }
 
             _disposed = true;
             Stop();
@@ -797,4 +1191,5 @@ namespace IecSlaveSimulator.Services
         public int BackgroundPublishIntervalMs { get; set; }
         public bool EnableMeasurementStreaming { get; set; }
     }
+
 }

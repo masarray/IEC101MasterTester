@@ -213,7 +213,6 @@
     <Compile Include="Services\Diagnostics\ProtocolEvidenceExportService.cs" />
     <Compile Include="Services\Diagnostics\ProtocolEvidenceRecorder.cs" />
     <Compile Include="Services\Export\EventLogExportService.cs" />
-    <Compile Include="Services\Iec101\Iec101MasterService.cs" />
     <Compile Include="Services\Iec101\IIec101MasterService.cs" />
     <Compile Include="Services\Iec101\LineMonitorFormatter.cs" />
     <Compile Include="Services\Profiles\OfficialPointProfile.cs" />
@@ -288,7 +287,6 @@
       <DependentUpon>NucRedundancyWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Vendor\lib60870\**\*.cs" Exclude="Vendor\lib60870\Properties\AssemblyInfo.cs;Vendor\lib60870\obj\**\*.cs;Vendor\lib60870\bin\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -325,21 +323,5 @@
   <ItemGroup>
     <Resource Include="iec60870-icon.jpg" />
   </ItemGroup>
-  <Target Name="BuildReleaseInstaller" AfterTargets="Build" Condition="'$(Configuration)' == 'Release' and Exists('$(InnoSetupCompilerPath)')">
-    <MakeDir Directories="$(DotnetCliHome)" />
-    <Exec Command="dotnet build &quot;$(SlaveProjectPath)&quot; -c Release"
-          WorkingDirectory="$(MSBuildProjectDirectory)"
-          EnvironmentVariables="DOTNET_CLI_HOME=$(DotnetCliHome);HOME=$(DotnetCliHome)">
-      <Output TaskParameter="ExitCode" PropertyName="SlaveBuildExitCode" />
-    </Exec>
-    <Error Condition="'$(SlaveBuildExitCode)' != '0'" Text="Slave simulator Release build failed with exit code $(SlaveBuildExitCode)." />
-    <MakeDir Directories="$(InstallerOutputDir)" />
-    <Exec Command="&quot;$(InnoSetupCompilerPath)&quot; &quot;$(InstallerScriptPath)&quot;"
-          WorkingDirectory="$(MSBuildProjectDirectory)"
-          EnvironmentVariables="MASTER_OUTPUT_DIR=$(TargetDir);SLAVE_OUTPUT_DIR=$(SlaveReleaseOutputDir);DOCS_SOURCE_DIR=$(MSBuildProjectDirectory);SETUP_OUTPUT_DIR=$(InstallerOutputDir)">
-      <Output TaskParameter="ExitCode" PropertyName="InnoSetupExitCode" />
-    </Exec>
-    <Error Condition="'$(InnoSetupExitCode)' != '0'" Text="Inno Setup failed with exit code $(InnoSetupExitCode)." />
-  </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

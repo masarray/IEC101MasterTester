@@ -27,7 +27,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\Vendor\lib60870\**\*.cs" Exclude="..\Vendor\lib60870\Properties\AssemblyInfo.cs;..\Vendor\lib60870\obj\**\*.cs;..\Vendor\lib60870\bin\**\*.cs" Link="Vendor\lib60870\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\Services\Iec101\Native\Iec101ApplicationProfile.cs" Link="SharedNative\Iec101ApplicationProfile.cs" />
+    <Compile Include="..\Services\Iec101\Native\Asdu\*.cs" Link="SharedNative\Asdu\%(Filename)%(Extension)" />
+    <Compile Include="..\Services\Iec101\Native\Frames\*.cs" Link="SharedNative\Frames\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

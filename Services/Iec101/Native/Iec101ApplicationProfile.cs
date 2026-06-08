@@ -1,5 +1,3 @@
-using IEC101MasterTester.Models;
-
 namespace IEC101MasterTester.Services.Iec101.Native
 {
     public sealed class Iec101ApplicationProfile
@@ -10,15 +8,15 @@ namespace IEC101MasterTester.Services.Iec101.Native
         public int IoaLength { get; private set; }
         public int OriginatorAddress { get; private set; }
 
-        public static Iec101ApplicationProfile FromSettings(ConnectionSettings settings)
+        public static Iec101ApplicationProfile FromValues(int linkAddressLength, int casduLength, int ioaLength, int originatorAddress)
         {
             return new Iec101ApplicationProfile
             {
-                LinkAddressLength = Clamp(settings == null ? 2 : settings.LinkAddressLength, 1, 2),
+                LinkAddressLength = Clamp(linkAddressLength, 1, 2),
                 CotLength = 2,
-                CasduLength = Clamp(settings == null ? 2 : settings.CasduLength, 1, 2),
-                IoaLength = Clamp(settings == null ? 3 : settings.IoaLength, 1, 3),
-                OriginatorAddress = settings == null ? 0 : Clamp(settings.OriginatorAddress, 0, 255)
+                CasduLength = Clamp(casduLength, 1, 2),
+                IoaLength = Clamp(ioaLength, 1, 3),
+                OriginatorAddress = Clamp(originatorAddress, 0, 255)
             };
         }
 

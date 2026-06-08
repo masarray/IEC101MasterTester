@@ -6,7 +6,7 @@
     <title>IEC101 Master Tester for SCADA FAT Evidence | MasArray</title>
     <meta
       name="description"
-      content="Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and clean-room native stack migration."
+      content="Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and native clean-room protocol analysis."
     />
     <meta name="author" content="MasArray" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -19,7 +19,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="MasArray IEC101 Master Tester" />
     <meta property="og:title" content="IEC101 Master Tester for SCADA FAT Evidence" />
-    <meta property="og:description" content="IEC-60870-5-101 master tester with analyzer views, SOE audit, NUC redundancy observation, protocol evidence capture, and native C# stack migration." />
+    <meta property="og:description" content="IEC-60870-5-101 master tester with analyzer views, SOE audit, NUC redundancy observation, protocol evidence capture, and project-owned native C# stack." />
     <meta property="og:url" content="https://masarray.github.io/IEC101MasterTester/" />
     <meta property="og:image" content="https://masarray.github.io/IEC101MasterTester/assets/iec60870-icon.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -31,7 +31,7 @@
         "@type": "SoftwareApplication",
         "name": "IEC101 Master Tester",
         "alternateName": "MasArray IEC101MasterTester",
-        "description": "Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and native C# stack migration.",
+        "description": "Windows IEC-60870-5-101 master tester for FAT evidence, SCADA troubleshooting, NUC redundancy observation, SOE replay audit, and native C# protocol analysis.",
         "url": "https://masarray.github.io/IEC101MasterTester/",
         "codeRepository": "https://github.com/masarray/IEC101MasterTester",
         "operatingSystem": "Windows",
@@ -70,16 +70,16 @@
     <main id="top">
       <section class="hero">
         <div class="hero-copy reveal">
-          <p class="eyebrow">IEC-60870-5-101 master testing - FAT evidence - Native stack migration</p>
+          <p class="eyebrow">IEC-60870-5-101 master testing - FAT evidence - Native clean-room stack</p>
           <h1>IEC101 testing that keeps protocol facts visible.</h1>
           <p class="lead">
             A Windows desktop tool for SCADA FAT, gateway troubleshooting, NUC redundancy observation,
-            SOE replay audit, and traceable IEC-101 evidence. The project is moving toward a clean-room
-            native C# stack while keeping lib60870.NET as the known-good baseline until validation gates pass.
+            SOE replay audit, and traceable IEC-101 evidence. The project now uses a project-owned
+            native C# stack with vendor protocol source removed from the repository.
           </p>
           <div class="hero-actions">
             <a class="button primary" href="https://github.com/masarray/IEC101MasterTester">View source</a>
-            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/codex/link-trace-restore/ROADMAP.md">Migration roadmap</a>
+            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/main/ROADMAP.md">Migration roadmap</a>
           </div>
           <div class="trust-strip" aria-label="Core capabilities">
             <span>ACD evidence</span>
@@ -94,8 +94,8 @@
           <div class="panel-header">
             <img src="assets/iec60870-icon.png" width="76" height="76" alt="" />
             <div>
-              <span class="live-pill">Lib60870 baseline</span>
-              <h2>NativeExperimental ready</h2>
+              <span class="live-pill">Native clean-room</span>
+              <h2>NativeCleanRoom active</h2>
             </div>
           </div>
           <div class="screen-frame featured-screen" aria-label="Mission control screenshot preview">
@@ -166,17 +166,17 @@
 
       <section class="section split" id="stack">
         <div class="section-heading reveal">
-          <p class="eyebrow">Clean-room migration</p>
-          <h2>Native IEC-101 is progressing, but still gated.</h2>
+          <p class="eyebrow">Clean-room stack</p>
+          <h2>Native IEC-101 is active, with validation gates still visible.</h2>
           <p>
             The native stack already includes FT1.2 parsing, ASDU parsing/encoding, UI mapper integration,
-            an experimental master engine, and protocol evidence recording. The vendor path remains the
-            production baseline until tests prove compatibility.
+            a clean-room unbalanced master engine, and protocol evidence recording. Vendor protocol source has
+            been removed; release confidence now depends on build, simulator, golden trace, and field validation.
           </p>
         </div>
         <div class="status-board reveal delay-1">
-          <div><span>Default engine</span><strong>Lib60870</strong></div>
-          <div><span>Opt-in engine</span><strong>NativeExperimental</strong></div>
+          <div><span>Default engine</span><strong>NativeCleanRoom</strong></div>
+          <div><span>Vendor source</span><strong>Removed</strong></div>
           <div><span>Frame codec</span><strong>FT1.2 ready</strong></div>
           <div><span>Validation</span><strong>Golden trace next</strong></div>
         </div>
@@ -239,7 +239,7 @@
             <p class="eyebrow">MasArray engineering tool</p>
             <h2>A practical IEC-101 workspace for SCADA and substation automation engineers.</h2>
             <p>
-              The project is intentionally transparent: protocol behavior, migration gates, and known limits
+              The project is intentionally transparent: protocol behavior, validation gates, and known limits
               are documented so future work can continue without guessing.
             </p>
           </div>
@@ -248,15 +248,15 @@
 
       <section class="section download" id="download">
         <div class="download-panel reveal">
-          <p class="eyebrow">Source and roadmap</p>
-          <h2>Inspect the code, then follow the migration gates.</h2>
+          <p class="eyebrow">Source and validation</p>
+          <h2>Inspect the code, then validate the native stack.</h2>
           <p>
-            The next engineering milestone is golden trace validation: export known-good lib60870 sessions,
-            assert native decoder fields, then harden the experimental engine with simulator and field tests.
+            The next engineering milestone is golden trace validation: assert native decoder and encoder fields,
+            then harden the clean-room engine with simulator, bench, and real gateway tests.
           </p>
           <div class="hero-actions">
             <a class="button primary" href="https://github.com/masarray/IEC101MasterTester">GitHub repository</a>
-            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/codex/link-trace-restore/CODEX_HANDOFF.md">Latest handoff</a>
+            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/main/docs/NATIVE_CLEANROOM_MIGRATION.md">Native migration notes</a>
           </div>
         </div>
       </section>
@@ -264,7 +264,7 @@
 
     <footer class="site-footer">
       <span>IEC101 Master Tester</span>
-      <span>Protocol correctness first. Native stack migration in progress.</span>
+      <span>Protocol correctness first. Native clean-room stack with validation-first release discipline.</span>
     </footer>
   </body>
 </html>

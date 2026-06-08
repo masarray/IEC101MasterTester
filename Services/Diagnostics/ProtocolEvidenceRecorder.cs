@@ -111,7 +111,7 @@ namespace IEC101MasterTester.Services.Diagnostics
 
         private static void PopulateNativeDecode(ProtocolEvidence row, byte[] rawFrame, ConnectionSettings settings)
         {
-            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromSettings(settings);
+            Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
             Iec101Frame frame;
             string frameError;
             if (!Iec101FrameCodec.TryParse(rawFrame, rawFrame.Length, profile, out frame, out frameError))

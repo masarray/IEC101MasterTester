@@ -1,205 +1,135 @@
-# ROADMAP.md
+# Roadmap
 
-## Current Direction
+IEC101 Master Tester is moving from a feature-rich analyzer into a release-ready, native clean-room IEC-60870-5-101 tool for Windows FAT, SCADA troubleshooting, gateway verification, and NUC redundancy observation.
 
-The project should stay:
+## Product Direction
+
+The project must stay:
+
 - protocol-correct
 - operator-usable
-- lightweight
+- lightweight during long FAT sessions
 - evidence-oriented
+- legally clean for Apache-2.0 public open-source release
 
-## Near-Term Priorities
+## Current Migration Status
 
-### 0. Lightweight buffer snapshot strategy
+Completed in the native clean-room pass:
 
-Goal:
-- keep long FAT/troubleshooting sessions responsive
-- avoid letting operator-facing grids retain large raw payload strings forever
-- keep deep evidence in explicit forensic/export paths instead of every live UI row
+- Removed the previous `Vendor/lib60870` source tree from the repository.
+- Removed `lib60870` compile includes from the main WPF project and simulator project.
+- Removed `lib60870.CS101` dependencies from mapper, line monitor formatter, main view model, and master-service routing.
+- Promoted `NativeCleanRoom` as the default master engine.
+- Routed main app and NUC redundancy channels through `Iec101MasterServiceRouter` backed by `NativeIec101MasterService`.
+- Migrated simulator runtime to the same project-owned native FT1.2 and ASDU codec path.
+- Added Apache-2.0 repository license files, pending final asset/dependency audit before official binary release.
 
-Current implementation:
-- `Services/Diagnostics/BoundedUiBuffer.cs` centralizes bounded `ObservableCollection` insertion/trimming
-- `Services/Diagnostics/ProtocolEvidenceRecorder.cs` keeps a bounded non-UI ring buffer of full raw TX/RX frames for golden trace/export work
-- `Services/Diagnostics/ProtocolEvidenceExportService.cs` can write the current protocol evidence snapshot to CSV with raw hex and decoded fields
-- Line Monitor and NUC trace rows now store UI snapshots with capped `RawHex`/`Detail` text
-- Event Log, NUC Event Log, SOE Audit Log, Status History, Findings, Command Life Monitor, Redundancy timelines, Availability timeline, and Buffer Replay sessions now use the shared bounded-buffer helper where possible
-- `NucValues` still trims manually because it must also maintain the IOA index
+## Native Stack Validation Roadmap
 
-Next strategy:
-- keep live UI buffers small and snapshot-oriented
-- expand the protocol evidence ring buffer into golden trace fixtures/export when validation work starts
-- never use UI buffer rows as the only source of protocol truth for pass/fail verdicts
-- preserve raw frame facts for tests/export through a dedicated evidence sink, not through unbounded WPF grids
+### 1. Build validation
 
-### 1. Native IEC-101 stack migration
+Required before merging/releasing:
 
-Goal:
-- remove `lib60870.NET` vendor dependency with a project-owned C# IEC-60870-5-101 stack
-- preserve wire correctness, operator workflow, and current analyzer behavior
-- keep `lib60870.NET` as the active baseline until native mode is proven
+- Open in Visual Studio on Windows.
+- Restore NuGet packages.
+- Build Debug and Release.
+- Confirm `0 Error(s)`.
+- Review warnings manually; protocol-related warnings must be fixed, cosmetic warnings may be triaged.
 
-Why this must be staged:
-- `lib60870.NET` currently owns `CS101Master`, callbacks, ASDU types, command objects, polling, and link state behavior
-- current UI models (`LineMonitorRow`, `ValueViewerRow`) are mostly neutral, so the best migration point is below `IIec101MasterService`
-- direct replacement would risk `COT`, `ACD`, Class 1/Class 2 behavior, command confirmation, and GI timing
+### 2. Golden trace tests
 
-Required architecture:
-- `Services/Iec101/Native/Frames`
-- `Services/Iec101/Native/LinkLayer`
-- `Services/Iec101/Native/Asdu`
-- `Services/Iec101/Native/Master`
-- `Services/Iec101/Native/Diagnostics`
+Add test coverage for:
 
-Internal model targets:
-- `Iec101Frame`
-- `Iec101ControlField`
-- `Iec101Asdu`
-- `Iec101InformationObject`
-- `Iec101CauseOfTransmission`
-- `Iec101TypeId`
-- `Iec101QualityDescriptor`
-- `Iec101ApplicationProfile`
+- FT1.2 single-character ACK, fixed frame, and variable frame decode.
+- checksum rejection.
+- configurable link-address length.
+- ASDU Type ID, VSQ, COT, CASDU, IOA decode.
+- monitor types: single point, double point, measured normalized/scaled/short float, step position, integrated total.
+- command types: single command, double command, step command, normalized setpoint.
+- CP24Time2a and CP56Time2a time decoding/encoding.
 
-Implementation phases:
-1. Passive FT1.2 decoder:
-   - parse `0xE5`, fixed frames, and variable frames
-   - validate length/checksum/end byte
-   - parse control field and link address using active settings
-   - extract `ACD/DFC` only from secondary frames
-   - preserve raw bytes for every unknown or invalid frame
-2. Native ASDU codec:
-   - support Type ID, VSQ, COT, originator, CASDU, IOA
-   - honor COT/CASDU/IOA lengths from settings/profile
-   - parse CP24Time2a and CP56Time2a
-   - initially support the product-critical types:
-     - `M_SP_NA_1`, `M_SP_TA_1`, `M_SP_TB_1`
-     - `M_DP_NA_1`, `M_DP_TA_1`, `M_DP_TB_1`
-     - `M_ME_NA_1`, `M_ME_TA_1`, `M_ME_TD_1`
-     - `M_ME_NB_1`, `M_ME_TB_1`, `M_ME_TE_1`
-     - `M_ME_NC_1`, `M_ME_TC_1`, `M_ME_TF_1`
-     - `M_ST_NA_1` and timed variants
-     - `M_IT_NA_1` and timed variants
-     - `M_EI_NA_1`
-     - `C_IC_NA_1`
-     - `C_SC_NA_1`, `C_DC_NA_1`, `C_RC_NA_1`, `C_SE_NA_1`
-3. Mapper migration:
-   - adapt current `Iec101DataMapper` and `LineMonitorFormatter` to consume internal models
-   - add `lib60870 -> internal model` adapter
-   - keep current UI and event/log/finding surfaces stable
-4. Golden trace test harness:
-   - capture known-good raw TX/RX sessions from current `lib60870` mode
-   - assert native decoder output matches factual fields: frame type, control bits, `ACD`, `DFC`, Type ID, `COT`, CASDU, IOA, value, quality, timestamps
-   - assert native encoder bytes for GI, poll, clock sync, single/double/step command, and setpoint are stable
-5. Native unbalanced master:
-   - open `SerialPort`
-   - reset link / reset FCB
-   - request link status
-   - poll Class 1 while `ACD=1`
-   - poll Class 2 as background
-   - send one-shot startup/manual GI
-   - execute queued commands
-   - implement retry, timeout, busy backoff, FCB/FCV handling
-6. Engine selection:
-   - keep `Lib60870` as default
-   - add `NativeExperimental` as explicit opt-in
-   - promote to `NativeStable` only after simulator and field validation
-7. Vendor removal:
-   - remove `Vendor\lib60870` and project compile include only after native stable passes all gates
+Recommended structure:
 
-Validation gates:
-- MSBuild succeeds with `0 Warning(s)` and `0 Error(s)`
-- native passive decoder matches golden traces
-- native encoder produces expected TX bytes for supported commands
-- NUC redundancy still enforces single communication owner
-- `COT` remains factual, never guessed
-- `ACD` remains factual from secondary control bits
-- Class 1/Class 2 remains analyzer metadata and never overwrites protocol facts
-- real RTU/simulator test confirms GI, Class 1, Class 2, command confirmation, and setpoint behavior
+```text
+tests/
+  IEC101MasterTester.Tests/
+    Native/
+      Iec101FrameCodecTests.cs
+      Iec101AsduCodecTests.cs
+      NativeMasterTxFrameTests.cs
+    Fixtures/
+      golden-traces/
+```
 
-Clean-room rule:
-- do not copy code from `lib60870.NET` or other GPL/commercial stacks
-- use public protocol documentation, interoperability guides, and project-owned traces as behavioral references
-- target project license may move to Apache-2 only after:
-  - `Vendor\lib60870` is removed
-  - no GPL implementation code has been copied or mechanically ported
-  - third-party assets and bundled code are audited for Apache-2 compatibility
-  - generated/build artifacts remain excluded from git
+### 3. Simulator interoperability
 
-Open-source cleanup status:
-- demo mode, trial counters, activation keys, hardware fingerprinting, and runtime license restrictions have been removed from the application
-- About window now reports open-source status instead of license/access state
-- clean-room native decoder, ASDU codec, mapper overload, and an opt-in `NativeExperimental` master engine skeleton now build successfully
-- `Lib60870` remains the default master engine and production baseline
-- project is still not Apache-2-ready until `Vendor\lib60870` is fully removed and remaining dependencies/assets are audited
+Validate against the included native simulator:
 
-Native stack status as of 2026-06-03:
-- Done:
-  - internal application profile, frame, control-field, ASDU, type, COT, quality, and information-object models
-  - passive FT1.2 raw frame decoder/encoder for single ACK, fixed frame, variable frame, checksum, link address, and secondary `ACD/DFC`
-  - ASDU decoder/encoder for common monitoring, GI, clock sync, single/double/step command, and normalized setpoint paths
-  - native raw-frame integration in `LineMonitorFormatter`
-  - native overload in `Iec101DataMapper`
-  - `NativeIec101MasterService` unbalanced skeleton with reset/status, class polling, GI/clock/command queue, FCB toggling, timeout, and busy backoff basics
-  - `Iec101MasterServiceRouter` and `ConnectionSettings.MasterEngine` so engine choice is explicit
-  - shared `ProtocolEvidenceRecorder` captures bounded full raw TX/RX frames from both `Lib60870` and `NativeExperimental`
-  - protocol evidence CSV export service is available for future golden-trace capture
-- Not done:
-  - golden trace tests
-  - simulator/field validation
-  - `lib60870 -> internal model` adapter for factual side-by-side comparison
-  - native redundancy backend replacement
-  - final removal of `Vendor\lib60870`
+- startup/reset-link behavior
+- link-status request
+- Class 1 poll while ACD is active
+- Class 2 background poll
+- general interrogation activation/confirmation/termination
+- single/double/step command confirmation
+- setpoint command confirmation
+- spontaneous event queue behavior
+- link timeout and reconnect behavior
 
-### 2. NUC Link Trace trustworthiness
+### 4. Real equipment / gateway validation
 
-Status:
-- recorder-style 60-second tape is in place
-- plot click is now restricted to graph area
-- inspect mode now freezes the selected time window
+Validate against at least one real IEC-101 controlled station or gateway:
 
-Next:
-- tighten bucket-to-event anchoring
-- validate that spike areas consistently resolve to matching GI/Class1/Class2 rows
-- remove any remaining cursor/tape mistrust
+- PLN-style 1200 bps 8E1 profile
+- link address length 2
+- CASDU length 2
+- IOA length 3
+- GI response completeness
+- spontaneous event retrieval
+- Class 1/Class 2 behavior
+- command confirmation and negative confirmation
+- select-before-operate timing
+- clock synchronization confirmation
+- long-session stability
 
-### 3. Findings and rule refinement
+### 5. NUC redundancy validation
 
-Next:
-- continue moving logic toward explicit rule codes
-- keep analyzer verdicts tied to real IEC evidence
-- keep `Class Data` tied to delivery context:
-  - `FC10` -> `Class 1`
-  - `FC11` / `GI` / `BACKGROUND_SCAN` -> `Class 2`
-  - do not treat class as a literal IOA field
+Validate:
 
-### 4. Point-profile adoption
+- only one communication owner is active at a time
+- primary/backup link activity is separated clearly
+- switchover does not duplicate command ownership
+- GI after switchover is controlled and traceable
+- availability dashboard does not invent protocol facts
 
-Next:
-- replace remaining scattered hardcoded IOA assumptions
-- keep `OfficialPointProfile` as single metadata source
+## Release Readiness Roadmap
 
-### 5. Redundancy workflow hardening
+### P0 - merge blocker
 
-Next:
-- continue refining exclusive NUC session behavior
-- keep active/standby observation stable and operator-readable
+- Build on Windows.
+- Fix compile errors from native migration.
+- Confirm no remaining source/build dependency on `lib60870`.
+- Confirm `Vendor/lib60870` is not present.
+- Update README and landing page to remove stale vendor-baseline wording.
 
-### 6. SOE and availability depth
+### P1 - public release
 
-Next:
-- deepen replay evidence analysis
-- improve long-run health summaries without inventing pass/fail policy
+- Add GitHub Actions Windows build workflow.
+- Add portable ZIP release workflow.
+- Add SHA256 checksum artifact.
+- Add `CHANGELOG.md`.
+- Add `SECURITY.md` and `CONTRIBUTING.md`.
+- Add quick-start and troubleshooting docs.
+- Add release notes with explicit validation status.
 
-## Medium-Term Goals
+### P2 - engineering hardening
 
-- stronger command lifecycle correlation
-- richer NUC switchover evidence
-- better export/report quality for FAT evidence
-- tighter coupling between findings, evidence, and operator windows
+- Add tests and golden traces.
+- Split `MainViewModel.cs` into smaller feature view models.
+- Add structured diagnostics log.
+- Add protocol compatibility matrix.
+- Add bench-test scripts/checklists.
+- Add release candidate soak-test checklist.
 
-## Guardrails
+## Clean-Room Rule
 
-- do not invent protocol facts
-- do not remove `lib60870.NET` until the native stack passes the migration gates above
-- do not turn operator windows into heavy visual experiments
-- do not sacrifice wire correctness for UI polish
+Do not copy implementation code from `lib60870.NET`, lib60870 C, or other GPL/commercial stacks. Public IEC protocol documentation, interoperability behavior, and project-owned raw traces may be used as behavioral references. Any new protocol behavior should be implemented as project-owned code and backed by repeatable tests or captured evidence.

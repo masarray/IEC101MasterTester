@@ -6,7 +6,7 @@ namespace IEC101MasterTester.Models
     public enum Iec101MasterEngine
     {
         [EnumMember]
-        Lib60870 = 0,
+        NativeCleanRoom = 0,
 
         [EnumMember]
         NativeExperimental = 1

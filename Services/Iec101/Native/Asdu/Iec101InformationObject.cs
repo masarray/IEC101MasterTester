@@ -11,5 +11,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
         public Iec101QualityDescriptor Quality { get; set; }
         public DateTime? TimestampUtc { get; set; }
         public byte[] RawBytes { get; set; }
+        public bool? Select { get; set; }
+        public int? CommandQualifierRaw { get; set; }
     }
 }

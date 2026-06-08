@@ -1,0 +1,38 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build WPF app
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Restore packages
+        shell: pwsh
+        run: |
+          nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
+
+      - name: Build Debug
+        shell: pwsh
+        run: |
+          msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Debug /p:UseSharedCompilation=false /m
+
+      - name: Build Release
+        shell: pwsh
+        run: |
+          msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m

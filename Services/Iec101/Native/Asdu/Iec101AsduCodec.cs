@@ -100,14 +100,30 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
             return EncodeSingleObjectAsdu(Iec101TypeId.C_CS_NA_1, Iec101CauseOfTransmission.Activation, casdu, 0, cp56, profile);
         }
 
+        public static byte[] EncodeInformationObjectAsdu(Iec101TypeId typeId, Iec101CauseOfTransmission cot, bool negative, int casdu, int ioa, byte[] payload, Iec101ApplicationProfile profile)
+        {
+            return EncodeSingleObjectAsdu(typeId, cot, negative, casdu, ioa, payload, profile);
+        }
+
+        public static byte[] EncodeCp56Time(DateTime timestampUtc)
+        {
+            return EncodeCp56Time2a(timestampUtc);
+        }
+
         private static byte[] EncodeSingleObjectAsdu(Iec101TypeId typeId, Iec101CauseOfTransmission cot, int casdu, int ioa, byte[] payload, Iec101ApplicationProfile profile)
+        {
+            return EncodeSingleObjectAsdu(typeId, cot, false, casdu, ioa, payload, profile);
+        }
+
+        private static byte[] EncodeSingleObjectAsdu(Iec101TypeId typeId, Iec101CauseOfTransmission cot, bool negative, int casdu, int ioa, byte[] payload, Iec101ApplicationProfile profile)
         {
             Iec101ApplicationProfile effectiveProfile = profile ?? Iec101ApplicationProfile.DefaultPln101();
             byte[] value = payload ?? new byte[0];
             List<byte> bytes = new List<byte>();
             bytes.Add((byte)typeId);
             bytes.Add(0x01);
-            bytes.Add((byte)((int)cot & 0x3F));
+            int causeByte = ((int)cot & 0x3F) | (negative ? 0x40 : 0x00);
+            bytes.Add((byte)causeByte);
             if (effectiveProfile.CotLength > 1)
             {
                 bytes.Add((byte)(effectiveProfile.OriginatorAddress & 0xFF));
@@ -206,7 +222,13 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
                     DecodeIntegratedTotal(obj, bytes, offset);
                     break;
                 case Iec101TypeId.C_SC_NA_1:
-                    obj.ValueText = (bytes[offset] & 0x01) != 0 ? "ON" : "OFF";
+                    DecodeSingleCommand(obj, bytes[offset]);
+                    break;
+                case Iec101TypeId.C_DC_NA_1:
+                    DecodeDoubleCommand(obj, bytes[offset]);
+                    break;
+                case Iec101TypeId.C_RC_NA_1:
+                    DecodeStepCommand(obj, bytes[offset]);
                     break;
                 case Iec101TypeId.C_SE_NA_1:
                     DecodeSetpointNormalized(obj, bytes, offset);
@@ -271,12 +293,43 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
             obj.Quality = Iec101QualityDescriptor.FromByte(bytes[offset + 4]);
         }
 
+        private static void DecodeSingleCommand(Iec101InformationObject obj, byte sco)
+        {
+            obj.ValueText = (sco & 0x01) != 0 ? "ON" : "OFF";
+            obj.NumericValue = (sco & 0x01) != 0 ? 1 : 0;
+            obj.Select = (sco & 0x80) != 0;
+            obj.CommandQualifierRaw = (sco >> 2) & 0x1F;
+        }
+
+        private static void DecodeDoubleCommand(Iec101InformationObject obj, byte dco)
+        {
+            int state = dco & 0x03;
+            obj.NumericValue = state;
+            obj.ValueText = state == 2 ? "ON" : state == 1 ? "OFF" : "Intermediate";
+            obj.Select = (dco & 0x80) != 0;
+            obj.CommandQualifierRaw = (dco >> 2) & 0x1F;
+        }
+
+        private static void DecodeStepCommand(Iec101InformationObject obj, byte rco)
+        {
+            int state = rco & 0x03;
+            obj.NumericValue = state;
+            obj.ValueText = state == 1 ? "RAISE" : state == 2 ? "LOWER" : "Intermediate";
+            obj.Select = (rco & 0x80) != 0;
+            obj.CommandQualifierRaw = (rco >> 2) & 0x1F;
+        }
+
         private static void DecodeSetpointNormalized(Iec101InformationObject obj, byte[] bytes, int offset)
         {
             short raw = ToInt16(bytes, offset);
             double value = raw / 32768.0d;
             obj.NumericValue = value;
             obj.ValueText = value.ToString("0.###");
+            if (offset + 2 < bytes.Length)
+            {
+                obj.Select = (bytes[offset + 2] & 0x80) != 0;
+                obj.CommandQualifierRaw = bytes[offset + 2] & 0x7F;
+            }
         }
 
         private static DateTime? TryDecodeTimestampUtc(Iec101TypeId typeId, byte[] bytes, int offset)
