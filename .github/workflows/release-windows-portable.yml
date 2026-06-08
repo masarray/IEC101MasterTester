@@ -21,15 +21,20 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Restore packages
+      - name: Restore main app packages
         shell: pwsh
         run: |
           nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 
-      - name: Build Release
+      - name: Build main app Release
         shell: pwsh
         run: |
           msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
+
+      - name: Build slave simulator Release
+        shell: pwsh
+        run: |
+          msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 
       - name: Create portable package
         shell: pwsh
@@ -38,9 +43,12 @@ jobs:
           $version = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { 'manual' }
           $outDir = 'artifacts'
           $packageDir = Join-Path $outDir 'IEC101MasterTester-windows-portable'
+          $simDir = Join-Path $packageDir 'tools\IecSlaveSimulator'
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          New-Item -ItemType Directory -Force -Path $simDir | Out-Null
           Copy-Item -Path 'bin\Release\*' -Destination $packageDir -Recurse -Force
-          Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md' -Destination $packageDir -Force
+          Copy-Item -Path 'IecSlaveSimulator\bin\Release\net48\*' -Destination $simDir -Recurse -Force
+          Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md','docs\NATIVE_CLEANROOM_PASS2.md' -Destination $packageDir -Force
           $zipPath = Join-Path $outDir "IEC101MasterTester-$version-windows-portable.zip"
           Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
           Get-FileHash $zipPath -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $zipPath -Leaf)" } | Set-Content (Join-Path $outDir "IEC101MasterTester-$version-windows-portable.sha256")

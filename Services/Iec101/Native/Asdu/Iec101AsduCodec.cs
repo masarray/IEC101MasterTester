@@ -93,10 +93,9 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
                 profile);
         }
 
-        public static byte[] EncodeClockSyncCommand(int casdu, DateTime timestampUtc, Iec101ApplicationProfile profile)
+        public static byte[] EncodeClockSyncCommand(int casdu, DateTime timestamp, Iec101ApplicationProfile profile)
         {
-            DateTime utc = timestampUtc.Kind == DateTimeKind.Utc ? timestampUtc : timestampUtc.ToUniversalTime();
-            byte[] cp56 = EncodeCp56Time2a(utc);
+            byte[] cp56 = EncodeCp56Time2a(timestamp);
             return EncodeSingleObjectAsdu(Iec101TypeId.C_CS_NA_1, Iec101CauseOfTransmission.Activation, casdu, 0, cp56, profile);
         }
 
@@ -105,9 +104,9 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
             return EncodeSingleObjectAsdu(typeId, cot, negative, casdu, ioa, payload, profile);
         }
 
-        public static byte[] EncodeCp56Time(DateTime timestampUtc)
+        public static byte[] EncodeCp56Time(DateTime timestamp)
         {
-            return EncodeCp56Time2a(timestampUtc);
+            return EncodeCp56Time2a(timestamp);
         }
 
         private static byte[] EncodeSingleObjectAsdu(Iec101TypeId typeId, Iec101CauseOfTransmission cot, int casdu, int ioa, byte[] payload, Iec101ApplicationProfile profile)
@@ -418,19 +417,19 @@ namespace IEC101MasterTester.Services.Iec101.Native.Asdu
             }
         }
 
-        private static byte[] EncodeCp56Time2a(DateTime timestampUtc)
+        private static byte[] EncodeCp56Time2a(DateTime timestamp)
         {
-            DateTime utc = timestampUtc.Kind == DateTimeKind.Utc ? timestampUtc : timestampUtc.ToUniversalTime();
-            int milliseconds = utc.Second * 1000 + utc.Millisecond;
+            DateTime value = timestamp;
+            int milliseconds = value.Second * 1000 + value.Millisecond;
             return new byte[]
             {
                 (byte)(milliseconds & 0xFF),
                 (byte)((milliseconds >> 8) & 0xFF),
-                (byte)(utc.Minute & 0x3F),
-                (byte)(utc.Hour & 0x1F),
-                (byte)(utc.Day & 0x1F),
-                (byte)(utc.Month & 0x0F),
-                (byte)((utc.Year - 2000) & 0x7F)
+                (byte)(value.Minute & 0x3F),
+                (byte)(value.Hour & 0x1F),
+                (byte)(value.Day & 0x1F),
+                (byte)(value.Month & 0x0F),
+                (byte)((value.Year - 2000) & 0x7F)
             };
         }
 

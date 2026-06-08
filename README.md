@@ -8,7 +8,7 @@ Windows WPF `.NET Framework 4.8` IEC-60870-5-101 master tester and analyzer for 
 [![Stack](https://img.shields.io/badge/IEC--101%20stack-native%20clean--room-16a34a)](#native-clean-room-stack)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md)
+[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md) | [Pass 2 behavior parity](docs/NATIVE_CLEANROOM_PASS2.md)
 
 ![IEC101 Master Tester mission control](docs/assets/screenshot/mission-control.webp)
 
@@ -78,7 +78,8 @@ Implemented in this migration pass:
 - FT1.2 fixed frame, variable frame, and single-character ACK handling.
 - Configurable link address, CASDU, IOA, and originator-address lengths.
 - ASDU decode/encode for key monitor and command types used by FAT workflows.
-- GI, Class 1/Class 2 polling, link-layer test, reset-link style startup, clock sync, and command queue flow.
+- GI, Class 1/Class 2 polling, link-layer test, reset-link style startup, local-time clock sync, and command queue flow.
+- Pass 2 behavior parity: FCB toggles only after valid responses, DFC applies busy backoff, ACD prioritizes Class 1 polling, and command ASDUs stay out of the process Value Viewer.
 - Native mapping into existing `ValueViewerRow` and `LineMonitorRow` models.
 - Protocol evidence export path for raw TX/RX validation.
 - Native simulator response path for repeatable bench testing without vendor protocol code.
@@ -95,6 +96,7 @@ Still required before declaring field-stable:
 
 - `ROADMAP.md` - product and native-stack validation roadmap.
 - `docs/NATIVE_CLEANROOM_MIGRATION.md` - migration notes and validation checklist.
+- `docs/NATIVE_CLEANROOM_PASS2.md` - behavior-parity notes for FCB, ACD/DFC, command follow-up, and startup polling order.
 - `USER_MANUAL.md` - operator notes.
 - `PROJECT_STRUCTURE.md` - source map.
 - `docs/` - GitHub Pages landing page.

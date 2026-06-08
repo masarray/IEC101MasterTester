@@ -392,6 +392,9 @@ namespace IecSlaveSimulator.Services
                 case Iec101TypeId.C_DC_NA_1:
                     HandleDoubleCommand(asdu);
                     break;
+                case Iec101TypeId.C_RC_NA_1:
+                    HandleStepCommand(asdu);
+                    break;
                 case Iec101TypeId.C_SE_NA_1:
                     HandleNormalizedSetpointCommand(asdu);
                     break;
@@ -506,6 +509,43 @@ namespace IecSlaveSimulator.Services
             CommandIntent intent = string.Equals(command.ValueText, "ON", StringComparison.OrdinalIgnoreCase) ? CommandIntent.Close : CommandIntent.Open;
             bool isSelect = command.Select.HasValue && command.Select.Value;
             if (!ValidateAndTrackCommand(asdu, commandSignal, intent, isSelect, "Double command"))
+            {
+                return;
+            }
+
+            if (!isSelect)
+            {
+                ApplyCommandToTarget(commandSignal, targetSignal, intent);
+            }
+        }
+
+        private void HandleStepCommand(Iec101Asdu asdu)
+        {
+            Iec101InformationObject command = GetFirstObject(asdu);
+            if (command == null)
+            {
+                return;
+            }
+
+            SignalDefinition commandSignal;
+            SignalDefinition targetSignal;
+            lock (_sync)
+            {
+                _runtimeSignals.TryGetValue(command.ObjectAddress, out commandSignal);
+                targetSignal = commandSignal != null && commandSignal.LinkedStatusIoa > 0 && _runtimeSignals.ContainsKey(commandSignal.LinkedStatusIoa)
+                    ? _runtimeSignals[commandSignal.LinkedStatusIoa]
+                    : null;
+            }
+
+            if (commandSignal == null || targetSignal == null)
+            {
+                RejectCommand(asdu, "Step command rejected: binding not found.");
+                return;
+            }
+
+            CommandIntent intent = string.Equals(command.ValueText, "RAISE", StringComparison.OrdinalIgnoreCase) ? CommandIntent.Raise : CommandIntent.Lower;
+            bool isSelect = command.Select.HasValue && command.Select.Value;
+            if (!ValidateAndTrackCommand(asdu, commandSignal, intent, isSelect, "Step command"))
             {
                 return;
             }
