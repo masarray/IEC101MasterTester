@@ -11,3 +11,5 @@ Files:
 - `NATIVE_CLEANROOM_MIGRATION.md` - native-stack migration notes
 
 The page should describe the current public product honestly: native clean-room IEC-101 stack active, vendor protocol source removed, Windows build/bench validation still required before declaring field-stable release status.
+
+- `NATIVE_CLEANROOM_PASS4.md` - smart redundancy recovery engine notes

@@ -160,6 +160,7 @@ namespace IecSlaveSimulator.Services
                 }
             };
             service.LinkFrameObserved = (isTx, isRx) => _controller.MarkLinkFrame(linkNumber, isTx, isRx);
+            service.MasterApplicationTrafficObserved = () => _controller.MarkApplicationTraffic(linkNumber);
             service.WorkerPulseObserved = () => _controller.MarkWorkerPulse(linkNumber);
         }
 

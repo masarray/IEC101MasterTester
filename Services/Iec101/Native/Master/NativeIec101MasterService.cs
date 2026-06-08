@@ -62,6 +62,11 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
         private string _lastLoggedFlowClass;
         private string _lastRxFrameAcd;
         private string _lastRxFrameClass;
+        private bool _exclusiveApplicationSequenceActive;
+        private long _lastApplicationAsduAt;
+        private long _lastGiResponseAt;
+        private long _lastGiTerminationAt;
+        private int _giResponseObjectsObserved;
 
         public NativeIec101MasterService()
         {
@@ -276,8 +281,29 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
 
         public Task SendGeneralInterrogationAsync()
         {
-            Enqueue(new PendingCommand { Kind = "GI" });
-            return Task.CompletedTask;
+            return DispatchGeneralInterrogationAsync();
+        }
+
+        private Task DispatchGeneralInterrogationAsync()
+        {
+            ConnectionSettings settings = GetSettingsSnapshot();
+            bool canExecuteImmediately;
+            lock (_syncRoot)
+            {
+                canExecuteImmediately = _isConnected
+                    && _startupHandshakeComplete
+                    && !_linkBusy
+                    && settings.ChannelOperationMode == Iec101ChannelOperationMode.FullActive;
+            }
+
+            if (!canExecuteImmediately)
+            {
+                Enqueue(new PendingCommand { Kind = "GI" });
+                RaiseLine(CreateFlowRow("Info", "Native GI queued", "Class 1", "Activation C_IC_NA_1 queued until the active link worker is ready."));
+                return Task.CompletedTask;
+            }
+
+            return Task.Run(() => ExecuteGeneralInterrogationSequence("Operator/NUC GI"));
         }
 
         public Task<bool> SendLinkLayerTestFunctionAsync()
@@ -375,6 +401,12 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                     }
 
                     long now = NowMs();
+                    if (IsExclusiveApplicationSequenceActive())
+                    {
+                        SleepWorker(cancellationToken, WorkerSleepMs);
+                        continue;
+                    }
+
                     if (TryExecutePendingCommand(settings, profile, now))
                     {
                         SleepWorker(cancellationToken, WorkerSleepMs);
@@ -434,6 +466,178 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
             }
         }
 
+        private void ExecuteGeneralInterrogationSequence(string reason)
+        {
+            ConnectionSettings settings = GetSettingsSnapshot();
+            if (settings.ChannelOperationMode != Iec101ChannelOperationMode.FullActive)
+            {
+                RaiseLine(CreateFlowRow("Info", "GI skipped", "Class 1", "General interrogation is only executed on the active NUC/application channel."));
+                return;
+            }
+
+            lock (_syncRoot)
+            {
+                if (!_isConnected || !_startupHandshakeComplete)
+                {
+                    Enqueue(new PendingCommand { Kind = "GI" });
+                    RaiseLine(CreateFlowRow("Info", "Native GI queued", "Class 1", "Active link is not ready yet; GI will run from the worker."));
+                    return;
+                }
+
+                if (_exclusiveApplicationSequenceActive)
+                {
+                    Enqueue(new PendingCommand { Kind = "GI" });
+                    RaiseLine(CreateFlowRow("Info", "Native GI coalesced", "Class 1", "Another application sequence is active; GI was retained as pending work."));
+                    return;
+                }
+
+                _exclusiveApplicationSequenceActive = true;
+                _hasAccessDemand = true;
+                _linkBusy = false;
+                _commandFollowUpObserved = false;
+                _lastCommandSentAt = NowMs();
+                _commandFollowUpUntil = _lastCommandSentAt + CommandFollowUpMs;
+                _lastCommandSummary = "General interrogation";
+                _lastPollAt = 0;
+                _lastGiResponseAt = 0;
+                _lastGiTerminationAt = 0;
+                _giResponseObjectsObserved = 0;
+            }
+
+            try
+            {
+                Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);
+                byte[] asdu = Iec101AsduCodec.EncodeInterrogationCommand(settings.CasduAddress, 0, 20, profile);
+                RaiseLine(CreateFlowRow("Info", "Native GI dispatch", "Class 1", string.Format("C_IC_NA_1 activation sent through active link. Reason: {0}", string.IsNullOrWhiteSpace(reason) ? "-" : reason)));
+
+                bool fcb = GetFcb();
+                bool ok = ExecuteLinkExchange(Iec101PrimaryLinkFrameFactory.SendUserDataConfirmed(settings.LinkAddress, fcb, asdu, profile), settings, true);
+                if (ok)
+                {
+                    ToggleFcb();
+                    RaiseLine(CreateFlowRow("Info", "GI link ACK received", "Class 1", "GI activation was acknowledged at link layer. Draining Class 1 until GI data or termination is observed."));
+                }
+                else
+                {
+                    RaiseLine(CreateFlowRow("Warning", "GI activation not confirmed", "Class 1", "No valid link-layer response to C_IC_NA_1. Class 1 drain will still be attempted briefly."));
+                    RegisterTransientLinkError(NowMs(), settings);
+                }
+
+                DrainClass1AfterGi(settings, profile);
+            }
+            finally
+            {
+                lock (_syncRoot)
+                {
+                    _exclusiveApplicationSequenceActive = false;
+                    _lastPollAt = NowMs();
+                }
+            }
+        }
+
+        private void DrainClass1AfterGi(ConnectionSettings settings, Iec101ApplicationProfile profile)
+        {
+            long startedAt = NowMs();
+            long deadline = startedAt + Math.Max(2500, settings.ResponseTimeoutMs * 4);
+            int maxPolls = 96;
+            int consecutiveNoApplicationAsdu = 0;
+            bool observedGiData = false;
+            bool observedTermination = false;
+
+            UpdateFlowClass("Class 1");
+            for (int i = 0; i < maxPolls && NowMs() < deadline; i++)
+            {
+                long beforeApplicationAsdu;
+                long beforeGiResponse;
+                long beforeGiTermination;
+                int beforeGiObjects;
+                lock (_syncRoot)
+                {
+                    beforeApplicationAsdu = _lastApplicationAsduAt;
+                    beforeGiResponse = _lastGiResponseAt;
+                    beforeGiTermination = _lastGiTerminationAt;
+                    beforeGiObjects = _giResponseObjectsObserved;
+                }
+
+                bool fcb = GetFcb();
+                bool ok = ExecuteLinkExchange(Iec101PrimaryLinkFrameFactory.RequestClass1Data(settings.LinkAddress, fcb, profile), settings, true);
+                if (ok)
+                {
+                    ToggleFcb();
+                }
+                else
+                {
+                    RegisterTransientLinkError(NowMs(), settings);
+                    consecutiveNoApplicationAsdu++;
+                    Thread.Sleep(Math.Max(20, settings.Class1PollIntervalMs));
+                    continue;
+                }
+
+                long afterApplicationAsdu;
+                long afterGiResponse;
+                long afterGiTermination;
+                int afterGiObjects;
+                lock (_syncRoot)
+                {
+                    afterApplicationAsdu = _lastApplicationAsduAt;
+                    afterGiResponse = _lastGiResponseAt;
+                    afterGiTermination = _lastGiTerminationAt;
+                    afterGiObjects = _giResponseObjectsObserved;
+                }
+
+                bool gotAnyApplicationAsdu = afterApplicationAsdu > beforeApplicationAsdu;
+                bool gotGiResponse = afterGiResponse > beforeGiResponse || afterGiObjects > beforeGiObjects;
+                bool gotGiTermination = afterGiTermination > beforeGiTermination;
+
+                if (gotGiResponse)
+                {
+                    observedGiData = true;
+                    consecutiveNoApplicationAsdu = 0;
+                }
+                else if (gotAnyApplicationAsdu)
+                {
+                    consecutiveNoApplicationAsdu = 0;
+                }
+                else
+                {
+                    consecutiveNoApplicationAsdu++;
+                }
+
+                if (gotGiTermination)
+                {
+                    observedTermination = true;
+                }
+
+                if (observedTermination && consecutiveNoApplicationAsdu >= 1)
+                {
+                    break;
+                }
+
+                if (observedGiData && consecutiveNoApplicationAsdu >= 2)
+                {
+                    break;
+                }
+
+                Thread.Sleep(Math.Max(20, Math.Min(100, settings.Class1PollIntervalMs)));
+            }
+
+            lock (_syncRoot)
+            {
+                _hasAccessDemand = false;
+                _commandFollowUpObserved = observedGiData || observedTermination;
+            }
+
+            RaiseLine(CreateFlowRow(
+                observedGiData || observedTermination ? "Info" : "Warning",
+                observedGiData || observedTermination ? "GI bootstrap drain completed" : "GI bootstrap drain incomplete",
+                "Class 1",
+                string.Format(
+                    "GI drain result: data={0}, termination={1}, objects={2}. Normal Class 1/Class 2 polling resumes.",
+                    observedGiData ? "yes" : "no",
+                    observedTermination ? "yes" : "no",
+                    _giResponseObjectsObserved)));
+        }
+
         private bool TryExecutePendingCommand(ConnectionSettings settings, Iec101ApplicationProfile profile, long now)
         {
             PendingCommand command;
@@ -453,6 +657,17 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 _pendingCommand = null;
             }
 
+            if (string.Equals(command.Kind, "GI", StringComparison.OrdinalIgnoreCase))
+            {
+                ExecuteGeneralInterrogationSequence("Queued GI");
+                return true;
+            }
+
+            return ExecutePendingCommandCore(command, settings, profile, now);
+        }
+
+        private bool ExecutePendingCommandCore(PendingCommand command, ConnectionSettings settings, Iec101ApplicationProfile profile, long now)
+        {
             byte[] asdu = EncodePendingCommand(command, settings, profile);
             if (asdu == null)
             {
@@ -470,6 +685,10 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 _commandFollowUpObserved = false;
                 _lastCommandSummary = summary;
                 _lastPollAt = 0;
+                if (string.Equals(command.Kind, "GI", StringComparison.OrdinalIgnoreCase))
+                {
+                    _hasAccessDemand = true;
+                }
             }
 
             if (ok)
@@ -585,6 +804,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
             }
 
             UpdateApplicationState(asdu);
+            RegisterApplicationAsdu(asdu);
 
             if (!ShouldMapToValueViewer(asdu))
             {
@@ -671,6 +891,33 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                     {
                         _commandFollowUpObserved = true;
                     }
+                }
+            }
+        }
+
+        private void RegisterApplicationAsdu(Iec101Asdu asdu)
+        {
+            if (asdu == null)
+            {
+                return;
+            }
+
+            long now = NowMs();
+            lock (_syncRoot)
+            {
+                _lastApplicationAsduAt = now;
+                if (asdu.Cause == Iec101CauseOfTransmission.InterrogatedByStation)
+                {
+                    _lastGiResponseAt = now;
+                    _giResponseObjectsObserved += asdu.Objects == null ? 0 : Math.Max(1, asdu.Objects.Count);
+                    _commandFollowUpObserved = true;
+                }
+
+                if (asdu.TypeId == Iec101TypeId.C_IC_NA_1
+                    && asdu.Cause == Iec101CauseOfTransmission.ActivationTermination)
+                {
+                    _lastGiTerminationAt = now;
+                    _commandFollowUpObserved = true;
                 }
             }
         }
@@ -885,6 +1132,14 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
             }
         }
 
+        private bool IsExclusiveApplicationSequenceActive()
+        {
+            lock (_syncRoot)
+            {
+                return _exclusiveApplicationSequenceActive;
+            }
+        }
+
         private void UpdateFlowClass(string nextClass)
         {
             if (string.IsNullOrWhiteSpace(nextClass))
@@ -997,6 +1252,11 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 _lastLoggedFlowClass = null;
                 _lastRxFrameAcd = null;
                 _lastRxFrameClass = null;
+                _exclusiveApplicationSequenceActive = false;
+                _lastApplicationAsduAt = 0;
+                _lastGiResponseAt = 0;
+                _lastGiTerminationAt = 0;
+                _giResponseObjectsObserved = 0;
             }
         }
 

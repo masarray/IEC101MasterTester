@@ -272,6 +272,7 @@ namespace IEC101MasterTester.ViewModels
         private static readonly Brush NucStandbyBrush = new SolidColorBrush(Color.FromRgb(59, 130, 246));
         private static readonly Brush NucFaultBrush = new SolidColorBrush(Color.FromRgb(239, 68, 68));
         private static readonly Brush NucSwitchingBrush = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+        private static readonly Brush NucNoResponseBrush = new SolidColorBrush(Color.FromRgb(248, 113, 113));
         private static readonly Brush NucClass1Brush = new SolidColorBrush(Color.FromRgb(16, 185, 129));
         private static readonly Brush NucClass2Brush = new SolidColorBrush(Color.FromRgb(56, 189, 248));
         private static readonly Brush NucGiBrush = new SolidColorBrush(Color.FromRgb(168, 85, 247));
@@ -437,7 +438,7 @@ namespace IEC101MasterTester.ViewModels
         public bool IsNucMainClass2Recent => IsRecentNucPulse(_nucMainLastClass2Utc);
         public bool IsNucMainGiRecent => IsRecentNucPulse(_nucMainLastGiUtc);
         public bool IsNucMainLinkCheckRecent => IsRecentNucPulse(_nucMainLastSupervisionUtc);
-        public bool IsNucMainTimeoutActive => _nucMainLinkState == NucLinkHealthState.Timeout || _nucMainLinkState == NucLinkHealthState.Fault;
+        public bool IsNucMainTimeoutActive => _nucMainLinkState == NucLinkHealthState.Timeout || _nucMainLinkState == NucLinkHealthState.Fault || (_nucMainRole == NucChannelRole.Active && _nucMainLinkState == NucLinkHealthState.ConnectedNoResponse);
         public bool IsNucMainConnectedIndicator => _nucMainConnected;
         public bool IsNucMainPortOpen => _nucMainConnected;
         public string NucMainPortStateText => _nucMainConnected ? "OPEN" : "CLOSED";
@@ -446,7 +447,7 @@ namespace IEC101MasterTester.ViewModels
         public bool IsNucBackupClass2Recent => IsRecentNucPulse(_nucBackupLastClass2Utc);
         public bool IsNucBackupGiRecent => IsRecentNucPulse(_nucBackupLastGiUtc);
         public bool IsNucBackupLinkCheckRecent => IsRecentNucPulse(_nucBackupLastSupervisionUtc);
-        public bool IsNucBackupTimeoutActive => _nucBackupLinkState == NucLinkHealthState.Timeout || _nucBackupLinkState == NucLinkHealthState.Fault;
+        public bool IsNucBackupTimeoutActive => _nucBackupLinkState == NucLinkHealthState.Timeout || _nucBackupLinkState == NucLinkHealthState.Fault || (_nucBackupRole == NucChannelRole.Active && _nucBackupLinkState == NucLinkHealthState.ConnectedNoResponse);
         public bool IsNucBackupConnectedIndicator => _nucBackupConnected;
         public bool IsNucBackupPortOpen => _nucBackupConnected;
         public string NucBackupPortStateText => _nucBackupConnected ? "OPEN" : "CLOSED";
@@ -685,6 +686,15 @@ namespace IEC101MasterTester.ViewModels
             _nucRedundancyService.ApplySettings(settings);
             _nucSessionActive = false;
             _redundancyActiveLink = null;
+            _redundancySwitchoverCount = 0;
+            _lastRedundancySwitchUtc = null;
+            _lastRedundancyDisconnectUtc = null;
+            _lastRedundancyReconnectUtc = null;
+            _giObservedAfterRedundancySwitch = false;
+            RedundancySwitchSummaryText = "Switchover count: 0";
+            LastRedundancySwitchText = "Last switchover: -";
+            RedundancyGiObservationText = "GI after switchover: Not observed";
+            RedundancyContinuityText = "Continuity gap: -";
             ClearNucRecentTrafficBadges();
             ClearNucValues();
             ResetAvailabilityState();
@@ -3156,6 +3166,29 @@ namespace IEC101MasterTester.ViewModels
             RefreshRedundancyConfigurationSummary();
         }
 
+        private static string BuildNucControllerDetailText(NucRedundancySessionState state)
+        {
+            if (state == null)
+            {
+                return string.Empty;
+            }
+
+            string appState = string.IsNullOrWhiteSpace(state.ApplicationImageState) ? "-" : state.ApplicationImageState;
+            string giStatus = string.IsNullOrWhiteSpace(state.LastGiStatus) ? "-" : state.LastGiStatus;
+            string appDetail = string.IsNullOrWhiteSpace(state.ApplicationImageDetail) ? string.Empty : state.ApplicationImageDetail;
+            string baseDetail = state.DetailText ?? string.Empty;
+
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "{0} | Application image: {1} | Objects: {2} | GI: {3} | Attempts: {4}{5}",
+                baseDetail,
+                appState,
+                state.ApplicationObjectCount,
+                giStatus,
+                state.BootstrapAttemptCount,
+                string.IsNullOrWhiteSpace(appDetail) ? string.Empty : " | " + appDetail);
+        }
+
         private void NucRedundancyService_SessionStateChanged(object sender, NucRedundancySessionState e)
         {
             RunOnUi(() =>
@@ -3170,7 +3203,8 @@ namespace IEC101MasterTester.ViewModels
                   OnPropertyChanged(nameof(CanStartNucRedundancySessionButton));
                   OnPropertyChanged(nameof(CanStopNucRedundancySessionButton));
                   RedundancyControllerStatusText = "Controller: " + (e.StatusText ?? "Unknown");
-                  RedundancyControllerDetailText = e.DetailText ?? string.Empty;
+                  RedundancyControllerDetailText = BuildNucControllerDetailText(e);
+                  RegisterControllerSwitchoverEvidence(e);
                   if (e.IsActive && !string.IsNullOrWhiteSpace(e.ActiveChannel))
                   {
                       _redundancyActiveLink = e.ActiveChannel;
@@ -3186,6 +3220,8 @@ namespace IEC101MasterTester.ViewModels
                   _nucBackupRole = ParseNucRole(e.BackupRole, NucChannelRole.Standby);
                   _nucMainControllerState = ParseNucChannelState(e.PrimaryChannelState, NucChannelState.Disconnected);
                   _nucBackupControllerState = ParseNucChannelState(e.BackupChannelState, NucChannelState.Disconnected);
+                  _nucMainConnected = IsControllerPortOpen(_nucMainControllerState);
+                  _nucBackupConnected = IsControllerPortOpen(_nucBackupControllerState);
                   _nucMainLinkState = MapControllerChannelState(_nucMainControllerState, _nucMainRole);
                   _nucBackupLinkState = MapControllerChannelState(_nucBackupControllerState, _nucBackupRole);
                   _nucMainRxCount = e.PrimaryRxCount;
@@ -3196,6 +3232,8 @@ namespace IEC101MasterTester.ViewModels
                   _nucBackupLastActivityUtc = ParseUtcTimestamp(e.BackupLastActivityUtcText);
                   _nucMainLastResponseUtc = ParseUtcTimestamp(e.PrimaryLastResponseUtcText);
                   _nucBackupLastResponseUtc = ParseUtcTimestamp(e.BackupLastResponseUtcText);
+                  _nucMainLastTimeoutUtc = ParseUtcTimestamp(e.PrimaryLastTimeoutUtcText);
+                  _nucBackupLastTimeoutUtc = ParseUtcTimestamp(e.BackupLastTimeoutUtcText);
                   _nucMainLastTxUtc = _nucMainLastActivityUtc;
                   _nucMainLastRxUtc = _nucMainLastResponseUtc;
                   _nucBackupLastTxUtc = _nucBackupLastActivityUtc;
@@ -3216,11 +3254,15 @@ namespace IEC101MasterTester.ViewModels
                 {
                     RedundancyControllerDetailText = string.Format(
                         CultureInfo.InvariantCulture,
-                        "{0} | Active={1} | Main={2} | Backup={3} | Main sup tick/tx/rx={4}/{5}/{6} | Backup sup tick/tx/rx={7}/{8}/{9}",
+                        "{0} | Active={1} | Main={2} | Backup={3} | App={4} ({5} object(s), GI={6}, attempts={7}) | Main sup tick/tx/rx={8}/{9}/{10} | Backup sup tick/tx/rx={11}/{12}/{13}",
                         e.DetailText ?? string.Empty,
                         string.IsNullOrWhiteSpace(e.ActiveChannel) ? "-" : e.ActiveChannel,
                         string.IsNullOrWhiteSpace(e.PrimaryStatusText) ? "-" : e.PrimaryStatusText,
                         string.IsNullOrWhiteSpace(e.BackupStatusText) ? "-" : e.BackupStatusText,
+                        string.IsNullOrWhiteSpace(e.ApplicationImageState) ? "-" : e.ApplicationImageState,
+                        e.ApplicationObjectCount,
+                        string.IsNullOrWhiteSpace(e.LastGiStatus) ? "-" : e.LastGiStatus,
+                        e.BootstrapAttemptCount,
                         e.PrimarySupervisionTickCount,
                         e.PrimarySupervisionTxObservedCount,
                         e.PrimarySupervisionResponseObservedCount,
@@ -3357,13 +3399,40 @@ namespace IEC101MasterTester.ViewModels
 
                 if (string.Equals(row.Direction, "STATE", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (row.Summary.IndexOf("GI command sent", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (row.Summary.IndexOf("GI command sent", StringComparison.OrdinalIgnoreCase) >= 0
+                        || row.Summary.IndexOf("GI dispatched", StringComparison.OrdinalIgnoreCase) >= 0
+                        || row.Summary.IndexOf("Startup GI", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         ObserveRedundancyGiEvent("GI sent (" + channelName + ")", DateTime.Today.ToString("yyyy-MM-dd ") + row.Time);
                     }
-                    else if (row.Summary.IndexOf("GI completed", StringComparison.OrdinalIgnoreCase) >= 0)
+                    else if (row.Summary.IndexOf("GI completed", StringComparison.OrdinalIgnoreCase) >= 0
+                        || row.Summary.IndexOf("Application image ready", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         ObserveRedundancyGiEvent("GI completed (" + channelName + ")", DateTime.Today.ToString("yyyy-MM-dd ") + row.Time);
+                    }
+
+                    bool isBootstrapState = string.Equals(row.FrameType, "Bootstrap", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(row.DataClass, "System", StringComparison.OrdinalIgnoreCase)
+                        || row.Summary.IndexOf("Bootstrap", StringComparison.OrdinalIgnoreCase) >= 0
+                        || row.Summary.IndexOf("Startup GI", StringComparison.OrdinalIgnoreCase) >= 0
+                        || row.Summary.IndexOf("Application image", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if (isBootstrapState)
+                    {
+                        AddNucEventLog(new EventLogRow
+                        {
+                            Time = DateTime.Today.ToString("yyyy-MM-dd ", CultureInfo.InvariantCulture) + row.Time,
+                            RecvTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                            Source = channelName,
+                            Name = "System",
+                            IOA = "-",
+                            Type = "Bootstrap",
+                            Event = row.Summary ?? "Bootstrap",
+                            Value = row.Detail ?? string.Empty,
+                            DataClass = "System",
+                            Cot = "-",
+                            Quality = "-"
+                        });
                     }
 
                     if (!suppressUiNoise)
@@ -3627,6 +3696,56 @@ namespace IEC101MasterTester.ViewModels
             };
 
             return true;
+        }
+
+        private void RegisterControllerSwitchoverEvidence(NucRedundancySessionState state)
+        {
+            if (state == null || !state.IsActive || string.IsNullOrWhiteSpace(state.ActiveChannel))
+            {
+                return;
+            }
+
+            string newActiveLink = NormalizeNucChannelName(state.ActiveChannel);
+            string previousActiveLink = NormalizeNucChannelName(_redundancyActiveLink);
+            if (string.IsNullOrWhiteSpace(newActiveLink)
+                || string.IsNullOrWhiteSpace(previousActiveLink)
+                || string.Equals(previousActiveLink, newActiveLink, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            DateTime nowUtc = DateTime.UtcNow;
+            if (_lastRedundancySwitchUtc.HasValue
+                && nowUtc - _lastRedundancySwitchUtc.Value < TimeSpan.FromSeconds(3))
+            {
+                return;
+            }
+
+            _redundancySwitchoverCount++;
+            _lastRedundancySwitchUtc = nowUtc;
+            _giObservedAfterRedundancySwitch = false;
+
+            string timestampText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            string latencyText = state.LastFailoverLatencyMs > 0d
+                ? state.LastFailoverLatencyMs.ToString("F0", CultureInfo.InvariantCulture) + " ms"
+                : "-";
+            string detail = "Controller committed active link " + previousActiveLink + " -> " + newActiveLink + " | Failover latency: " + latencyText;
+
+            RedundancyContinuityText = "Failover latency: " + latencyText;
+            RedundancySwitchSummaryText = "Switchover count: " + _redundancySwitchoverCount.ToString(CultureInfo.InvariantCulture)
+                + " | Last switch: " + previousActiveLink + " -> " + newActiveLink
+                + " | " + latencyText;
+            LastRedundancySwitchText = "Last switchover: " + previousActiveLink + " -> " + newActiveLink
+                + " @ " + timestampText + " | " + latencyText;
+            RedundancyGiObservationText = "GI after switchover: Not observed";
+            RedundancyFindingSummaryText = "Redundancy findings: waiting GI observation window.";
+            AvailabilityLinkSwitchoverCountText = "Link switchover count: " + _redundancySwitchoverCount.ToString(CultureInfo.InvariantCulture);
+            OnPropertyChanged(nameof(RedundancySwitchoverCountValue));
+            OnPropertyChanged(nameof(IsGiObservedAfterRedundancySwitch));
+
+            ObserveNucAvailabilitySwitchover(previousActiveLink, newActiveLink, "Controller health model", timestampText);
+            AddRedundancyTimeline(timestampText, "Controller", "Switchover", previousActiveLink + " -> " + newActiveLink, detail, latencyText);
+            AddRedundancyJournal(timestampText, "Controller", "Switchover", detail);
         }
 
         private void ObserveRedundancyConnectionState(string newStatus)
@@ -4215,64 +4334,42 @@ namespace IEC101MasterTester.ViewModels
             int txCount,
             DateTime? lastActivityUtc,
             DateTime? lastTimeoutUtc)
-          {
-              bool isConnected = linkState != NucLinkHealthState.Fault && linkState != NucLinkHealthState.Timeout;
-              bool hasRecentTimeout = linkState == NucLinkHealthState.Timeout
-                  || (lastTimeoutUtc.HasValue && DateTime.UtcNow - lastTimeoutUtc.Value <= NucLinkTimeoutBadgeWindow);
-              bool dataFlowActive = (linkState == NucLinkHealthState.Responsive || (!isActive && txCount > 0))
-                  && lastActivityUtc.HasValue
-                  && DateTime.UtcNow - lastActivityUtc.Value <= (isActive ? NucLinkFlowWindow : TimeSpan.FromSeconds(5));
-              bool canShowTrafficBadges = _nucSessionActive && isActive && !isSwitching && isConnected;
-              bool hasRecentClass1 = canShowTrafficBadges && HasNucRecentTraffic(channelName, "Class1");
-              bool hasRecentClass2 = canShowTrafficBadges && HasNucRecentTraffic(channelName, "Class2");
-              bool hasRecentGi = canShowTrafficBadges && HasNucRecentTraffic(channelName, "GI");
-              bool hasRecentSupervision = _nucSessionActive && isConnected && HasNucRecentTraffic(channelName, "SUPERVISION");
-              UpdateNucLinkFlowJournalState(channelName, dataFlowActive, isConnected);
+        {
+            bool isTransportFault = linkState == NucLinkHealthState.Fault || linkState == NucLinkHealthState.Timeout;
+            bool isConnected = !isTransportFault;
+            bool hasRecentTimeout = linkState == NucLinkHealthState.Timeout
+                || linkState == NucLinkHealthState.Fault
+                || (lastTimeoutUtc.HasValue && DateTime.UtcNow - lastTimeoutUtc.Value <= NucLinkTimeoutBadgeWindow);
+            bool dataFlowActive = (linkState == NucLinkHealthState.Responsive || (!isActive && txCount > 0))
+                && lastActivityUtc.HasValue
+                && DateTime.UtcNow - lastActivityUtc.Value <= (isActive ? NucLinkFlowWindow : TimeSpan.FromSeconds(5));
+            bool canShowTrafficBadges = _nucSessionActive && isActive && !isSwitching && isConnected;
+            bool hasRecentClass1 = canShowTrafficBadges && HasNucRecentTraffic(channelName, "Class1");
+            bool hasRecentClass2 = canShowTrafficBadges && HasNucRecentTraffic(channelName, "Class2");
+            bool hasRecentGi = canShowTrafficBadges && HasNucRecentTraffic(channelName, "GI");
+            bool hasRecentSupervision = _nucSessionActive && isConnected && HasNucRecentTraffic(channelName, "SUPERVISION");
+            UpdateNucLinkFlowJournalState(channelName, dataFlowActive, isConnected);
 
-            string stateText;
-            Brush accentBrush;
-            if (linkState == NucLinkHealthState.Fault)
-            {
-                stateText = "Fault";
-                accentBrush = NucFaultBrush;
-            }
-            else if (linkState == NucLinkHealthState.Timeout)
-            {
-                stateText = "Timeout";
-                accentBrush = NucFaultBrush;
-            }
-            else if (isSwitching)
-            {
-                stateText = "Switching";
-                accentBrush = NucSwitchingBrush;
-            }
-            else if (linkState == NucLinkHealthState.ConnectedNoResponse)
-            {
-                stateText = "No Response";
-                accentBrush = NucSwitchingBrush;
-            }
-            else if (isActive)
-            {
-                stateText = "Active";
-                accentBrush = NucActiveBrush;
-            }
-            else
-            {
-                stateText = "Standby";
-                accentBrush = NucStandbyBrush;
-            }
+            string roleText = isActive ? "Active" : "Standby";
+            string healthText = GetNucHealthText(linkState, isSwitching);
+            Brush healthBrush = GetNucHealthBrush(linkState, isSwitching, isActive);
+            string stateText = IsNucProblemHealth(linkState) || isSwitching ? healthText : roleText;
+            Brush stateBrush = IsNucProblemHealth(linkState) || isSwitching ? healthBrush : (isActive ? NucActiveBrush : NucStandbyBrush);
 
+            link.RoleText = roleText;
+            link.HealthText = healthText;
+            link.HealthBrush = healthBrush;
             link.StateText = stateText;
-            link.StateBrush = accentBrush;
-            link.LineBrush = accentBrush;
-            link.PulseBrush = accentBrush;
+            link.StateBrush = stateBrush;
+            link.LineBrush = healthBrush;
+            link.PulseBrush = stateBrush;
             link.CardBrush = isActive ? NucActivePanelBrush : NucPanelBrush;
             link.IsDataFlowActive = dataFlowActive;
 
             link.Badges.Clear();
-            if (linkState != NucLinkHealthState.Timeout && isConnected)
+            if (isConnected)
             {
-                link.Badges.Add(CreateNucBadge("CONNECTED", new SolidColorBrush(Color.FromRgb(30, 41, 59)), NucTextBrush));
+                link.Badges.Add(CreateNucBadge("PORT OPEN", new SolidColorBrush(Color.FromRgb(30, 41, 59)), NucTextBrush));
             }
 
             if (_nucSessionActive && isActive)
@@ -4284,13 +4381,21 @@ namespace IEC101MasterTester.ViewModels
                 link.Badges.Add(CreateNucBadge("STANDBY", NucStandbyBrush, NucTextBrush));
             }
 
-            if (linkState == NucLinkHealthState.Timeout || !isConnected)
+            if (hasRecentTimeout || linkState == NucLinkHealthState.Fault)
             {
                 link.Badges.Add(CreateNucBadge("TIMEOUT", NucFaultBrush, NucTextBrush));
             }
+            else if (linkState == NucLinkHealthState.Recovering)
+            {
+                link.Badges.Add(CreateNucBadge("RECOVERING", NucSwitchingBrush, Brushes.Black));
+            }
+            else if (linkState == NucLinkHealthState.ConnectedNoResponse)
+            {
+                link.Badges.Add(CreateNucBadge("NO RESPONSE", NucNoResponseBrush, Brushes.Black));
+            }
             else if (isConnected)
             {
-                link.Badges.Add(CreateNucBadge("HEALTHY", NucActiveBrush, Brushes.Black));
+                link.Badges.Add(CreateNucBadge("RESPONSIVE", NucActiveBrush, Brushes.Black));
             }
 
             if (isConnected && hasRecentClass1)
@@ -4313,17 +4418,63 @@ namespace IEC101MasterTester.ViewModels
                 link.Badges.Add(CreateNucBadge("LINK CHECK", new SolidColorBrush(Color.FromRgb(14, 165, 233)), Brushes.Black));
             }
 
-            SetInfoRowValue(
-                link.Rows,
-                "Mode",
-                linkState == NucLinkHealthState.Fault
-                    ? "Fault"
-                    : linkState == NucLinkHealthState.Timeout
-                        ? "Response Timeout"
-                        : (isActive ? "Active Polling" : "Standby Supervision"));
+            SetInfoRowValue(link.Rows, "Mode", roleText + " / " + healthText);
             SetInfoRowValue(link.Rows, "RX", rxCount.ToString(CultureInfo.InvariantCulture));
             SetInfoRowValue(link.Rows, "TX", txCount.ToString(CultureInfo.InvariantCulture));
             SetInfoRowValue(link.Rows, "Last Activity", FormatNucElapsed(lastActivityUtc));
+        }
+
+        private static string GetNucHealthText(NucLinkHealthState linkState, bool isSwitching)
+        {
+            if (isSwitching)
+            {
+                return "Switching";
+            }
+
+            switch (linkState)
+            {
+                case NucLinkHealthState.Responsive:
+                    return "Responsive";
+                case NucLinkHealthState.ConnectedNoResponse:
+                    return "No Response";
+                case NucLinkHealthState.Recovering:
+                    return "Recovering";
+                case NucLinkHealthState.Timeout:
+                    return "Timeout";
+                case NucLinkHealthState.Fault:
+                default:
+                    return "Fault";
+            }
+        }
+
+        private static Brush GetNucHealthBrush(NucLinkHealthState linkState, bool isSwitching, bool isActive)
+        {
+            if (isSwitching)
+            {
+                return NucSwitchingBrush;
+            }
+
+            switch (linkState)
+            {
+                case NucLinkHealthState.Responsive:
+                    return isActive ? NucActiveBrush : NucStandbyBrush;
+                case NucLinkHealthState.ConnectedNoResponse:
+                    return NucNoResponseBrush;
+                case NucLinkHealthState.Recovering:
+                    return NucSwitchingBrush;
+                case NucLinkHealthState.Timeout:
+                case NucLinkHealthState.Fault:
+                default:
+                    return NucFaultBrush;
+            }
+        }
+
+        private static bool IsNucProblemHealth(NucLinkHealthState linkState)
+        {
+            return linkState == NucLinkHealthState.ConnectedNoResponse
+                || linkState == NucLinkHealthState.Timeout
+                || linkState == NucLinkHealthState.Recovering
+                || linkState == NucLinkHealthState.Fault;
         }
 
         private NucLinkHealthState EvaluateNucLinkState(
@@ -4438,19 +4589,33 @@ namespace IEC101MasterTester.ViewModels
             return Enum.TryParse(value, true, out parsed) ? parsed : fallback;
         }
 
+        private static bool IsControllerPortOpen(NucChannelState controllerState)
+        {
+            return controllerState == NucChannelState.StandbySupervision
+                || controllerState == NucChannelState.ConnectedNoResponse
+                || controllerState == NucChannelState.Responsive
+                || controllerState == NucChannelState.Timeout
+                || controllerState == NucChannelState.Recovering
+                || controllerState == NucChannelState.Reopening;
+        }
+
         private static NucLinkHealthState MapControllerChannelState(NucChannelState controllerState, NucChannelRole role)
         {
             switch (controllerState)
             {
                 case NucChannelState.StandbySupervision:
-                    return NucLinkHealthState.ConnectedNoResponse;
+                    return NucLinkHealthState.Responsive;
                 case NucChannelState.ConnectedNoResponse:
                     return NucLinkHealthState.ConnectedNoResponse;
                 case NucChannelState.Responsive:
                     return NucLinkHealthState.Responsive;
                 case NucChannelState.Timeout:
-                case NucChannelState.FaultLatched:
                     return NucLinkHealthState.Timeout;
+                case NucChannelState.Recovering:
+                case NucChannelState.Reopening:
+                    return NucLinkHealthState.Recovering;
+                case NucChannelState.FaultLatched:
+                    return NucLinkHealthState.Fault;
                 case NucChannelState.Disconnected:
                 default:
                     return role == NucChannelRole.Standby ? NucLinkHealthState.ConnectedNoResponse : NucLinkHealthState.Fault;
@@ -5404,21 +5569,6 @@ namespace IEC101MasterTester.ViewModels
                 + "\nGI after switch: " + (_giObservedAfterRedundancySwitch ? "Observed" : "Not observed");
         }
 
-        private static bool IsNucResponsiveForAvailability(bool isConnected, DateTime? lastRxUtc, DateTime? lastTimeoutUtc, DateTime nowUtc)
-        {
-            if (!isConnected)
-            {
-                return false;
-            }
-
-            if (lastTimeoutUtc.HasValue && nowUtc - lastTimeoutUtc.Value <= NucLinkTimeoutBadgeWindow)
-            {
-                return false;
-            }
-
-            return lastRxUtc.HasValue && nowUtc - lastRxUtc.Value <= NucLinkFlowWindow;
-        }
-
         private static bool IsNucStandbyHealthyForAvailability(bool isConnected, DateTime? lastTimeoutUtc, DateTime nowUtc)
         {
             if (!isConnected)
@@ -5434,19 +5584,26 @@ namespace IEC101MasterTester.ViewModels
             DateTime nowUtc = DateTime.UtcNow;
             bool isConnected = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase) ? _nucBackupConnected : _nucMainConnected;
             DateTime? lastTimeoutUtc = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase) ? _nucBackupLastTimeoutUtc : _nucMainLastTimeoutUtc;
+            NucLinkHealthState linkState = string.Equals(channelName, "Backup", StringComparison.OrdinalIgnoreCase) ? _nucBackupLinkState : _nucMainLinkState;
             bool isStandby = IsNucStandbyChannel(channelName);
 
-            if (!isConnected)
+            if (!isConnected || linkState == NucLinkHealthState.Fault)
             {
                 return "NO RESPONSE";
             }
 
-            if (lastTimeoutUtc.HasValue && nowUtc - lastTimeoutUtc.Value <= NucLinkTimeoutBadgeWindow)
+            if (linkState == NucLinkHealthState.Timeout
+                || (lastTimeoutUtc.HasValue && nowUtc - lastTimeoutUtc.Value <= NucLinkTimeoutBadgeWindow))
             {
                 return "TIMEOUT";
             }
 
-            if (IsNucChannelApplicationResponsive(channelName, nowUtc))
+            if (linkState == NucLinkHealthState.Recovering)
+            {
+                return "RECOVERING";
+            }
+
+            if (linkState == NucLinkHealthState.Responsive || IsNucChannelApplicationResponsive(channelName, nowUtc))
             {
                 return "RESPONSIVE";
             }

@@ -16,7 +16,8 @@ namespace IecSlaveSimulator.Models
         [EnumMember] StandbyReady,
         [EnumMember] ActivePolling,
         [EnumMember] Timeout,
-        [EnumMember] Faulted
+        [EnumMember] Faulted,
+        [EnumMember] Recovering
     }
 
     [DataContract]

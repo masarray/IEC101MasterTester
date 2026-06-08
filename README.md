@@ -8,7 +8,7 @@ Windows WPF `.NET Framework 4.8` IEC-60870-5-101 master tester and analyzer for 
 [![Stack](https://img.shields.io/badge/IEC--101%20stack-native%20clean--room-16a34a)](#native-clean-room-stack)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md) | [Pass 2 behavior parity](docs/NATIVE_CLEANROOM_PASS2.md)
+[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md) | [Pass 2 behavior parity](docs/NATIVE_CLEANROOM_PASS2.md) | [Pass 3 redundancy tuning](docs/NATIVE_CLEANROOM_PASS3.md) | [Pass 4 smart recovery](docs/NATIVE_CLEANROOM_PASS4.md)
 
 ![IEC101 Master Tester mission control](docs/assets/screenshot/mission-control.webp)
 
@@ -96,7 +96,7 @@ Still required before declaring field-stable:
 
 - `ROADMAP.md` - product and native-stack validation roadmap.
 - `docs/NATIVE_CLEANROOM_MIGRATION.md` - migration notes and validation checklist.
-- `docs/NATIVE_CLEANROOM_PASS2.md` - behavior-parity notes for FCB, ACD/DFC, command follow-up, and startup polling order.
+- `docs/NATIVE_CLEANROOM_PASS2.md` / `docs/NATIVE_CLEANROOM_PASS3.md` / `docs/NATIVE_CLEANROOM_PASS4.md` - behavior-parity, redundancy tuning, and smart recovery notes for native NUC operation.
 - `USER_MANUAL.md` - operator notes.
 - `PROJECT_STRUCTURE.md` - source map.
 - `docs/` - GitHub Pages landing page.
@@ -119,3 +119,10 @@ Release build:
 ## License
 
 The repository is prepared for **Apache-2.0** after the removal of the previous GPL/commercial vendor protocol source tree. Before publishing a formal release, perform a final asset and dependency audit, especially for screenshots, icons, and any files copied from external sources.
+
+
+### Native clean-room pass 5
+
+Pass 5 adds smart startup bootstrap, application-image readiness tracking, and context-aware GI orchestration for NUC redundancy. See [`docs/NATIVE_CLEANROOM_PASS5.md`](docs/NATIVE_CLEANROOM_PASS5.md).
+
+- [Native clean-room pass 6](docs/NATIVE_CLEANROOM_PASS6.md) / [Pass 7](docs/NATIVE_CLEANROOM_PASS7.md) — startup GI and NUC active arbitration.

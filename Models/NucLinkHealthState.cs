@@ -6,5 +6,6 @@ namespace IEC101MasterTester.Models
         Responsive = 1,
         Timeout = 2,
         Fault = 3,
+        Recovering = 4,
     }
 }

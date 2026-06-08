@@ -12,6 +12,11 @@ namespace IecSlaveSimulator.Services
             ActiveEndpoint = NucEndpointId.None;
         }
 
+        public void PreferActive(NucEndpointId endpointId)
+        {
+            ActiveEndpoint = endpointId;
+        }
+
         public void Evaluate(NucPortEndpointState linkA, NucPortEndpointState linkB)
         {
             if (linkA == null || linkB == null)
@@ -54,21 +59,47 @@ namespace IecSlaveSimulator.Services
 
         private static NucEndpointId SelectPreferredHealthy(NucPortEndpointState linkA, NucPortEndpointState linkB, bool aHealthy, bool bHealthy)
         {
-            if (aHealthy && !bHealthy)
+            bool aApplicationSeen = linkA.LastValidMasterActivityUtc.HasValue;
+            bool bApplicationSeen = linkB.LastValidMasterActivityUtc.HasValue;
+
+            if (aApplicationSeen && !bApplicationSeen && aHealthy)
             {
                 return NucEndpointId.LinkA;
             }
 
-            if (bHealthy && !aHealthy)
+            if (bApplicationSeen && !aApplicationSeen && bHealthy)
             {
                 return NucEndpointId.LinkB;
             }
 
-            if (aHealthy && bHealthy)
+            if (aApplicationSeen && bApplicationSeen)
             {
                 DateTime aSeen = linkA.LastValidMasterActivityUtc ?? DateTime.MinValue;
                 DateTime bSeen = linkB.LastValidMasterActivityUtc ?? DateTime.MinValue;
-                return aSeen >= bSeen ? NucEndpointId.LinkA : NucEndpointId.LinkB;
+                if (aHealthy && bHealthy)
+                {
+                    return aSeen >= bSeen ? NucEndpointId.LinkA : NucEndpointId.LinkB;
+                }
+
+                if (aHealthy)
+                {
+                    return NucEndpointId.LinkA;
+                }
+
+                if (bHealthy)
+                {
+                    return NucEndpointId.LinkB;
+                }
+            }
+
+            if (aHealthy)
+            {
+                return NucEndpointId.LinkA;
+            }
+
+            if (bHealthy)
+            {
+                return NucEndpointId.LinkB;
             }
 
             return NucEndpointId.None;
@@ -79,7 +110,8 @@ namespace IecSlaveSimulator.Services
             return endpoint.IsConnected
                 && endpoint.State != NucSlaveLinkState.Timeout
                 && endpoint.State != NucSlaveLinkState.Faulted
-                && endpoint.State != NucSlaveLinkState.Disconnected;
+                && endpoint.State != NucSlaveLinkState.Disconnected
+                && endpoint.State != NucSlaveLinkState.Recovering;
         }
 
         private static void ApplyRoles(NucPortEndpointState linkA, NucPortEndpointState linkB, NucEndpointRole roleA, NucEndpointRole roleB)
@@ -101,6 +133,11 @@ namespace IecSlaveSimulator.Services
             if (endpoint.State == NucSlaveLinkState.Timeout || endpoint.State == NucSlaveLinkState.Faulted)
             {
                 return endpoint.State;
+            }
+
+            if (endpoint.State == NucSlaveLinkState.Recovering)
+            {
+                return NucSlaveLinkState.Recovering;
             }
 
             switch (role)

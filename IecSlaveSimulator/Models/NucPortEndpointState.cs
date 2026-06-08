@@ -11,6 +11,8 @@ namespace IecSlaveSimulator.Models
         public bool IsLoopAlive { get; set; }
         public NucEndpointRole Role { get; set; }
         public NucSlaveLinkState State { get; set; }
+        public DateTime? ConnectedAtUtc { get; set; }
+        public DateTime? RecoveryStartedUtc { get; set; }
         public DateTime? LastRxUtc { get; set; }
         public DateTime? LastTxUtc { get; set; }
         public DateTime? LastValidMasterActivityUtc { get; set; }
@@ -24,6 +26,8 @@ namespace IecSlaveSimulator.Models
             IsLoopAlive = false;
             Role = NucEndpointRole.None;
             State = NucSlaveLinkState.Disconnected;
+            ConnectedAtUtc = null;
+            RecoveryStartedUtc = null;
             LastRxUtc = null;
             LastTxUtc = null;
             LastValidMasterActivityUtc = null;

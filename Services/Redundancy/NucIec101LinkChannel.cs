@@ -16,11 +16,17 @@ namespace IEC101MasterTester.Services.Redundancy
         private bool _faultLatched;
         private Timer _standbySupervisionTimer;
         private int _standbyTickInFlight;
+        private int _recoveryInFlight;
         private DateTime? _standbyStartedAtUtc;
         private DateTime? _firstSuccessfulStandbySupervisionUtc;
-        private static readonly TimeSpan StandbySupervisionInterval = TimeSpan.FromSeconds(2);
-        private static readonly TimeSpan StandbyInitialResponseWindow = TimeSpan.FromSeconds(6);
-        private static readonly TimeSpan StandbySupervisionResponseWindow = TimeSpan.FromSeconds(8);
+        private DateTime? _lastRecoveryProbeUtc;
+        private DateTime? _lastReconnectAttemptUtc;
+
+        private static readonly TimeSpan StandbySupervisionInterval = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan StandbyInitialResponseWindow = TimeSpan.FromSeconds(4);
+        private static readonly TimeSpan StandbySupervisionResponseWindow = TimeSpan.FromSeconds(5);
+        private static readonly TimeSpan RecoveryProbeInterval = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan RecoveryReconnectInterval = TimeSpan.FromSeconds(5);
 
         public NucIec101LinkChannel(string name, IIec101MasterService service)
         {
@@ -102,6 +108,11 @@ namespace IEC101MasterTester.Services.Redundancy
             return _service.DisconnectAsync();
         }
 
+        public Task RecoverAsync(string reason = null)
+        {
+            return RecoverCoreAsync(string.IsNullOrWhiteSpace(reason) ? "controller requested recovery" : reason);
+        }
+
         public Task SendGeneralInterrogationAsync()
         {
             if (Role != NucChannelRole.Active)
@@ -155,6 +166,8 @@ namespace IEC101MasterTester.Services.Redundancy
                 _faultLatched = false;
                 _standbyStartedAtUtc = role == NucChannelRole.Standby ? (DateTime?)DateTime.UtcNow : null;
                 _firstSuccessfulStandbySupervisionUtc = null;
+                _lastRecoveryProbeUtc = null;
+                _lastReconnectAttemptUtc = null;
             }
 
             if (settings == null)
@@ -162,27 +175,154 @@ namespace IEC101MasterTester.Services.Redundancy
                 return;
             }
 
-            settings.ChannelOperationMode = role == NucChannelRole.Active
-                ? Iec101ChannelOperationMode.FullActive
-                : Iec101ChannelOperationMode.StandbySupervision;
-            settings.UseGeneralInterrogationOnConnect = role == NucChannelRole.Active
-                && settings.UseGeneralInterrogationOnConnect;
+            PrepareSettingsForRole(settings, role);
 
             StopStandbySupervisionTimer();
+            UpdateSnapshot(snapshot =>
+            {
+                snapshot.Role = role;
+                snapshot.State = NucChannelState.Reopening;
+                snapshot.DetailText = string.Format("{0} channel is opening as {1}.", Name, role);
+            });
+
             await _service.DisconnectAsync().ConfigureAwait(false);
             _service.ApplySettings(settings);
             await _service.ConnectAsync().ConfigureAwait(false);
 
             UpdateSnapshot(snapshot =>
             {
+                bool connected = _service.IsConnected;
                 snapshot.Role = role;
-                snapshot.State = role == NucChannelRole.Active ? NucChannelState.ConnectedNoResponse : NucChannelState.StandbySupervision;
+                snapshot.Connected = connected;
+                snapshot.LastTimeoutUtc = connected ? null : (DateTime?)DateTime.UtcNow;
+                snapshot.State = connected
+                    ? (role == NucChannelRole.Active ? NucChannelState.ConnectedNoResponse : NucChannelState.StandbySupervision)
+                    : NucChannelState.Reopening;
+                snapshot.DetailText = connected
+                    ? (role == NucChannelRole.Active
+                        ? "Active channel opened. Waiting for first application or link-layer response."
+                        : "Standby channel opened. Link-layer supervision remains armed.")
+                    : "Channel open failed or is still unavailable. Recovery will retry.";
             });
 
             if (role == NucChannelRole.Standby)
             {
                 StartStandbySupervisionTimer();
             }
+        }
+
+        private async Task RecoverCoreAsync(string reason)
+        {
+            if (Interlocked.Exchange(ref _recoveryInFlight, 1) != 0)
+            {
+                return;
+            }
+
+            try
+            {
+                ConnectionSettings settings;
+                NucChannelRole role;
+                DateTime nowUtc = DateTime.UtcNow;
+                bool serviceConnected = _service.IsConnected;
+                bool shouldReconnect;
+                bool shouldProbe;
+
+                lock (_syncRoot)
+                {
+                    settings = _baseSettings == null ? null : _baseSettings.Clone();
+                    role = _role;
+                    shouldReconnect = !serviceConnected
+                        && (!_lastReconnectAttemptUtc.HasValue || nowUtc - _lastReconnectAttemptUtc.Value >= RecoveryReconnectInterval);
+                    shouldProbe = serviceConnected
+                        && (!_lastRecoveryProbeUtc.HasValue || nowUtc - _lastRecoveryProbeUtc.Value >= RecoveryProbeInterval);
+                    if (shouldReconnect)
+                    {
+                        _lastReconnectAttemptUtc = nowUtc;
+                    }
+                    if (shouldProbe)
+                    {
+                        _lastRecoveryProbeUtc = nowUtc;
+                    }
+                }
+
+                if (settings == null)
+                {
+                    return;
+                }
+
+                PrepareSettingsForRole(settings, role);
+
+                if (shouldReconnect)
+                {
+                    UpdateSnapshot(snapshot =>
+                    {
+                        snapshot.Role = role;
+                        snapshot.State = NucChannelState.Reopening;
+                        snapshot.Connected = false;
+                        snapshot.DetailText = string.Format("Recovery is reopening {0} after {1}.", Name, reason ?? "timeout");
+                    });
+
+                    await _service.DisconnectAsync().ConfigureAwait(false);
+                    _service.ApplySettings(settings);
+                    await _service.ConnectAsync().ConfigureAwait(false);
+
+                    if (role == NucChannelRole.Standby)
+                    {
+                        StartStandbySupervisionTimer();
+                    }
+
+                    UpdateSnapshot(snapshot =>
+                    {
+                        bool connected = _service.IsConnected;
+                        snapshot.Role = role;
+                        snapshot.Connected = connected;
+                        snapshot.LastTimeoutUtc = connected ? null : (DateTime?)DateTime.UtcNow;
+                        snapshot.State = connected
+                            ? (role == NucChannelRole.Active ? NucChannelState.ConnectedNoResponse : NucChannelState.Recovering)
+                            : NucChannelState.Reopening;
+                        snapshot.DetailText = connected
+                            ? string.Format("Recovery reopened {0}. Waiting for first valid response.", Name)
+                            : string.Format("Recovery could not reopen {0} yet. Retry remains armed.", Name);
+                    });
+
+                    return;
+                }
+
+                if (!shouldProbe)
+                {
+                    return;
+                }
+
+                UpdateSnapshot(snapshot =>
+                {
+                    snapshot.Role = role;
+                    snapshot.State = NucChannelState.Recovering;
+                    snapshot.Connected = true;
+                    snapshot.DetailText = string.Format("Recovery probe on {0}: {1}.", Name, reason ?? "timeout/no-response");
+                });
+
+                if (role == NucChannelRole.Standby)
+                {
+                    await _service.SendLinkLayerTestFunctionAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    _service.NotifyActiveLinkSwitchover();
+                }
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _recoveryInFlight, 0);
+            }
+        }
+
+        private static void PrepareSettingsForRole(ConnectionSettings settings, NucChannelRole role)
+        {
+            settings.ChannelOperationMode = role == NucChannelRole.Active
+                ? Iec101ChannelOperationMode.FullActive
+                : Iec101ChannelOperationMode.StandbySupervision;
+            settings.UseGeneralInterrogationOnConnect = role == NucChannelRole.Active
+                && settings.UseGeneralInterrogationOnConnect;
         }
 
         private void Service_ConnectionStateChanged(object sender, ConnectionStatusInfo e)
@@ -193,28 +333,52 @@ namespace IEC101MasterTester.Services.Redundancy
             {
                 snapshot.StatusText = e == null ? "Unknown" : e.DisplayText;
                 snapshot.DetailText = e == null ? string.Empty : e.Detail;
-                bool isConnected = e != null
-                    && string.Equals(e.DisplayText, ConnectionStatusInfo.Connected.DisplayText, StringComparison.OrdinalIgnoreCase);
-                snapshot.Connected = isConnected;
-                if (!isConnected)
+                string displayText = e == null ? string.Empty : e.DisplayText;
+                bool isConnected = string.Equals(displayText, ConnectionStatusInfo.Connected.DisplayText, StringComparison.OrdinalIgnoreCase);
+                bool isDisconnected = string.Equals(displayText, ConnectionStatusInfo.Disconnected.DisplayText, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(displayText, ConnectionStatusInfo.Disconnecting.DisplayText, StringComparison.OrdinalIgnoreCase);
+                bool isFaulted = string.Equals(displayText, ConnectionStatusInfo.Faulted.DisplayText, StringComparison.OrdinalIgnoreCase);
+
+                if (isConnected)
                 {
-                    snapshot.State = NucChannelState.FaultLatched;
-                    _faultLatched = true;
-                }
-                else if (snapshot.Role == NucChannelRole.Standby)
-                {
+                    snapshot.Connected = true;
                     snapshot.LastTimeoutUtc = null;
-                    if (!snapshot.LastActivityUtc.HasValue)
+                    if (snapshot.Role == NucChannelRole.Standby)
                     {
-                        snapshot.LastActivityUtc = DateTime.UtcNow;
+                        if (!snapshot.LastActivityUtc.HasValue)
+                        {
+                            snapshot.LastActivityUtc = DateTime.UtcNow;
+                        }
+                        snapshot.State = NucChannelState.StandbySupervision;
                     }
-                    snapshot.State = NucChannelState.StandbySupervision;
+                    else if (!_faultLatched)
+                    {
+                        snapshot.State = NucChannelState.ConnectedNoResponse;
+                    }
+                    return;
                 }
-                else if (!_faultLatched)
+
+                if (isDisconnected)
                 {
-                    snapshot.LastTimeoutUtc = null;
-                    snapshot.State = NucChannelState.ConnectedNoResponse;
+                    snapshot.Connected = false;
+                    snapshot.State = NucChannelState.Disconnected;
+                    return;
                 }
+
+                if (isFaulted)
+                {
+                    bool serviceStillOpen = _service.IsConnected;
+                    snapshot.Connected = serviceStillOpen;
+                    snapshot.LastTimeoutUtc = DateTime.UtcNow;
+                    snapshot.State = serviceStillOpen ? NucChannelState.Timeout : NucChannelState.FaultLatched;
+                    if (!serviceStillOpen)
+                    {
+                        _faultLatched = true;
+                    }
+                    return;
+                }
+
+                snapshot.Connected = _service.IsConnected;
             });
         }
 
@@ -234,6 +398,7 @@ namespace IEC101MasterTester.Services.Redundancy
             bool isLinkTestTxObserved = summary.IndexOf("link test sent", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("link test sent", StringComparison.OrdinalIgnoreCase) >= 0;
             bool isTransportHealthFailure = IsTransportHealthFailureEvidence(e);
+            bool isPhysicalTransportFailure = IsPhysicalTransportFailureEvidence(e);
 
             UpdateSnapshot(snapshot =>
             {
@@ -269,12 +434,15 @@ namespace IEC101MasterTester.Services.Redundancy
                 if (isTransportHealthFailure)
                 {
                     snapshot.LastTimeoutUtc = DateTime.UtcNow;
-                    snapshot.Connected = false;
-                    if (snapshot.Role == NucChannelRole.Active)
+                    snapshot.Connected = !isPhysicalTransportFailure && _service.IsConnected;
+                    snapshot.State = isPhysicalTransportFailure ? NucChannelState.FaultLatched : NucChannelState.Timeout;
+                    snapshot.DetailText = isPhysicalTransportFailure
+                        ? "Physical transport fault was observed. Recovery will reopen the port."
+                        : "Protocol timeout/no-response was observed. Recovery will continue probing without closing the port.";
+                    if (snapshot.Role == NucChannelRole.Active && isPhysicalTransportFailure)
                     {
                         _faultLatched = true;
                     }
-                    snapshot.State = NucChannelState.Timeout;
                 }
             });
         }
@@ -295,28 +463,37 @@ namespace IEC101MasterTester.Services.Redundancy
                 return false;
             }
 
-            bool explicitTransportFailure =
-                summary.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
+            return summary.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("standby supervision timeout", StringComparison.OrdinalIgnoreCase) >= 0
                 || summary.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("no response", StringComparison.OrdinalIgnoreCase) >= 0
-                || summary.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
+                || summary.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || detail.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
+                || IsPhysicalTransportFailureEvidence(row)
+                || (string.Equals(frameType, "Error", StringComparison.OrdinalIgnoreCase)
+                    && (summary.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
+                        || summary.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0
+                        || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
+        }
+
+        private static bool IsPhysicalTransportFailureEvidence(LineMonitorRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            string summary = row.Summary ?? string.Empty;
+            string detail = row.Detail ?? string.Empty;
+            return summary.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("serial port", StringComparison.OrdinalIgnoreCase) >= 0
                 || summary.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("port closed", StringComparison.OrdinalIgnoreCase) >= 0
                 || summary.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
                 || detail.IndexOf("disconnected", StringComparison.OrdinalIgnoreCase) >= 0
                 || summary.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
-                || detail.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0
-                || (string.Equals(frameType, "Error", StringComparison.OrdinalIgnoreCase)
-                    && (summary.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                        || detail.IndexOf("timeout", StringComparison.OrdinalIgnoreCase) >= 0
-                        || summary.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
-                        || detail.IndexOf("read", StringComparison.OrdinalIgnoreCase) >= 0
-                        || summary.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0
-                        || detail.IndexOf("connect", StringComparison.OrdinalIgnoreCase) >= 0));
-
-            return explicitTransportFailure;
+                || detail.IndexOf("worker error", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static bool IsCommandLifecycleEvidence(string summary, string detail)
@@ -385,6 +562,11 @@ namespace IEC101MasterTester.Services.Redundancy
         {
             lock (_syncRoot)
             {
+                if (_standbySupervisionTimer != null)
+                {
+                    return;
+                }
+
                 _standbySupervisionTimer = new Timer(
                     async _ => await RunStandbySupervisionTickAsync().ConfigureAwait(false),
                     null,
@@ -425,6 +607,12 @@ namespace IEC101MasterTester.Services.Redundancy
                 }
 
                 DateTime nowUtc = DateTime.UtcNow;
+                if (!_service.IsConnected)
+                {
+                    await RecoverCoreAsync("standby port is closed").ConfigureAwait(false);
+                    return;
+                }
+
                 UpdateSnapshot(snapshot =>
                 {
                     snapshot.SupervisionTickCount++;
@@ -440,16 +628,9 @@ namespace IEC101MasterTester.Services.Redundancy
 
                 UpdateSnapshot(snapshot =>
                 {
-                    if (!snapshot.Connected)
-                    {
-                        snapshot.State = NucChannelState.FaultLatched;
-                        snapshot.LastTimeoutUtc = nowUtc;
-                        snapshot.DetailText = "Standby supervision cannot run because link is not connected.";
-                        return;
-                    }
-
                     if (sent)
                     {
+                        snapshot.Connected = true;
                         snapshot.TxCount++;
                         snapshot.SupervisionTxObservedCount++;
                         snapshot.LastSupervisionTxObservedUtc = nowUtc;
@@ -468,41 +649,29 @@ namespace IEC101MasterTester.Services.Redundancy
 
                     if (!sent)
                     {
-                        if (_firstSuccessfulStandbySupervisionUtc.HasValue
-                            && nowUtc - _firstSuccessfulStandbySupervisionUtc.Value > StandbyInitialResponseWindow)
-                        {
-                            snapshot.LastTimeoutUtc = nowUtc;
-                            snapshot.Connected = false;
-                            snapshot.State = NucChannelState.Timeout;
-                            snapshot.DetailText = string.Format(
-                                "Standby supervision timeout: ticks={0}, txObs={1}, rxObs={2}.",
-                                snapshot.SupervisionTickCount,
-                                snapshot.SupervisionTxObservedCount,
-                                snapshot.SupervisionResponseObservedCount);
-                        }
-                        else
-                        {
-                            snapshot.DetailText = string.Format(
-                                "Standby supervision tick ran, but link-layer test dispatch did not complete. ticks={0}, txObs={1}, rxObs={2}.",
-                                snapshot.SupervisionTickCount,
-                                snapshot.SupervisionTxObservedCount,
-                                snapshot.SupervisionResponseObservedCount);
-                            snapshot.State = NucChannelState.ConnectedNoResponse;
-                        }
+                        snapshot.LastTimeoutUtc = nowUtc;
+                        snapshot.Connected = _service.IsConnected;
+                        snapshot.State = _service.IsConnected ? NucChannelState.Recovering : NucChannelState.Reopening;
+                        snapshot.DetailText = string.Format(
+                            "Standby recovery probe pending: ticks={0}, txObs={1}, rxObs={2}. Timer remains armed.",
+                            snapshot.SupervisionTickCount,
+                            snapshot.SupervisionTxObservedCount,
+                            snapshot.SupervisionResponseObservedCount);
                     }
                     else if ((!hasValidResponse && initialWindowExpired && snapshot.SupervisionTxObservedCount >= 2) || responseStale)
                     {
                         snapshot.LastTimeoutUtc = nowUtc;
-                        snapshot.Connected = false;
+                        snapshot.Connected = true;
                         snapshot.State = NucChannelState.Timeout;
                         snapshot.DetailText = string.Format(
-                            "Standby supervision timeout: ticks={0}, txObs={1}, rxObs={2}.",
+                            "Standby supervision timeout: ticks={0}, txObs={1}, rxObs={2}. Recovery probes remain armed.",
                             snapshot.SupervisionTickCount,
                             snapshot.SupervisionTxObservedCount,
                             snapshot.SupervisionResponseObservedCount);
                     }
                     else
                     {
+                        snapshot.Connected = true;
                         snapshot.State = NucChannelState.StandbySupervision;
                         snapshot.DetailText = string.Format(
                             "Standby supervision active: ticks={0}, txObs={1}, rxObs={2}.",
@@ -512,10 +681,9 @@ namespace IEC101MasterTester.Services.Redundancy
                     }
                 });
 
-                if (!sent && _firstSuccessfulStandbySupervisionUtc.HasValue
-                    && nowUtc - _firstSuccessfulStandbySupervisionUtc.Value > StandbyInitialResponseWindow)
+                if (!sent)
                 {
-                    StopStandbySupervisionTimer();
+                    await RecoverCoreAsync("standby supervision dispatch failed").ConfigureAwait(false);
                 }
             }
             finally

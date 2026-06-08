@@ -7,7 +7,10 @@ namespace IEC101MasterTester.ViewModels
     {
         private string _linkName;
         private string _stateText;
+        private string _roleText;
+        private string _healthText;
         private Brush _stateBrush;
+        private Brush _healthBrush;
         private Brush _lineBrush;
         private Brush _cardBrush;
         private Brush _pulseBrush;
@@ -31,10 +34,28 @@ namespace IEC101MasterTester.ViewModels
             set => SetProperty(ref _stateText, value);
         }
 
+        public string RoleText
+        {
+            get => _roleText;
+            set => SetProperty(ref _roleText, value);
+        }
+
+        public string HealthText
+        {
+            get => _healthText;
+            set => SetProperty(ref _healthText, value);
+        }
+
         public Brush StateBrush
         {
             get => _stateBrush;
             set => SetProperty(ref _stateBrush, value);
+        }
+
+        public Brush HealthBrush
+        {
+            get => _healthBrush;
+            set => SetProperty(ref _healthBrush, value);
         }
 
         public Brush LineBrush

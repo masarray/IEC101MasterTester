@@ -36,6 +36,7 @@ namespace IecSlaveSimulator.Services
         public Action<int, string, string> RuntimeSignalUpdated { get; set; }
         public Action<bool, string> ConnectionStateChanged { get; set; }
         public Action<bool, bool> LinkFrameObserved { get; set; }
+        public Action MasterApplicationTrafficObserved { get; set; }
         public Action WorkerPulseObserved { get; set; }
         public Func<bool> ApplicationTrafficEnabledProvider { get; set; }
 
@@ -283,6 +284,11 @@ namespace IecSlaveSimulator.Services
                 return;
             }
 
+            if (frame.Control != null && frame.Control.IsPrimary && IsPrimaryApplicationTraffic(frame))
+            {
+                NotifyMasterApplicationTraffic();
+            }
+
             if (frame.FrameType == Iec101FrameType.Fixed && frame.Control != null && frame.Control.IsPrimary)
             {
                 HandlePrimaryFixed(frame);
@@ -331,6 +337,36 @@ namespace IecSlaveSimulator.Services
             return new byte[] { (byte)first };
         }
 
+
+        private static bool IsPrimaryApplicationTraffic(Iec101Frame frame)
+        {
+            if (frame == null || frame.Control == null || !frame.Control.IsPrimary)
+            {
+                return false;
+            }
+
+            if (frame.FrameType == Iec101FrameType.Variable && frame.GetAsduBytesOrEmpty().Length > 0)
+            {
+                return true;
+            }
+
+            if (frame.FrameType == Iec101FrameType.Fixed)
+            {
+                int fc = frame.Control.FunctionCode;
+                return fc == 10 || fc == 11; // request Class 1 / Class 2 data = active polling, not standby supervision
+            }
+
+            return false;
+        }
+
+        private void NotifyMasterApplicationTraffic()
+        {
+            if (MasterApplicationTrafficObserved != null)
+            {
+                MasterApplicationTrafficObserved();
+            }
+        }
+
         private void HandlePrimaryFixed(Iec101Frame frame)
         {
             int fc = frame.Control.FunctionCode;
@@ -374,9 +410,9 @@ namespace IecSlaveSimulator.Services
                 return;
             }
 
-            SendFixedSecondary(0);
             if (!IsApplicationTrafficEnabled())
             {
+                SendFixedSecondary(0);
                 LogStatus("APP", "Application ASDU deferred on standby port.");
                 return;
             }
@@ -406,6 +442,12 @@ namespace IecSlaveSimulator.Services
                     LogStatus("APP", "Unsupported ASDU received: " + asdu.TypeId);
                     break;
             }
+
+            // A confirmed primary ASDU is acknowledged after application handling so the
+            // secondary ACD bit reflects newly queued Class 1 data (GI responses, command
+            // confirmations). This mirrors real IEC-101 behaviour better than acknowledging
+            // first and polling blind afterwards.
+            SendFixedSecondary(0);
         }
 
         private void HandleInterrogation(Iec101Asdu asdu)
@@ -734,12 +776,24 @@ namespace IecSlaveSimulator.Services
         private void SendQueuedAsduOrNoData(bool class1)
         {
             byte[] asdu = null;
+            bool class1Pending = false;
             lock (_sync)
             {
-                Queue<byte[]> queue = class1 ? _class1Queue : _class2Queue;
-                if (queue.Count > 0)
+                class1Pending = _class1Queue.Count > 0;
+                if (!class1 && class1Pending)
                 {
-                    asdu = queue.Dequeue();
+                    // Do not let cyclic Class 2/background traffic hide pending Class 1 data.
+                    // Return no Class 2 data with ACD=1 so an unbalanced master immediately
+                    // switches to FC10/Class 1 and drains GI/events/command confirmations.
+                    asdu = null;
+                }
+                else
+                {
+                    Queue<byte[]> queue = class1 ? _class1Queue : _class2Queue;
+                    if (queue.Count > 0)
+                    {
+                        asdu = queue.Dequeue();
+                    }
                 }
             }
 

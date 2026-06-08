@@ -102,11 +102,22 @@ namespace IecSlaveSimulator.Services
                 return;
             }
 
+            DateTime nowUtc = DateTime.UtcNow;
             endpoint.IsConnected = true;
-            if (endpoint.State == NucSlaveLinkState.Disconnected || endpoint.State == NucSlaveLinkState.Faulted)
-            {
-                endpoint.State = NucSlaveLinkState.StandbyReady;
-            }
+            endpoint.IsLoopAlive = true;
+            endpoint.ConnectedAtUtc = nowUtc;
+            endpoint.RecoveryStartedUtc = nowUtc;
+            endpoint.LastWorkerPulseUtc = nowUtc;
+            endpoint.LastRxUtc = null;
+            endpoint.LastTxUtc = null;
+            endpoint.LastValidMasterActivityUtc = null;
+            endpoint.Role = NucEndpointRole.None;
+            endpoint.State = NucSlaveLinkState.Recovering;
+
+            Trace.WriteLine(string.Format(
+                "[SLAVE-LINK] {0} CONNECTED/RECOVERING ts={1:o}",
+                endpoint.EndpointId,
+                nowUtc));
 
             EvaluateArbiter();
         }
@@ -148,24 +159,59 @@ namespace IecSlaveSimulator.Services
             if (isRx)
             {
                 endpoint.LastRxUtc = nowUtc;
-                endpoint.LastValidMasterActivityUtc = nowUtc;
                 endpoint.RxCount++;
                 Trace.WriteLine(string.Format(
                     "[SLAVE-LINK] {0} RX ts={1:o}",
                     endpoint.EndpointId,
                     nowUtc));
-                if (_arbiter.ActiveEndpoint == NucEndpointId.None)
-                {
-                    endpoint.Role = NucEndpointRole.Active;
-                }
             }
 
-            if (endpoint.State == NucSlaveLinkState.Timeout || endpoint.State == NucSlaveLinkState.Faulted)
+            if (endpoint.State == NucSlaveLinkState.Timeout
+                || endpoint.State == NucSlaveLinkState.Faulted
+                || endpoint.State == NucSlaveLinkState.Recovering)
             {
-                endpoint.State = NucSlaveLinkState.StandbyReady;
+                endpoint.State = endpoint.Role == NucEndpointRole.Active
+                    ? NucSlaveLinkState.ActivePolling
+                    : NucSlaveLinkState.StandbyReady;
+                endpoint.RecoveryStartedUtc = null;
             }
 
             EvaluateArbiter();
+        }
+
+        public void MarkApplicationTraffic(int linkNumber)
+        {
+            DateTime nowUtc = DateTime.UtcNow;
+            NucPortEndpointState endpoint = ResolveEndpoint(linkNumber);
+            NucPortEndpointState other = linkNumber == 1 ? LinkB : LinkA;
+            if (endpoint == null)
+            {
+                return;
+            }
+
+            endpoint.IsConnected = true;
+            endpoint.LastRxUtc = nowUtc;
+            endpoint.LastValidMasterActivityUtc = nowUtc;
+            endpoint.Role = NucEndpointRole.Active;
+            endpoint.State = NucSlaveLinkState.ActivePolling;
+            endpoint.RecoveryStartedUtc = null;
+
+            if (other != null && other.IsConnected)
+            {
+                other.Role = NucEndpointRole.Standby;
+                if (other.State != NucSlaveLinkState.Timeout && other.State != NucSlaveLinkState.Faulted)
+                {
+                    other.State = NucSlaveLinkState.StandbyReady;
+                }
+            }
+
+            _arbiter.PreferActive(endpoint.EndpointId);
+            EvaluateArbiter();
+
+            Trace.WriteLine(string.Format(
+                "[SLAVE-LINK] {0} APPLICATION-ACTIVE ts={1:o}",
+                endpoint.EndpointId,
+                nowUtc));
         }
 
         public void EvaluateLinkHealth()
@@ -198,7 +244,12 @@ namespace IecSlaveSimulator.Services
             {
                 newState = NucSlaveLinkState.Faulted;
             }
-            else if (endpoint.LastTxUtc.HasValue && (!endpoint.LastRxUtc.HasValue || nowUtc - endpoint.LastRxUtc.Value > timeoutWindow))
+            else if (!endpoint.LastRxUtc.HasValue)
+            {
+                // Connected but no master link-layer frame has arrived yet. This is recovery/awaiting-master, not a fault.
+                newState = NucSlaveLinkState.Recovering;
+            }
+            else if (nowUtc - endpoint.LastRxUtc.Value > timeoutWindow)
             {
                 newState = NucSlaveLinkState.Timeout;
             }
@@ -217,7 +268,9 @@ namespace IecSlaveSimulator.Services
             }
 
             endpoint.State = newState;
-            if (newState == NucSlaveLinkState.Disconnected || newState == NucSlaveLinkState.Faulted || newState == NucSlaveLinkState.Timeout)
+            if (newState == NucSlaveLinkState.Disconnected
+                || newState == NucSlaveLinkState.Faulted
+                || newState == NucSlaveLinkState.Timeout)
             {
                 endpoint.Role = NucEndpointRole.None;
             }
@@ -232,9 +285,10 @@ namespace IecSlaveSimulator.Services
             if (newState == NucSlaveLinkState.Timeout)
             {
                 Trace.WriteLine(string.Format(
-                    "[SLAVE-LINK] {0} TIMEOUT ts={1:o} lastTx={2} lastRx={3}",
+                    "[SLAVE-LINK] {0} TIMEOUT ts={1:o} lastMasterActivity={2} lastTx={3} lastRx={4}",
                     endpoint.EndpointId,
                     nowUtc,
+                    endpoint.LastValidMasterActivityUtc.HasValue ? endpoint.LastValidMasterActivityUtc.Value.ToString("o") : "-",
                     endpoint.LastTxUtc.HasValue ? endpoint.LastTxUtc.Value.ToString("o") : "-",
                     endpoint.LastRxUtc.HasValue ? endpoint.LastRxUtc.Value.ToString("o") : "-"));
             }
@@ -254,10 +308,10 @@ namespace IecSlaveSimulator.Services
 
             bool l1Fault = !LinkA.IsConnected
                 || (LinkA.LastWorkerPulseUtc.HasValue && (nowUtc - LinkA.LastWorkerPulseUtc.Value > loopWindow))
-                || (LinkA.LastTxUtc.HasValue && (!LinkA.LastRxUtc.HasValue || nowUtc - LinkA.LastRxUtc.Value > timeoutWindow));
+                || (!LinkA.LastRxUtc.HasValue || nowUtc - LinkA.LastRxUtc.Value > timeoutWindow);
             bool l2Fault = !LinkB.IsConnected
                 || (LinkB.LastWorkerPulseUtc.HasValue && (nowUtc - LinkB.LastWorkerPulseUtc.Value > loopWindow))
-                || (LinkB.LastTxUtc.HasValue && (!LinkB.LastRxUtc.HasValue || nowUtc - LinkB.LastRxUtc.Value > timeoutWindow));
+                || (!LinkB.LastRxUtc.HasValue || nowUtc - LinkB.LastRxUtc.Value > timeoutWindow);
             bool iedFault = false;
 
             if (_lastExportedL1Fault == l1Fault

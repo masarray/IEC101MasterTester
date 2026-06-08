@@ -29,6 +29,8 @@ namespace IEC101MasterTester.Services.Redundancy
 
         Task StopAsync();
 
+        Task RecoverAsync(string reason = null);
+
         Task SendGeneralInterrogationAsync();
         void NotifyActiveLinkSwitchover();
 

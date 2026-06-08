@@ -181,6 +181,7 @@
     <Compile Include="Models\NucChannelSnapshot.cs" />
     <Compile Include="Models\NucChannelState.cs" />
     <Compile Include="Models\NucControllerState.cs" />
+    <Compile Include="Models\NucApplicationImageState.cs" />
     <Compile Include="Models\NucRedundancyConnectionEventArgs.cs" />
     <Compile Include="Models\NucRedundancyLineMonitorEventArgs.cs" />
     <Compile Include="Models\NucLinkHealthState.cs" />

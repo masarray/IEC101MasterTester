@@ -579,20 +579,26 @@
                     <Style TargetType="Border">
                         <Setter Property="BorderBrush" Value="#22314A" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding NucLinkAVisual.StateText}" Value="Active">
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="Responsive">
                                 <Setter Property="BorderBrush" Value="#22C55E" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkAVisual.StateText}" Value="Standby">
+                            <DataTrigger Binding="{Binding NucLinkAVisual.RoleText}" Value="Standby">
                                 <Setter Property="BorderBrush" Value="#38BDF8" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkAVisual.StateText}" Value="Fault">
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="Fault">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkAVisual.StateText}" Value="Offline">
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="Timeout">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkAVisual.StateText}" Value="Disconnected">
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="No Response">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="Recovering">
+                                <Setter Property="BorderBrush" Value="#F59E0B" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding NucLinkAVisual.HealthText}" Value="Switching">
+                                <Setter Property="BorderBrush" Value="#F59E0B" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -713,7 +719,7 @@
                                                                 <Setter Property="Fill" Value="#EF4444" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding NucMainCommStateText}" Value="NO RESPONSE">
-                                                                <Setter Property="Fill" Value="#94A3B8" />
+                                                                <Setter Property="Fill" Value="#EF4444" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -869,20 +875,26 @@
                     <Style TargetType="Border">
                         <Setter Property="BorderBrush" Value="#22314A" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding NucLinkBVisual.StateText}" Value="Active">
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="Responsive">
                                 <Setter Property="BorderBrush" Value="#22C55E" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkBVisual.StateText}" Value="Standby">
+                            <DataTrigger Binding="{Binding NucLinkBVisual.RoleText}" Value="Standby">
                                 <Setter Property="BorderBrush" Value="#38BDF8" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkBVisual.StateText}" Value="Fault">
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="Fault">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkBVisual.StateText}" Value="Offline">
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="Timeout">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding NucLinkBVisual.StateText}" Value="Disconnected">
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="No Response">
                                 <Setter Property="BorderBrush" Value="#EF4444" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="Recovering">
+                                <Setter Property="BorderBrush" Value="#F59E0B" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding NucLinkBVisual.HealthText}" Value="Switching">
+                                <Setter Property="BorderBrush" Value="#F59E0B" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -1004,7 +1016,7 @@
                                                                 <Setter Property="Fill" Value="#EF4444" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding NucBackupCommStateText}" Value="NO RESPONSE">
-                                                                <Setter Property="Fill" Value="#94A3B8" />
+                                                                <Setter Property="Fill" Value="#EF4444" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
