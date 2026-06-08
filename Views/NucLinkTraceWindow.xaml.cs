@@ -1,4 +1,4 @@
-using IEC101MasterTester.Controls;
+﻿using IEC101MasterTester.Controls;
 using IEC101MasterTester.Models;
 using IEC101MasterTester.ViewModels;
 using Microsoft.Win32;
@@ -689,14 +689,14 @@ namespace IEC101MasterTester.Views
             bool hasSingleCharAck = rows.Any(r => string.Equals(r.Row.Direction, "RX", StringComparison.OrdinalIgnoreCase)
                 && (string.Equals(r.Row.FrameType, "Single Char", StringComparison.OrdinalIgnoreCase)
                     || Contains(r.Row, "Single-character ACK")));
-            bool hasAsdu = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase));
+            bool hasAsdu = rows.Any(r => HasDecodedAsdu(r.Row));
             bool giSent = rows.Any(r => Contains(r.Row, "GI command sent"));
-            bool giActCon = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+            bool giActCon = rows.Any(r => HasDecodedAsdu(r.Row)
                 && Contains(r.Row, "C_IC_NA_1", "General interrogation command")
                 && Contains(r.Row, "ACTIVATION CON", "ACT_CON"));
             bool acdObserved = rows.Any(r => string.Equals(r.Row.ACD, "1", StringComparison.OrdinalIgnoreCase)
                 || Contains(r.Row, "ACD asserted", "ACD=1"));
-            bool class1Observed = rows.Any(r => string.Equals(r.Row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+            bool class1Observed = rows.Any(r => HasDecodedAsdu(r.Row)
                 && string.Equals(r.Row.DataClass, "Class 1", StringComparison.OrdinalIgnoreCase));
 
             if (hasTx && !hasRx)
@@ -729,6 +729,13 @@ namespace IEC101MasterTester.Views
             return hasAsdu
                 ? "Link response and ASDU observed."
                 : "Waiting for stronger communication evidence.";
+        }
+
+        private static bool HasDecodedAsdu(LineMonitorRow row)
+        {
+            return row != null
+                && !string.IsNullOrWhiteSpace(row.AsduType)
+                && !string.Equals(row.AsduType, "-", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool Contains(LineMonitorRow row, params string[] needles)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -60,6 +60,12 @@ namespace IEC101MasterTester.Views
         }
 
         public event EventHandler WindowClosedByUser;
+
+        public bool AllowClose
+        {
+            get { return _allowClose; }
+            set { _allowClose = value; }
+        }
 
         private void NucRedundancyWindow_Loaded(object sender, RoutedEventArgs e)
         {

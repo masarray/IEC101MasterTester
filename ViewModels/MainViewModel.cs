@@ -1,4 +1,4 @@
-using IEC101MasterTester.Models;
+﻿using IEC101MasterTester.Models;
 using IEC101MasterTester.Services.Diagnostics;
 using IEC101MasterTester.Services.Iec101;
 using IEC101MasterTester.Services.Profiles;
@@ -1448,7 +1448,7 @@ namespace IEC101MasterTester.ViewModels
                     effectiveTimestamp,
                     e.HasProtocolTimestamp || string.Equals(e.SourceType, "SPONT", StringComparison.OrdinalIgnoreCase));
                 TryCreateClassMismatchFinding(e.IOA, e.Type, e.TrafficClass, e.Acd, e.Cot);
-                TryCreateAcdExpectationFinding(e.IOA, e.Type, e.Acd, e.Cot);
+                TryCreateAcdExpectationFinding(e.IOA, e.Type, e.Acd, e.Cot, e.TrafficClass, e.DeliveryContext);
             });
         }
 
@@ -1682,12 +1682,12 @@ namespace IEC101MasterTester.ViewModels
             }
 
             if (isRx
-                && string.Equals(row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+                && HasDecodedAsdu(row)
                 && (row.AsduType.IndexOf("C_SC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0
                     || row.AsduType.IndexOf("C_DC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0
                     || row.AsduType.IndexOf("C_RC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0))
             {
-                bool isNegative = row.ControlFc.IndexOf("NEG=1", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isNegative = IsNegativeConfirmation(row);
                 string ioa = string.IsNullOrWhiteSpace(row.IOA) ? ExtractIoaFromDetail(row.Detail) : row.IOA;
                 string commandType = GetCommandFamilyLabel(row.AsduType);
                 string operation = NormalizeCommandOperation(commandType, GetCommandOperationLabel(row));
@@ -1995,7 +1995,7 @@ namespace IEC101MasterTester.ViewModels
         public bool IsRedundancyBackupFaultActive => _backupLinkFaultActive == true;
         public bool IsRedundancyIedFaultActive => _iedFaultActive == true;
 
-        private void TryCreateAcdExpectationFinding(int ioa, string type, string acd, string cot)
+        private void TryCreateAcdExpectationFinding(int ioa, string type, string acd, string cot, string trafficClass, string deliveryContext)
         {
             if (string.IsNullOrWhiteSpace(type) || string.IsNullOrWhiteSpace(cot))
             {
@@ -2030,13 +2030,25 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
+            // ACD is a secondary link-layer access-demand hint, not proof that every
+            // current ASDU must carry ACD=1. When a spontaneous Class 1 object is
+            // already delivered through an FC10/Class 1 response, ACD may be cleared
+            // because no additional Class 1 data remains pending. Treat that as a
+            // healthy delivery path instead of a finding.
+            if (string.Equals(trafficClass, "Class 1", StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrWhiteSpace(deliveryContext)
+                    && deliveryContext.IndexOf("FC10", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                return;
+            }
+
             AddFindingOnce("ACD:MISSING:" + ioa, new FindingRow
             {
                 Time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                Severity = "Major",
+                Severity = "Warning",
                 Category = "ACD",
                 RuleCode = "ACD_EXPECTED_NOT_OBSERVED",
-                Title = "ACD not observed for Class 1 event",
+                Title = "Class 1 profile arrived without access-demand evidence",
                 Detail = string.Format(
                     CultureInfo.InvariantCulture,
                     "{0} IOA {1} is profiled as {2} and arrived with spontaneous behavior, but ACD=1 was not observed.",
@@ -3361,12 +3373,12 @@ namespace IEC101MasterTester.ViewModels
                 }
 
                 if (string.Equals(row.Direction, "RX", StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase)
+                    && HasDecodedAsdu(row)
                     && (row.AsduType.IndexOf("C_SC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0
                         || row.AsduType.IndexOf("C_DC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0
                         || row.AsduType.IndexOf("C_RC_NA_1", StringComparison.OrdinalIgnoreCase) >= 0))
                 {
-                    bool isNegative = row.ControlFc.IndexOf("NEG=1", StringComparison.OrdinalIgnoreCase) >= 0;
+                    bool isNegative = IsNegativeConfirmation(row);
                     string ioa = string.IsNullOrWhiteSpace(row.IOA) ? ExtractIoaFromDetail(row.Detail) : row.IOA;
                     string commandType = GetCommandFamilyLabel(row.AsduType);
                     string operation = NormalizeCommandOperation(commandType, GetCommandOperationLabel(row));
@@ -3514,7 +3526,7 @@ namespace IEC101MasterTester.ViewModels
 
             LineMonitorRow row = e.Record;
             if (!string.Equals(row.Direction, "RX", StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(row.FrameType, "ASDU", StringComparison.OrdinalIgnoreCase))
+                || !HasDecodedAsdu(row))
             {
                 return;
             }
@@ -3526,7 +3538,7 @@ namespace IEC101MasterTester.ViewModels
                 return;
             }
 
-            bool isNegative = row.ControlFc.IndexOf("NEG=1", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool isNegative = IsNegativeConfirmation(row);
             string ioa = string.IsNullOrWhiteSpace(row.IOA) ? ExtractIoaFromDetail(row.Detail) : row.IOA;
             string commandType = GetCommandFamilyLabel(row.AsduType);
             string operation = NormalizeCommandOperation(commandType, GetCommandOperationLabel(row));
@@ -5025,6 +5037,26 @@ namespace IEC101MasterTester.ViewModels
             RefreshAvailabilityTelemetry();
         }
 
+        private static bool HasDecodedAsdu(LineMonitorRow row)
+        {
+            return row != null
+                && !string.IsNullOrWhiteSpace(row.AsduType)
+                && !string.Equals(row.AsduType, "-", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsNegativeConfirmation(LineMonitorRow row)
+        {
+            if (row == null)
+            {
+                return false;
+            }
+
+            string detail = row.Detail ?? string.Empty;
+            string control = row.ControlFc ?? string.Empty;
+            return detail.IndexOf("NEG=1", StringComparison.OrdinalIgnoreCase) >= 0
+                || control.IndexOf("NEG=1", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private static bool IsNucTransportTimeoutEvidence(LineMonitorRow row)
         {
             if (row == null)
@@ -5513,15 +5545,17 @@ namespace IEC101MasterTester.ViewModels
                 newState = SlaveAvailabilityState.Silent;
                 detail = "Session is connected but no RX frame has been observed in the silence window.";
             }
-            else if (_slaveRecentErrorUtc.Count >= SlaveRecentErrorDegradedThreshold)
-            {
-                newState = SlaveAvailabilityState.Degraded;
-                detail = "Recent protocol/error pressure is high while transport remains connected.";
-            }
             else if (_lastSlaveValidAsduUtc.HasValue && nowUtc - _lastSlaveValidAsduUtc.Value <= SlaveNoAsduWindow)
             {
                 newState = SlaveAvailabilityState.ApplicationResponsive;
-                detail = "Recent valid ASDU/application activity has been observed.";
+                detail = _slaveRecentErrorUtc.Count >= SlaveRecentErrorDegradedThreshold
+                    ? "Recent valid ASDU/application activity has been observed; transient protocol/error pressure is present."
+                    : "Recent valid ASDU/application activity has been observed.";
+            }
+            else if (_slaveRecentErrorUtc.Count >= SlaveRecentErrorDegradedThreshold)
+            {
+                newState = SlaveAvailabilityState.Degraded;
+                detail = "Recent protocol/error pressure is high and no fresh application ASDU has been observed in the freshness window.";
             }
             else if (_lastSlaveValidFrameUtc.HasValue)
             {

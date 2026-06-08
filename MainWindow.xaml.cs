@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
@@ -726,8 +726,34 @@ namespace IEC101MasterTester
                 _nucRedundancyWindow = null;
             }
 
-            Show();
-            Activate();
+            if (_isClosing || Application.Current == null
+                || Application.Current.Dispatcher.HasShutdownStarted
+                || Application.Current.Dispatcher.HasShutdownFinished)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_isClosing || Application.Current == null
+                    || Application.Current.Dispatcher.HasShutdownStarted
+                    || Application.Current.Dispatcher.HasShutdownFinished)
+                {
+                    return;
+                }
+
+                if (!IsVisible)
+                {
+                    Show();
+                }
+
+                if (WindowState == WindowState.Minimized)
+                {
+                    WindowState = WindowState.Normal;
+                }
+
+                Activate();
+            }), DispatcherPriority.ApplicationIdle);
         }
 
         private void ShowAvailabilityDashboardWindow()
@@ -766,8 +792,9 @@ namespace IEC101MasterTester
             {
                 bufferedEventAuditWindow.AllowClose = true;
             }
-            else if (window is NucRedundancyWindow)
+            else if (window is NucRedundancyWindow nucRedundancyWindow)
             {
+                nucRedundancyWindow.AllowClose = true;
             }
             else if (window is AvailabilityDashboardWindow availabilityDashboardWindow)
             {
