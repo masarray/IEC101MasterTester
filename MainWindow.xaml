@@ -10,7 +10,7 @@
         MinWidth="1320"
         MinHeight="760"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized" Icon="/iec60870-icon.jpg">
+        WindowState="Maximized" Icon="/app.ico">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -23,15 +23,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
-
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
-      - name: Restore main application packages
-        shell: pwsh
-        run: nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 
       - name: Build main application Release
         shell: pwsh

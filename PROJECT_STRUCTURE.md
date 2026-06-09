@@ -23,7 +23,6 @@ IEC101MasterTester/
   MainWindow.xaml                     Main application shell
   IEC101MasterTester.csproj           Main app project
   IEC101MasterTester.slnx             Solution file
-  packages.config                     NuGet packages for main app
 ```
 
 ## Main application

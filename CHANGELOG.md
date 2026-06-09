@@ -26,3 +26,9 @@
 - Added GitHub Pages deployment from `docs/` through GitHub Actions.
 - Hardened Windows portable release automation with checksum output.
 - Added repository setup documentation for default branch, Pages, and release tagging.
+
+## Documentation and build cleanup
+
+- Removed the project package restore requirement from the main application build path.
+- Simplified Windows build and release automation around framework/WPF assemblies.
+- Refined public documentation and website wording for a cleaner user-facing repository.

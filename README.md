@@ -117,12 +117,12 @@ Requirements:
 - Windows 10/11.
 - Visual Studio 2022 or Visual Studio Build Tools with .NET desktop workload.
 - .NET Framework 4.8 developer pack.
-- NuGet.
+
+The main application uses framework assemblies only; no project package restore is required.
 
 Build commands:
 
 ```powershell
-nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 ```

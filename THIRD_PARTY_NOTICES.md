@@ -1,18 +1,14 @@
 # Third-Party Notices
 
-This document records known third-party components and redistribution notes for IEC101 Master Tester.
+This document records external asset and redistribution notes for IEC101 Master Tester.
 
-## NuGet packages
+## Runtime and framework
 
-The application uses packages declared in `packages.config`. Review exact versions and licenses before publishing formal binary releases.
-
-Known package:
-
-- `System.IO.Ports` 6.0.0
+IEC101 Master Tester targets Microsoft .NET Framework 4.8 and Windows WPF. The repository does not declare project-level application packages.
 
 ## Assets
 
-Before public binary release, confirm ownership or license compatibility for:
+Before a formal public binary release, confirm ownership or license compatibility for:
 
 - application icon files;
 - screenshot assets under `docs/assets/`;
@@ -20,4 +16,4 @@ Before public binary release, confirm ownership or license compatibility for:
 
 ## Legal note
 
-This file is an engineering aid, not legal advice. Perform a final legal/dependency review before distributing official release binaries.
+This file is an engineering aid, not legal advice. Perform a final legal and asset review before distributing official release binaries.

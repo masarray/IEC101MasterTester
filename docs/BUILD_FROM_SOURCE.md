@@ -6,13 +6,12 @@
 - Visual Studio 2022 Community, Professional, Enterprise, or Build Tools.
 - .NET desktop development workload.
 - .NET Framework 4.8 Developer Pack.
-- NuGet.
 
-## Restore packages
+## Package dependencies
 
-```powershell
-nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
-```
+The main application is self-contained at source level and uses .NET Framework/WPF assemblies only. There is no project package restore step for the main application.
+
+The simulator project is SDK-style; the build command includes `/restore` so MSBuild can generate its normal build metadata. It does not introduce external application packages.
 
 ## Build the main application
 

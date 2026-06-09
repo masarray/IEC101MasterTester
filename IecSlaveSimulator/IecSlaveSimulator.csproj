@@ -13,7 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.IO.Ports" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
@@ -37,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="..\SharedUi\Assets\Icons\iec60870-icon.png" Link="SharedUi\Assets\Icons\iec60870-icon.png" />
+    <Resource Include="..\SharedUi\Assets\Icons\app-icon.png" Link="SharedUi\Assets\Icons\app-icon.png" />
     <Resource Include="..\SharedUi\Assets\Profile\ari-profile.jpg" Link="SharedUi\Assets\Profile\ari-profile.jpg" />
   </ItemGroup>
 </Project>
