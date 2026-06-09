@@ -1,40 +1,86 @@
 # IEC101 Master Tester
 
-Windows WPF `.NET Framework 4.8` IEC-60870-5-101 master tester and analyzer for SCADA FAT, gateway troubleshooting, NUC redundancy observation, SOE replay audit, and protocol evidence capture.
+Windows desktop master tester and analyzer for **IEC 60870-5-101** serial communication workflows.
 
-[![Platform](https://img.shields.io/badge/platform-Windows-1f6feb)](#build)
-[![Framework](https://img.shields.io/badge/.NET%20Framework-4.8-512bd4)](#build)
-[![Protocol](https://img.shields.io/badge/protocol-IEC--60870--5--101-0f766e)](#what-it-does)
-[![Stack](https://img.shields.io/badge/IEC--101%20stack-native%20clean--room-16a34a)](#native-clean-room-stack)
+It is designed for engineers who need a practical tool for SCADA FAT, SAT preparation, gateway testing, RTU troubleshooting, NUC dual-link redundancy observation, command verification, SOE audit, and protocol evidence capture.
+
+[![Windows Build](https://github.com/masarray/IEC101MasterTester/actions/workflows/windows-build.yml/badge.svg)](https://github.com/masarray/IEC101MasterTester/actions/workflows/windows-build.yml)
+[![Release](https://img.shields.io/github/v/release/masarray/IEC101MasterTester?display_name=tag)](https://github.com/masarray/IEC101MasterTester/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-1f6feb)](#download)
+[![Framework](https://img.shields.io/badge/.NET%20Framework-4.8-512bd4)](#build-from-source)
+[![Protocol](https://img.shields.io/badge/protocol-IEC--60870--5--101-0f766e)](#what-the-application-does)
 
-[Landing page](https://masarray.github.io/IEC101MasterTester/) | [Roadmap](ROADMAP.md) | [User manual](USER_MANUAL.md) | [Native migration notes](docs/NATIVE_CLEANROOM_MIGRATION.md) | [Pass 2 behavior parity](docs/NATIVE_CLEANROOM_PASS2.md) | [Pass 3 redundancy tuning](docs/NATIVE_CLEANROOM_PASS3.md) | [Pass 4 smart recovery](docs/NATIVE_CLEANROOM_PASS4.md)
+[Website](https://masarray.github.io/IEC101MasterTester/) · [Download](https://github.com/masarray/IEC101MasterTester/releases) · [Quick Start](docs/QUICK_START.md) · [User Manual](USER_MANUAL.md) · [FAQ](docs/FAQ.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
 
 ![IEC101 Master Tester mission control](docs/assets/screenshot/mission-control.webp)
 
-## Current Status
+## What the application does
 
-This repository now uses a **project-owned native clean-room IEC-101 communication stack** for the main tester path. The previous `lib60870.NET` vendor source tree has been removed from the source tree and from the project build.
+IEC101 Master Tester connects to an IEC 60870-5-101 slave/outstation over serial communication and makes the session visible in an engineer-friendly workspace.
 
-Current state:
+Core capabilities:
 
-- `NativeCleanRoom` is the default communication engine.
-- `NativeExperimental` remains as a compatibility enum value for older saved settings and controlled bench testing.
-- The main WPF app, NUC redundancy channels, data mapper, line monitor formatter, and simulator no longer compile against `lib60870.NET` namespaces.
-- The native stack includes FT1.2 fixed/variable frame codec, ASDU codec, IEC-101 profile handling, unbalanced master service, command encoding, GI/polling flow, line monitor integration, and protocol evidence capture.
-- The native simulator has also been migrated to project-owned IEC-101 frame/ASDU code.
+- **IEC-101 master session** for unbalanced serial communication.
+- **General Interrogation monitoring** with startup image readiness awareness.
+- **Class 1 / Class 2 polling visibility** with ACD, DFC, COT, CASDU, IOA, and quality detail.
+- **Value Viewer** for live process values.
+- **Event Log** for command, spontaneous, GI, and diagnostic events.
+- **Line Monitor** for frame-level evidence and raw protocol inspection.
+- **NUC dual-link redundancy analyzer** for active/standby link testing, switchover observation, and recovery behavior.
+- **Command workflow monitor** for single, double, regulating, and setpoint command tests.
+- **SOE buffer audit** for event replay, duplicate detection, ordering review, and minimum-capacity checks.
+- **48h availability dashboard** for long-session observation.
+- **Findings window** for suspicious protocol behavior and evidence-oriented warnings.
+- **Built-in slave simulator** for bench testing and demonstration without external equipment.
 
-Important validation note: this migration pass removes the vendor dependency at source level, but the project still needs Windows MSBuild/Visual Studio validation and bench testing against real RTU/gateway/simulator before it should be called field-stable.
+## Who should use it
 
-## What It Does
+This project is useful for:
 
-- IEC-101 serial master workflow for practical FAT and troubleshooting.
-- Operator value viewer, event journal, status history, findings, availability telemetry, and command lifecycle tracking.
-- Line Monitor with factual frame, COT, ACD, DFC, CASDU, IOA, and raw evidence visibility.
-- NUC redundancy observation with link activity, switchover, continuity, and GI observation context.
-- SOE/buffer replay audit with duplicate/FIFO/minimum-capacity checks.
-- Protocol evidence ring buffer for golden trace and native-stack validation work.
-- Lightweight UI snapshot buffering so long sessions do not retain large raw payload strings in WPF grids.
+- SCADA engineers preparing or executing FAT/SAT.
+- Substation automation engineers testing RTU/gateway IEC-101 behavior.
+- Commissioning engineers validating serial telecontrol links.
+- Protection/control engineers who need protocol evidence around indications, commands, and SOE.
+- Developers building or validating IEC-101 integrations.
+- Teams that need a lightweight Windows tool for reproducible protocol screenshots and traces.
+
+## Download
+
+The easiest way to use the application is the Windows portable release package.
+
+1. Open the [Releases](https://github.com/masarray/IEC101MasterTester/releases) page.
+2. Download `IEC101MasterTester-<version>-windows-portable.zip`.
+3. Extract the ZIP to a local folder, for example `D:\Tools\IEC101MasterTester`.
+4. Run `IEC101MasterTester.exe`.
+5. Optionally run `tools\IecSlaveSimulator\IecSlaveSimulator.exe` for a local bench test.
+
+No installer is required for the portable package.
+
+## Quick start
+
+### Test with the built-in slave simulator
+
+1. Start `IecSlaveSimulator.exe`.
+2. Configure Link A and Link B COM ports.
+3. Start the simulator runtime.
+4. Start `IEC101MasterTester.exe`.
+5. Open **NUC Redundancy** or **Single Link** mode.
+6. Configure the same serial parameters and link/CASDU profile.
+7. Start the session.
+8. Confirm that Value Viewer, Event Log, and Line Monitor begin receiving data.
+
+See [Quick Start](docs/QUICK_START.md) for the full walkthrough.
+
+### Connect to real equipment
+
+Before connecting to a real RTU, gateway, or controlled station:
+
+- Use an approved test plan.
+- Confirm the serial wiring, converter, port ownership, baud rate, parity, stop bits, link address, CASDU, IOA length, and command policy.
+- Start in monitor/verification mode before issuing commands.
+- Validate command behavior in a simulator or isolated test bay first.
+- Capture Line Monitor evidence when reporting protocol findings.
 
 ## Screenshots
 
@@ -50,79 +96,66 @@ Important validation note: this migration pass removes the vendor dependency at 
 | --- | --- |
 | ![Availability dashboard](docs/assets/screenshot/availability-dashboard.webp) | ![Findings dashboard](docs/assets/screenshot/findings-dashboard.webp) |
 
-## PLN-Oriented Defaults
+## Professional FAT, SAT, and commissioning use
 
-The default IEC-101 profile follows the working PLN/Pusertif-style baseline used in this repository:
+IEC101 Master Tester can be used as an engineering support tool for professional FAT, SAT preparation, commissioning checks, troubleshooting, and protocol evidence review.
 
-- `1200 bps`
-- `8E1`
-- link address length `2`
-- CASDU length `2`
-- IOA length `3`
-- originator address `0`
-- link address `105`
-- CASDU `105`
+Use it responsibly:
 
-## Native Clean-Room Stack
+- Treat the tool as a tester/analyzer, not as a certified control system.
+- Confirm every command workflow in a safe test boundary before live equipment use.
+- Keep exported traces and screenshots as supporting evidence, not as the only acceptance record.
+- Align acceptance criteria with the project specification, utility standard, interoperability profile, and approved test procedure.
+- For official project records, pair the tool output with signed FAT/SAT forms and site-approved test reports.
 
-The native stack lives under:
+See [Professional Use](docs/PROFESSIONAL_USE.md).
 
-- `Services/Iec101/Native/Frames`
-- `Services/Iec101/Native/Asdu`
-- `Services/Iec101/Native/Master`
-- `Services/Diagnostics/ProtocolEvidenceRecorder.cs`
-- `Services/Diagnostics/ProtocolEvidenceExportService.cs`
+## Build from source
 
-Implemented in this migration pass:
+Requirements:
 
-- FT1.2 fixed frame, variable frame, and single-character ACK handling.
-- Configurable link address, CASDU, IOA, and originator-address lengths.
-- ASDU decode/encode for key monitor and command types used by FAT workflows.
-- GI, Class 1/Class 2 polling, link-layer test, reset-link style startup, local-time clock sync, and command queue flow.
-- Pass 2 behavior parity: FCB toggles only after valid responses, DFC applies busy backoff, ACD prioritizes Class 1 polling, and command ASDUs stay out of the process Value Viewer.
-- Native mapping into existing `ValueViewerRow` and `LineMonitorRow` models.
-- Protocol evidence export path for raw TX/RX validation.
-- Native simulator response path for repeatable bench testing without vendor protocol code.
+- Windows 10/11.
+- Visual Studio 2022 or Visual Studio Build Tools with .NET desktop workload.
+- .NET Framework 4.8 developer pack.
+- NuGet.
 
-Still required before declaring field-stable:
-
-- Windows MSBuild validation.
-- Golden trace tests for FT1.2 and ASDU codec.
-- Simulator interoperability test.
-- Real RTU/gateway test covering GI, spontaneous/event retrieval, Class 1/Class 2 polling, command confirmation, select-before-operate, setpoint, and clock sync.
-- Longer NUC redundancy soak test.
-
-## Repository Guide
-
-- `ROADMAP.md` - product and native-stack validation roadmap.
-- `docs/NATIVE_CLEANROOM_MIGRATION.md` - migration notes and validation checklist.
-- `docs/NATIVE_CLEANROOM_PASS2.md` / `docs/NATIVE_CLEANROOM_PASS3.md` / `docs/NATIVE_CLEANROOM_PASS4.md` - behavior-parity, redundancy tuning, and smart recovery notes for native NUC operation.
-- `USER_MANUAL.md` - operator notes.
-- `PROJECT_STRUCTURE.md` - source map.
-- `docs/` - GitHub Pages landing page.
-- `AGENTS.md` - contributor/development rules.
-
-## Build
-
-Use MSBuild on Windows with Visual Studio Build Tools / Visual Studio Community:
+Build commands:
 
 ```powershell
-& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' IEC101MasterTester.csproj /t:Build /p:Configuration=Debug /p:UseSharedCompilation=false
+nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
+msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
+msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 ```
 
-Release build:
+See [Build from Source](docs/BUILD_FROM_SOURCE.md) for details.
 
-```powershell
-& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false
-```
+## Repository guide
+
+- `IEC101MasterTester.csproj` — main Windows WPF application.
+- `IecSlaveSimulator/` — built-in IEC-101 slave simulator for bench testing.
+- `Services/Iec101/Native/` — IEC-101 frame, ASDU, and master communication implementation.
+- `Services/Redundancy/` — NUC dual-link redundancy session controller.
+- `Services/Diagnostics/` — protocol evidence recording and export support.
+- `ViewModels/` and `Views/` — WPF presentation layer.
+- `docs/` — GitHub Pages website and user documentation.
+- `.github/workflows/` — CI build, portable release, and GitHub Pages deployment workflows.
+
+## Documentation
+
+- [Quick Start](docs/QUICK_START.md)
+- [User Manual](USER_MANUAL.md)
+- [FAQ](docs/FAQ.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Build from Source](docs/BUILD_FROM_SOURCE.md)
+- [Professional Use](docs/PROFESSIONAL_USE.md)
+- [Validation Guide](docs/VALIDATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security](SECURITY.md)
 
 ## License
 
-The repository is prepared for **Apache-2.0** after the removal of the previous GPL/commercial vendor protocol source tree. Before publishing a formal release, perform a final asset and dependency audit, especially for screenshots, icons, and any files copied from external sources.
+IEC101 Master Tester is released under the [Apache License 2.0](LICENSE).
 
-
-### Native clean-room pass 5
-
-Pass 5 adds smart startup bootstrap, application-image readiness tracking, and context-aware GI orchestration for NUC redundancy. See [`docs/NATIVE_CLEANROOM_PASS5.md`](docs/NATIVE_CLEANROOM_PASS5.md).
-
-- [Native clean-room pass 6](docs/NATIVE_CLEANROOM_PASS6.md) / [Pass 7](docs/NATIVE_CLEANROOM_PASS7.md) — startup GI and NUC active arbitration.
+Third-party package and asset notes are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

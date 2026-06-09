@@ -26,7 +26,7 @@
         <Border Grid.Row="1" Margin="0,14,0,14" Padding="14" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="10">
             <StackPanel>
                 <TextBlock FontWeight="SemiBold" Foreground="#0F172A" Text="Communication principles" />
-                <TextBlock Margin="0,8,0,0" Foreground="#334155" TextWrapping="Wrap" Text="IEC-101 communication now uses the project-owned native clean-room stack. Event Log is operator-facing SCADA journaling. Line Monitor remains the technical wire trace." />
+                <TextBlock Margin="0,8,0,0" Foreground="#334155" TextWrapping="Wrap" Text="IEC-101 communication, Event Log, and Line Monitor are designed for practical SCADA testing and protocol evidence review." />
                 <TextBlock Margin="0,14,0,0" FontWeight="SemiBold" Foreground="#0F172A" Text="Focus" />
                 <TextBlock Margin="0,8,0,0" Foreground="#334155" TextWrapping="Wrap" Text="Protocol correctness first, then stable operator workflow, then observability and UI polish." />
             </StackPanel>

@@ -1,4 +1,4 @@
 IEC101 Master Tester
 Copyright 2026 Ari Sulistiono / masarray
 
-This repository contains a project-owned native clean-room IEC-60870-5-101 implementation for testing, troubleshooting, and protocol evidence workflows.
+IEC101 Master Tester is a Windows engineering tool for IEC 60870-5-101 testing, troubleshooting, redundancy observation, and protocol evidence workflows.

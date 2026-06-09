@@ -161,11 +161,11 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 }
 
                 RaiseConnectionState(ConnectionStatusInfo.Connected);
-                RaiseLine(CreateFlowRow("Info", "Native master ready", "Class 2", "NativeCleanRoom unbalanced engine is active."));
+                RaiseLine(CreateFlowRow("Info", "Native master ready", "Class 2", "IEC-101 unbalanced master engine is active."));
 
                 if (!string.Equals(settings.LinkLayerMode, "Unbalanced", StringComparison.OrdinalIgnoreCase))
                 {
-                    RaiseLine(CreateFlowRow("Warning", "Native balanced mode not implemented", "-", "NativeCleanRoom currently behaves as an IEC-101 unbalanced master. Use Unbalanced for protocol-parity validation."));
+                    RaiseLine(CreateFlowRow("Warning", "Native balanced mode not implemented", "-", "Balanced mode is not implemented yet. Use Unbalanced for IEC-101 master testing."));
                 }
 
                 if (settings.UseGeneralInterrogationOnConnect)
@@ -746,7 +746,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
                 try
                 {
                     port.Write(request, 0, request.Length);
-                    ProtocolEvidenceRecorder.Shared.RecordRaw("NativeCleanRoom", "TX", request, request.Length, settings);
+                    ProtocolEvidenceRecorder.Shared.RecordRaw("IEC101", "TX", request, request.Length, settings);
                     RaiseLine(_lineMonitorFormatter.FromRawMessage("TX", request, request.Length, settings));
 
                     if (!expectResponse)
@@ -772,7 +772,7 @@ namespace IEC101MasterTester.Services.Iec101.Native.Master
 
         private bool ProcessReceivedFrame(byte[] frameBytes, ConnectionSettings settings)
         {
-            ProtocolEvidenceRecorder.Shared.RecordRaw("NativeCleanRoom", "RX", frameBytes, frameBytes.Length, settings);
+            ProtocolEvidenceRecorder.Shared.RecordRaw("IEC101", "RX", frameBytes, frameBytes.Length, settings);
             RaiseLine(_lineMonitorFormatter.FromRawMessage("RX", frameBytes, frameBytes.Length, settings));
 
             Iec101ApplicationProfile profile = Iec101ApplicationProfile.FromValues(settings.LinkAddressLength, settings.CasduLength, settings.IoaLength, settings.OriginatorAddress);

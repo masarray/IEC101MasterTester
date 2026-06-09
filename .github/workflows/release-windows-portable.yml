@@ -23,18 +23,15 @@ jobs:
 
       - name: Restore main app packages
         shell: pwsh
-        run: |
-          nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
+        run: nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 
       - name: Build main app Release
         shell: pwsh
-        run: |
-          msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
+        run: msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 
       - name: Build slave simulator Release
         shell: pwsh
-        run: |
-          msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
+        run: msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 
       - name: Create portable package
         shell: pwsh
@@ -48,7 +45,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path $simDir | Out-Null
           Copy-Item -Path 'bin\Release\*' -Destination $packageDir -Recurse -Force
           Copy-Item -Path 'IecSlaveSimulator\bin\Release\net48\*' -Destination $simDir -Recurse -Force
-          Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md','docs\NATIVE_CLEANROOM_PASS2.md' -Destination $packageDir -Force
+          Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md' -Destination $packageDir -Force
+          New-Item -ItemType Directory -Force -Path (Join-Path $packageDir 'docs') | Out-Null
+          Copy-Item -Path 'docs\QUICK_START.md','docs\FAQ.md','docs\TROUBLESHOOTING.md','docs\PROFESSIONAL_USE.md' -Destination (Join-Path $packageDir 'docs') -Force
           $zipPath = Join-Path $outDir "IEC101MasterTester-$version-windows-portable.zip"
           Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
           Get-FileHash $zipPath -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $zipPath -Leaf)" } | Set-Content (Join-Path $outDir "IEC101MasterTester-$version-windows-portable.sha256")

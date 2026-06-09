@@ -327,9 +327,9 @@ In real FAT and troubleshooting environments, communication issues often consume
 
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Open Source Status" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="License and Use" Style="{StaticResource SectionTitleStyle}"/>
                             <TextBlock Style="{StaticResource BodyTextStyle}">
-This project is being prepared as an open-source IEC-60870 engineering tool. Demo mode, trial counters, activation keys, hardware fingerprinting, and runtime license restrictions have been removed from the application.
+IEC101 Master Tester is an open-source engineering tool for IEC-60870-5-101 testing, troubleshooting, redundancy observation, and protocol evidence workflows.
                             </TextBlock>
 
                             <Border Margin="0,14,0,0"
@@ -338,7 +338,7 @@ This project is being prepared as an open-source IEC-60870 engineering tool. Dem
                                     BorderThickness="1"
                                     CornerRadius="10"
                                     Padding="14">
-                                <TextBlock Text="Target license: Apache-2.0 after GPL vendor code is fully removed"
+                                <TextBlock Text="License: Apache-2.0"
                                            Foreground="{StaticResource TextMain}"
                                            FontSize="13"
                                            TextWrapping="Wrap"
@@ -360,11 +360,11 @@ This project is being prepared as an open-source IEC-60870 engineering tool. Dem
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Access" Style="{StaticResource LabelMiniStyle}" />
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="Unrestricted" Style="{StaticResource ValueMiniStyle}" />
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,0,0" Text="Demo Mode" Style="{StaticResource LabelMiniStyle}" />
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="Removed" Style="{StaticResource ValueMiniStyle}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,8,0,0" Text="Usage" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="Free / open source" Style="{StaticResource ValueMiniStyle}" />
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,0,0" Text="Native Stack" Style="{StaticResource LabelMiniStyle}" />
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="In progress" Style="{StaticResource ValueMiniStyle}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,8,0,0" Text="IEC-101 Engine" Style="{StaticResource LabelMiniStyle}" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="Built-in" Style="{StaticResource ValueMiniStyle}" />
                                 </Grid>
                             </Border>
                         </StackPanel>

@@ -3089,7 +3089,7 @@ namespace IEC101MasterTester.ViewModels
             NucRedundancySettings settings;
             if (TryBuildNucRedundancySettings(out settings, out validationMessage))
             {
-                RedundancyValidationText = "Configuration ready for dual-link engine handoff.";
+                RedundancyValidationText = "Configuration ready for dual-link session.";
             }
             else
             {

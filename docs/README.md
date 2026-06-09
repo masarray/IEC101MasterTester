@@ -1,15 +1,13 @@
-# IEC101 Master Tester Landing Page
+# Documentation
 
-Static GitHub Pages site for `IEC101MasterTester`.
+Documentation for IEC101 Master Tester.
 
-Files:
+- [Quick Start](QUICK_START.md)
+- [FAQ](FAQ.md)
+- [Troubleshooting](TROUBLESHOOTING.md)
+- [Build from Source](BUILD_FROM_SOURCE.md)
+- [Professional Use](PROFESSIONAL_USE.md)
+- [Validation Guide](VALIDATION.md)
+- [Architecture](ARCHITECTURE.md)
 
-- `index.html` - landing page
-- `styles.css` - visual system
-- `script.js` - reveal animation and small interactions
-- `assets/` - product icon/profile assets
-- `NATIVE_CLEANROOM_MIGRATION.md` - native-stack migration notes
-
-The page should describe the current public product honestly: native clean-room IEC-101 stack active, vendor protocol source removed, Windows build/bench validation still required before declaring field-stable release status.
-
-- `NATIVE_CLEANROOM_PASS4.md` - smart redundancy recovery engine notes
+The website entry point is `index.html` and is published through GitHub Pages.

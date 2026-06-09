@@ -1,110 +1,140 @@
-# USER_MANUAL.md
+# IEC101 Master Tester User Manual
 
-## Purpose
+IEC101 Master Tester is a Windows desktop tool for IEC 60870-5-101 serial master testing, SCADA FAT evidence, RTU/gateway troubleshooting, SOE review, and NUC dual-link redundancy observation.
 
-Quick operator guide for the current project state.
+## Main workflow
 
-## Main Windows
+1. Open the application.
+2. Configure the serial port and IEC-101 profile.
+3. Start a single-link or dual-link redundancy session.
+4. Verify link status, Class 1/Class 2 polling, General Interrogation behavior, and application image readiness.
+5. Use Value Viewer and Event Log for operator-level review.
+6. Use Line Monitor for frame-level evidence.
+7. Export screenshots or traces when documenting a finding.
 
-### NUC Redundancy Window
+## Connection setup
 
-Primary operator shell for dual-link observation.
+Typical parameters:
 
-Use it to:
-- monitor active link and standby link
-- watch continuity gap and switchover state
-- open link trace, SOE audit, availability, and other tools
+- COM port.
+- Baud rate.
+- Data bits, parity, and stop bits.
+- Link address length.
+- Link address.
+- CASDU length.
+- CASDU value.
+- IOA length.
+- Originator address.
+- Balanced/unbalanced mode selection.
 
-### NUC Link Trace
+For most RTU and gateway test cases, confirm the exact profile from the project interoperability sheet before connecting.
 
-File:
-- `Views/NucLinkTraceWindow.xaml`
+## Value Viewer
 
-Current behavior:
-- fixed 60-second tape view
-- `Link A` and `Link B` traffic lanes
-- click chart to inspect time
-- lower grids show rows around the selected bucket/time
+Value Viewer shows the current application image received from the slave/outstation.
 
-Important current rule:
-- click inside the traffic plot only
-- click outside the graph area should do nothing
-- `Live` returns to moving live follow mode
-- click on the tape enters inspect mode and freezes the selection window
+Important columns:
 
-How to use:
-1. Open `NUC Link Trace`.
-2. Let live tape move normally.
-3. Click a spike or burst area in the traffic lane.
-4. Check `Read Position`.
-5. Verify the lower line-monitor tables now show rows from that selected bucket.
-6. Press `Live` to return to live follow mode.
+- `IOA` — information object address.
+- `Name / Label` — configured or inferred signal label.
+- `Type` — IEC-101 information type.
+- `Value` — decoded value.
+- `Quality` — decoded quality indicator when available.
+- `Slave Timestamp` — timestamp from the slave when present.
+- `COT` — cause of transmission.
+- `Class` — analyzer classification for Class 1/Class 2 handling.
 
-### Buffered Event Audit
+If Value Viewer remains empty while the link is responsive, inspect the Line Monitor and GI status. A responsive link is not the same as a complete application image.
 
-Use it to inspect:
-- replay count
-- duplicate events
-- FIFO violations
-- minimum 600-event evidence
+## Event Log
 
-### Availability Dashboard
+Event Log is the operator-facing journal. It is intended for readable SCADA-style review, such as:
 
-Use it to inspect:
-- uptime
-- reconnect count
-- longest downtime
-- throughput and protocol trend
+- initial value received;
+- spontaneous indication;
+- command transmitted;
+- command confirmed;
+- GI activity;
+- redundancy switchover;
+- timeout, no-response, or recovery condition.
 
-### Findings Window
+## Line Monitor
 
-Use it to inspect analyzer findings and rule-based verdicts.
+Line Monitor is the technical evidence window. Use it when you need to inspect:
 
-## Main Workflow
+- TX/RX direction;
+- fixed or variable frame;
+- ACD/DFC state;
+- Class 1/Class 2 request;
+- Type ID;
+- COT;
+- CASDU;
+- IOA;
+- quality;
+- raw frame details.
 
-Typical operator flow:
-1. Configure connection.
-2. Start communication.
-3. Observe event log and value viewer.
-4. Open specialized windows when needed:
-   - `NUC Link Trace` for traffic/time inspection
-   - `Buffered Event Audit` for replay/SOE investigation
-   - `Availability Dashboard` for long-run health
-   - `Findings` for analyzer verdicts
+For protocol troubleshooting, Line Monitor is usually the most important view.
 
-## Communication Baseline
+## General Interrogation
 
-Default PLN Pusertif profile used in this project:
-- `1200 bps`
-- `8E1`
-- `Link Address Length = 2`
-- `CAASDU Length = 2`
-- `IOA Length = 3`
-- `Link Address = 105`
-- `CAASDU = 105`
-- `OA = 0`
+General Interrogation is used to build or refresh the application image. The tester tracks whether data came from background scan traffic or from GI/interrogated responses.
 
-## How To Read `Class Data`
+Expected startup behavior:
 
-Important:
-- `Class Data` is not written literally inside each IOA payload.
-- it is inferred from IEC-101 delivery context.
+1. Serial port opens.
+2. Link-layer handshake becomes responsive.
+3. Active link is selected.
+4. Startup GI is sent when the application image is empty.
+5. Class 1 data is drained.
+6. Value Viewer receives digital and analog objects.
+7. Normal Class 1/Class 2 polling resumes.
 
-Practical meaning in this project:
-- response to `Class 1 request (FC10)` -> `Class 1`
-- response to `Class 2 request (FC11)` -> `Class 2`
-- `GI response` -> `Class 2` delivery path
-- `BACKGROUND_SCAN / PERIODIC` -> `Class 2`
-- `COT` remains separate and factual
+If only cyclic analog/background values appear, run GI manually and inspect the Line Monitor. This usually means the slave did not provide a complete GI response or the active/standby ownership needs review.
 
-If `MainWindow` and `NUC` disagree on `Class Data`, trust the raw line/frame context first and inspect:
-- `Line Monitor`
-- `NUC Link Trace`
-- current `COT`
-- whether traffic was `GI`, `FC10`, `FC11`, or spontaneous
+## NUC dual-link redundancy
 
-## Notes
+The NUC redundancy workspace tracks two serial links as an active/standby pair.
 
-- This project is designed for practical FAT/troubleshooting, not decorative visualization.
-- Protocol truth comes from service callbacks, not UI guesses.
-- If a trace view seems visually wrong, verify the linked line-monitor rows before trusting the picture.
+Typical behavior:
+
+- Active link performs application polling and commands.
+- Standby link remains supervised and ready.
+- If active link fails, the standby link can be promoted.
+- After switchover, the tester verifies whether the application image is still fresh or needs GI refresh.
+- The old active link should recover into standby when communication returns.
+
+Status interpretation:
+
+- `PORT OPEN` means the serial transport is open.
+- `PORT CLOSED` means the serial transport is not open.
+- `COMM RESPONSIVE` means valid protocol response was observed.
+- `COMM TIMEOUT` means the port may be open but protocol response is missing.
+- `RECOVERING` means the engine is actively probing or re-opening the link.
+- `Active` and `Standby` are roles, not proof of application image completeness.
+
+## Commands
+
+The command window supports selected IEC-101 command workflows such as single, double, regulating, and setpoint commands depending on configured signal type.
+
+Before issuing commands to real equipment:
+
+- Confirm the IOA.
+- Confirm select-before-operate policy.
+- Confirm safe operating state.
+- Confirm command feedback mapping.
+- Capture evidence in Line Monitor.
+- Use an isolated test boundary unless the site procedure explicitly authorizes live command testing.
+
+## SOE buffer audit
+
+SOE audit helps inspect replay behavior, duplicate event handling, sequence/order concerns, and buffer capacity observations.
+
+Use it as supporting evidence, not as a replacement for an approved FAT/SAT record.
+
+## Availability dashboard
+
+The availability dashboard is designed for long-session observation. It helps engineers see communication gaps, degraded periods, and session continuity over time.
+
+## Findings
+
+Findings are analyzer warnings and diagnostics. They are not final acceptance decisions. Treat them as prompts for review and confirm with Line Monitor evidence, project specification, and test procedure.
