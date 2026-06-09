@@ -17,6 +17,47 @@ Set the default branch to `main`:
 2. Open **Branches**.
 3. Confirm that **Default branch** is `main`.
 
+
+### GitHub About and topics
+
+Use these fields in the repository **About** panel so GitHub search, topic pages, and external previews describe the project consistently.
+
+**Description**
+
+```text
+IEC 60870-5-101 Windows master tester for SCADA FAT/SAT, RTU gateway testing, NUC redundancy, commands, SOE audit, and protocol traces.
+```
+
+**Website**
+
+```text
+https://masarray.github.io/IEC101MasterTester/
+```
+
+**Topics**
+
+```text
+iec60870-5-101
+iec101
+iec-101
+scada
+substation-automation
+rtu
+gateway
+protocol-analyzer
+master-tester
+serial-communication
+fat-testing
+sat-testing
+commissioning
+telecontrol
+soe
+wpf
+dotnet
+windows
+apache-2-0
+```
+
 ### GitHub Pages
 
 Use GitHub Actions as the Pages source:

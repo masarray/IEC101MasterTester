@@ -1,6 +1,8 @@
 {
   "name": "IEC101 Master Tester",
   "short_name": "IEC101 Tester",
+  "description": "Windows IEC 60870-5-101 master tester and protocol analyzer for SCADA FAT/SAT, RTU gateway testing, redundancy, commands, SOE audit, and decoded serial traces.",
+  "categories": ["developer", "utilities", "productivity"],
   "icons": [
     {
       "src": "assets/app-icon-256.png",

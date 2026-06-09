@@ -204,7 +204,8 @@
   if (!lightbox || !lightboxImage || !stage || !zoomReadout) return;
 
   const MIN_SCALE = 0.72;
-  const MAX_SCALE = 4.5;
+  const MAX_SCALE_DEFAULT = 3.2;
+  let maxScale = MAX_SCALE_DEFAULT;
   let scale = 1;
   let translateX = 0;
   let translateY = 0;
@@ -229,7 +230,25 @@
     zoomReadout.textContent = `${Math.round(scale * 100)}%`;
   };
 
+  const getFitSize = () => {
+    const rect = stage.getBoundingClientRect();
+    const maxW = Math.max(240, rect.width - 48);
+    const maxH = Math.max(220, rect.height - 48);
+    const naturalW = lightboxImage.naturalWidth || maxW;
+    const naturalH = lightboxImage.naturalHeight || maxH;
+    const ratio = Math.min(maxW / naturalW, maxH / naturalH, 1);
+    return { width: naturalW * ratio, height: naturalH * ratio };
+  };
+
+  const refreshNativeZoomLimit = () => {
+    const fit = getFitSize();
+    const nativeRatio = fit.width > 0 ? (lightboxImage.naturalWidth || fit.width) / fit.width : MAX_SCALE_DEFAULT;
+    // Cap zoom close to source-pixel detail. Going far beyond this only magnifies pixels and looks blurry.
+    maxScale = clamp(nativeRatio * 1.08, 1.8, MAX_SCALE_DEFAULT);
+  };
+
   const resetView = () => {
+    refreshNativeZoomLimit();
     scale = 1;
     translateX = 0;
     translateY = 0;
@@ -241,7 +260,7 @@
     const rect = stage.getBoundingClientRect();
     const focusX = clientX - rect.left - rect.width / 2;
     const focusY = clientY - rect.top - rect.height / 2;
-    scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+    scale = clamp(nextScale, MIN_SCALE, maxScale);
     const ratio = scale / oldScale;
     translateX = focusX - (focusX - translateX) * ratio;
     translateY = focusY - (focusY - translateY) * ratio;
@@ -256,12 +275,28 @@
     lightboxImage.src = src;
     lightboxImage.alt = `${title} screenshot preview`;
     if (lightboxTitle) lightboxTitle.textContent = title;
-    resetView();
     lightbox.classList.add("is-open");
     lightbox.setAttribute("aria-hidden", "false");
     document.body.classList.add("lightbox-open");
-    window.requestAnimationFrame(() => stage.focus({ preventScroll: true }));
+    const afterImageReady = () => {
+      resetView();
+      window.requestAnimationFrame(() => stage.focus({ preventScroll: true }));
+    };
+    if (lightboxImage.decode) {
+      lightboxImage.decode().then(afterImageReady).catch(afterImageReady);
+    } else {
+      lightboxImage.onload = afterImageReady;
+      afterImageReady();
+    }
   };
+
+
+  window.addEventListener("resize", () => {
+    if (!lightbox.classList.contains("is-open")) return;
+    refreshNativeZoomLimit();
+    scale = clamp(scale, MIN_SCALE, maxScale);
+    applyTransform();
+  });
 
   const closeLightbox = () => {
     lightbox.classList.remove("is-open");

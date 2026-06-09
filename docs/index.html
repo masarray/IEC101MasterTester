@@ -3,8 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>IEC101 Master Tester for SCADA FAT, SAT & Redundancy Testing</title>
-    <meta name="description" content="Windows IEC 60870-5-101 master tester for SCADA FAT evidence, SAT preparation, RTU and gateway troubleshooting, NUC redundancy observation, SOE audit, commands, and protocol traces." />
+    <title>IEC 60870-5-101 Master Tester for SCADA FAT, SAT, RTU & Redundancy Testing</title>
+    <meta name="description" content="IEC101 Master Tester is a Windows IEC 60870-5-101 master tester and protocol analyzer for SCADA FAT/SAT, RTU gateway testing, NUC redundancy, commands, SOE audit, and decoded serial traces." />
+    <meta name="keywords" content="IEC 60870-5-101, IEC101, IEC-101, SCADA, RTU, gateway, master tester, protocol analyzer, FAT testing, SAT testing, commissioning, serial communication, telecontrol, SOE, NUC redundancy, WPF, Windows" />
+    <meta name="application-name" content="IEC101 Master Tester" />
     <meta name="author" content="MasArray" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#0b1a25" />
@@ -21,24 +23,26 @@
     <script src="script.js" defer></script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="IEC101 Master Tester" />
-    <meta property="og:title" content="IEC101 Master Tester for SCADA FAT Evidence" />
-    <meta property="og:description" content="A Windows IEC 60870-5-101 master tester for FAT/SAT, redundancy observation, commands, SOE audit, and protocol evidence." />
+    <meta property="og:title" content="IEC 60870-5-101 Master Tester for SCADA FAT/SAT" />
+    <meta property="og:description" content="Windows IEC101 master tester and protocol analyzer for SCADA FAT/SAT, RTU gateway testing, NUC redundancy, commands, SOE audit, and decoded serial traces." />
     <meta property="og:url" content="https://masarray.github.io/IEC101MasterTester/" />
     <meta property="og:image" content="https://masarray.github.io/IEC101MasterTester/assets/screenshot/mission-control.webp" />
+    <meta property="og:image:alt" content="IEC101 Master Tester Windows desktop protocol analyzer mission control screenshot" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="IEC101 Master Tester" />
-    <meta name="twitter:description" content="Windows IEC-101 master tester for SCADA FAT, SAT, redundancy observation, and protocol evidence." />
+    <meta name="twitter:title" content="IEC101 Master Tester for SCADA FAT/SAT" />
+    <meta name="twitter:description" content="Windows IEC 60870-5-101 master tester for SCADA FAT/SAT, RTU gateway testing, commands, redundancy, SOE audit, and protocol traces." />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "IEC101 Master Tester",
-        "description": "Windows IEC 60870-5-101 master tester for SCADA FAT evidence, SAT preparation, RTU and gateway troubleshooting, redundancy observation, SOE audit, commands, and protocol traces.",
+        "description": "Windows IEC 60870-5-101 master tester and protocol analyzer for SCADA FAT/SAT, RTU gateway testing, NUC redundancy observation, command verification, SOE audit, and decoded serial traces.",
         "url": "https://masarray.github.io/IEC101MasterTester/",
         "codeRepository": "https://github.com/masarray/IEC101MasterTester",
         "operatingSystem": "Windows",
         "applicationCategory": "DeveloperApplication",
         "softwareRequirements": "Windows, .NET Framework 4.8",
+        "keywords": "IEC 60870-5-101, IEC101, IEC-101, SCADA, RTU, gateway, master tester, protocol analyzer, FAT testing, SAT testing, commissioning, telecontrol, SOE, redundancy",
         "license": "https://www.apache.org/licenses/LICENSE-2.0",
         "author": { "@type": "Organization", "name": "MasArray", "url": "https://github.com/masarray" }
       }
@@ -72,9 +76,9 @@
       <main id="top">
         <section class="hero" aria-label="Product introduction">
           <div class="hero-copy reveal">
-            <p class="eyebrow">IEC 60870-5-101 · Serial master · Redundancy testing</p>
+            <p class="eyebrow">IEC 60870-5-101 · IEC101 serial master · SCADA evidence</p>
             <h1>Make IEC-101 testing readable, repeatable, and evidence-ready.</h1>
-            <p class="lead">A Windows desktop master tester for engineers who need to verify General Interrogation, Class 1/Class 2 polling, command feedback, SOE replay, and active/standby link behavior with protocol evidence visible on screen.</p>
+            <p class="lead">A Windows desktop IEC101 master tester and protocol analyzer for engineers who need to verify General Interrogation, Class 1/Class 2 polling, command feedback, SOE replay, RTU/gateway behavior, and active/standby link evidence on screen.</p>
             <div class="hero-actions">
               <a class="button primary shine" href="https://github.com/masarray/IEC101MasterTester/releases">Download Windows portable</a>
               <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/main/docs/QUICK_START.md">Read quick start</a>
@@ -93,7 +97,7 @@
               <span>Mission Control Preview</span>
               <strong>Windows · Apache-2.0</strong>
             </div>
-            <button class="screen-frame featured-screen screenshot-trigger" type="button" data-full="assets/screenshot/mission-control.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
+            <button class="screen-frame featured-screen screenshot-trigger" type="button" data-full="assets/screenshot/full/mission-control@2x.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
               <img src="assets/screenshot/mission-control.webp" width="1917" height="1002" alt="IEC101 Master Tester mission control screenshot" decoding="async" />
               <span class="screen-zoom-cue">Inspect fullscreen</span>
             </button>
@@ -168,7 +172,7 @@
               <li>Capture redundancy behavior without hiding the link state.</li>
             </ul>
           </div>
-          <button class="evidence-shot screenshot-trigger reveal delay-1" type="button" data-full="assets/screenshot/nuc-redundancy.webp" data-title="NUC Redundancy" aria-label="Open NUC Redundancy screenshot preview">
+          <button class="evidence-shot screenshot-trigger reveal delay-1" type="button" data-full="assets/screenshot/full/nuc-redundancy@2x.webp" data-title="NUC Redundancy" aria-label="Open NUC Redundancy screenshot preview">
             <img src="assets/screenshot/nuc-redundancy.webp" alt="NUC redundancy screenshot" loading="lazy" />
             <span class="screen-zoom-cue">Inspect fullscreen</span>
           </button>
@@ -182,35 +186,35 @@
           </div>
           <div class="screen-grid">
             <figure class="screen-card screen-card-large reveal">
-              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/mission-control.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/full/mission-control@2x.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
                 <img src="assets/screenshot/mission-control.webp" alt="Mission control screenshot" loading="lazy" />
                 <span class="screen-zoom-cue">Preview</span>
               </button>
               <figcaption><strong>Mission Control</strong><span>Values, events, commands, and trace in one operational view.</span></figcaption>
             </figure>
             <figure class="screen-card reveal delay-1">
-              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/line-monitor.webp" data-title="Line Monitor" aria-label="Open Line Monitor screenshot preview">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/full/line-monitor@2x.webp" data-title="Line Monitor" aria-label="Open Line Monitor screenshot preview">
                 <img src="assets/screenshot/line-monitor.webp" alt="Line monitor screenshot" loading="lazy" />
                 <span class="screen-zoom-cue">Preview</span>
               </button>
               <figcaption><strong>Line Monitor</strong><span>Frame-level evidence and decoded protocol facts.</span></figcaption>
             </figure>
             <figure class="screen-card reveal delay-2">
-              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/soe-buffer-audit.webp" data-title="SOE Buffer Audit" aria-label="Open SOE Buffer Audit screenshot preview">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/full/soe-buffer-audit@2x.webp" data-title="SOE Buffer Audit" aria-label="Open SOE Buffer Audit screenshot preview">
                 <img src="assets/screenshot/soe-buffer-audit.webp" alt="SOE buffer audit screenshot" loading="lazy" />
                 <span class="screen-zoom-cue">Preview</span>
               </button>
               <figcaption><strong>SOE Buffer Audit</strong><span>Replay and review event behavior from the tester workspace.</span></figcaption>
             </figure>
             <figure class="screen-card reveal delay-3">
-              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/availability-dashboard.webp" data-title="Availability Dashboard" aria-label="Open Availability Dashboard screenshot preview">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/full/availability-dashboard@2x.webp" data-title="Availability Dashboard" aria-label="Open Availability Dashboard screenshot preview">
                 <img src="assets/screenshot/availability-dashboard.webp" alt="Availability dashboard screenshot" loading="lazy" />
                 <span class="screen-zoom-cue">Preview</span>
               </button>
               <figcaption><strong>48h Availability</strong><span>Support long-duration communication observation.</span></figcaption>
             </figure>
             <figure class="screen-card reveal delay-1">
-              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/findings-dashboard.webp" data-title="Findings Dashboard" aria-label="Open Findings Dashboard screenshot preview">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/full/findings-dashboard@2x.webp" data-title="Findings Dashboard" aria-label="Open Findings Dashboard screenshot preview">
                 <img src="assets/screenshot/findings-dashboard.webp" alt="Findings dashboard screenshot" loading="lazy" />
                 <span class="screen-zoom-cue">Preview</span>
               </button>

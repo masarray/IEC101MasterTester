@@ -718,6 +718,8 @@ body.lightbox-open { overflow: hidden; }
   user-select: none;
   transform-origin: center center;
   will-change: transform;
+  backface-visibility: hidden;
+  image-rendering: auto;
   border-radius: 14px;
   box-shadow: 0 30px 100px rgba(0,0,0,.46);
 }

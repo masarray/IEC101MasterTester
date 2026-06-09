@@ -1,8 +1,8 @@
-# IEC101 Master Tester
+# IEC101 Master Tester — IEC 60870-5-101 SCADA Master Tester
 
-Windows desktop master tester and analyzer for **IEC 60870-5-101** serial communication workflows.
+**IEC101 Master Tester** is a Windows desktop **IEC 60870-5-101 master tester, protocol analyzer, and FAT/SAT evidence workspace** for serial SCADA communication.
 
-It is designed for engineers who need a practical tool for SCADA FAT, SAT preparation, gateway testing, RTU troubleshooting, NUC dual-link redundancy observation, command verification, SOE audit, and protocol evidence capture.
+It helps SCADA, substation automation, commissioning, and RTU/gateway engineers verify **General Interrogation**, **Class 1 / Class 2 polling**, command feedback, SOE replay, NUC dual-link redundancy behavior, and decoded protocol traces in one practical Windows tool.
 
 [![Windows Build](https://github.com/masarray/IEC101MasterTester/actions/workflows/windows-build.yml/badge.svg)](https://github.com/masarray/IEC101MasterTester/actions/workflows/windows-build.yml)
 [![Release](https://img.shields.io/github/v/release/masarray/IEC101MasterTester?display_name=tag)](https://github.com/masarray/IEC101MasterTester/releases)
@@ -17,7 +17,7 @@ It is designed for engineers who need a practical tool for SCADA FAT, SAT prepar
 
 ## What the application does
 
-IEC101 Master Tester connects to an IEC 60870-5-101 slave/outstation over serial communication and makes the session visible in an engineer-friendly workspace.
+IEC101 Master Tester connects to an **IEC 60870-5-101 slave, controlled station, outstation, RTU, or gateway** over serial communication and makes the protocol session visible in an engineer-friendly workspace. It is built for practical IEC-101 testing where engineers need readable values, decoded frames, command feedback, redundancy evidence, and repeatable screenshots for review.
 
 Core capabilities:
 
@@ -34,15 +34,27 @@ Core capabilities:
 - **Findings window** for suspicious protocol behavior and evidence-oriented warnings.
 - **Built-in slave simulator** for bench testing and demonstration without external equipment.
 
+## Common use cases
+
+Use IEC101 Master Tester when you need to:
+
+- Test an **IEC 60870-5-101 master/slave serial link** during SCADA FAT or SAT preparation.
+- Validate RTU, gateway, protection interface, or controlled-station behavior before site work.
+- Confirm **General Interrogation** response, startup image readiness, and missing point behavior.
+- Observe **Class 1 events**, **Class 2 background/cyclic data**, ACD, DFC, COT, CASDU, IOA, and quality flags.
+- Verify single command, double command, regulating command, setpoint command, and feedback response.
+- Review NUC-style active/standby link behavior, switchover evidence, and recovery after link interruption.
+- Capture screenshots and traces for protocol troubleshooting reports, punch-list discussion, or internal engineering review.
+
 ## Who should use it
 
 This project is useful for:
 
-- SCADA engineers preparing or executing FAT/SAT.
-- Substation automation engineers testing RTU/gateway IEC-101 behavior.
-- Commissioning engineers validating serial telecontrol links.
-- Protection/control engineers who need protocol evidence around indications, commands, and SOE.
-- Developers building or validating IEC-101 integrations.
+- SCADA engineers preparing or executing FAT, SAT, integration tests, or troubleshooting sessions.
+- Substation automation engineers testing IEC-101 RTU, gateway, and controlled-station behavior.
+- Commissioning engineers validating serial telecontrol links and command response.
+- Protection/control engineers who need protocol evidence around indications, commands, SOE, and link redundancy.
+- Developers building or validating IEC-101 integrations, simulators, gateways, or test benches.
 - Teams that need a lightweight Windows tool for reproducible protocol screenshots and traces.
 
 ## Download
@@ -150,6 +162,14 @@ See [Repository Setup](docs/REPOSITORY_SETUP.md) for the exact GitHub settings a
 - `ViewModels/` and `Views/` — WPF presentation layer.
 - `docs/` — GitHub Pages website and user documentation.
 - `.github/workflows/` — CI build, portable release, and GitHub Pages deployment workflows.
+
+## GitHub repository metadata
+
+Recommended repository metadata for discoverability:
+
+- **Description:** `IEC 60870-5-101 Windows master tester for SCADA FAT/SAT, RTU gateway testing, NUC redundancy, commands, SOE audit, and protocol traces.`
+- **Website:** `https://masarray.github.io/IEC101MasterTester/`
+- **Topics:** `iec60870-5-101`, `iec101`, `iec-101`, `scada`, `substation-automation`, `rtu`, `gateway`, `protocol-analyzer`, `master-tester`, `serial-communication`, `fat-testing`, `sat-testing`, `commissioning`, `telecontrol`, `soe`, `wpf`, `dotnet`, `windows`, `apache-2-0`
 
 ## Documentation
 
