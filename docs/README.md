@@ -9,5 +9,6 @@ Documentation for IEC101 Master Tester.
 - [Professional Use](PROFESSIONAL_USE.md)
 - [Validation Guide](VALIDATION.md)
 - [Architecture](ARCHITECTURE.md)
+- [Repository Setup](REPOSITORY_SETUP.md)
 
 The website entry point is `index.html` and is published through GitHub Pages.

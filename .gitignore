@@ -1,21 +1,30 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
-
-/.dotnet
-/.dotnet-cli/.dotnet
-/.dotnet-home/.dotnet
-/.vs
-/bin
+# Visual Studio / .NET build output
+.vs/
+bin/
+obj/
+packages/
+artifacts/
+TestResults/
+.vstest/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-/IecSlaveSimulator/obj/x64/Debug/net48
-/IecSlaveSimulator/obj/Release/net48
-/obj
-/packages
-/IecSlaveSimulator/bin/x64/Debug/net48
-/IecSlaveSimulator/bin
-/IecSlaveSimulator/obj
-/DocTestReference
+
+# Local tools / temporary SDK folders
+.dotnet/
+.dotnet-cli/
+.dotnet-home/
+
+# Simulator build output
+IecSlaveSimulator/bin/
+IecSlaveSimulator/obj/
+
+# Documentation scratch output
+DocTestReference/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.log

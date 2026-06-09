@@ -2,9 +2,9 @@
 
 IEC101 Master Tester is an engineering test tool for IEC 60870-5-101 serial communication workflows.
 
-## Supported versions
+## Supported version
 
-Security and stability fixes target the current `main` branch unless a formal release branch is created.
+Security and stability fixes target the current `main` branch and the latest published release package.
 
 ## Reporting issues
 

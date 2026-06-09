@@ -129,6 +129,17 @@ msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Config
 
 See [Build from Source](docs/BUILD_FROM_SOURCE.md) for details.
 
+
+## GitHub automation
+
+The repository is prepared for a clean `main`-only workflow:
+
+- `Windows Build` runs on pushes and pull requests targeting `main`.
+- `Deploy GitHub Pages` publishes the `docs/` website using GitHub Actions. No separate Pages branch is required.
+- `Release Windows Portable` creates a portable ZIP and SHA256 checksum when a version tag such as `v0.1.0` is pushed.
+
+See [Repository Setup](docs/REPOSITORY_SETUP.md) for the exact GitHub settings and commands.
+
 ## Repository guide
 
 - `IEC101MasterTester.csproj` — main Windows WPF application.
@@ -150,6 +161,7 @@ See [Build from Source](docs/BUILD_FROM_SOURCE.md) for details.
 - [Professional Use](docs/PROFESSIONAL_USE.md)
 - [Validation Guide](docs/VALIDATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Repository Setup](docs/REPOSITORY_SETUP.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)

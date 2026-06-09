@@ -1,0 +1,19 @@
+# Normalize repository text files for clean cross-platform diffs
+* text=auto
+
+# Keep Windows project files readable in Visual Studio
+*.sln text eol=crlf
+*.csproj text eol=crlf
+*.xaml text eol=crlf
+*.cs text eol=crlf
+*.config text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
