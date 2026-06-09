@@ -44,6 +44,8 @@ $sim = Join-Path $package 'tools\IecSlaveSimulator'
 New-Item -ItemType Directory -Force -Path $package,$sim | Out-Null
 Copy-Item 'bin\Release\*' $package -Recurse -Force
 Copy-Item 'IecSlaveSimulator\bin\Release\net48\*' $sim -Recurse -Force
+Remove-Item (Join-Path $package '*.pdb') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $sim '*.pdb') -Force -ErrorAction SilentlyContinue
 Copy-Item 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md' $package -Force
 ```
 

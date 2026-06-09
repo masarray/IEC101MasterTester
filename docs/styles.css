@@ -965,7 +965,7 @@ summary:hover { color: var(--teal-2); }
   font-weight: 780;
   letter-spacing: .08em;
 }
-.download-mark img { margin: 0 5px 0 15px; border-radius: 12px; }
+.download-mark img { margin: 0 5px 0 15px; border-radius: 4px; }
 .footer-brand {
   display: inline-flex;
   align-items: center;
