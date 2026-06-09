@@ -117,12 +117,12 @@ Requirements:
 - Windows 10/11.
 - Visual Studio 2022 or Visual Studio Build Tools with .NET desktop workload.
 - .NET Framework 4.8 developer pack.
-- NuGet.
+
+The main application uses framework assemblies only; no project package restore is required.
 
 Build commands:
 
 ```powershell
-nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 msbuild IEC101MasterTester.csproj /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:UseSharedCompilation=false /m
 ```
@@ -162,6 +162,7 @@ See [Repository Setup](docs/REPOSITORY_SETUP.md) for the exact GitHub settings a
 - [Validation Guide](docs/VALIDATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Repository Setup](docs/REPOSITORY_SETUP.md)
+- [Release Checklist](docs/RELEASE_CHECKLIST.md)
 - [Roadmap](ROADMAP.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
@@ -170,4 +171,4 @@ See [Repository Setup](docs/REPOSITORY_SETUP.md) for the exact GitHub settings a
 
 IEC101 Master Tester is released under the [Apache License 2.0](LICENSE).
 
-Third-party package and asset notes are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Third-party notices are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

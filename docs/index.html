@@ -7,10 +7,16 @@
     <meta name="description" content="Windows IEC 60870-5-101 master tester for SCADA FAT evidence, SAT preparation, RTU and gateway troubleshooting, NUC redundancy observation, SOE audit, commands, and protocol traces." />
     <meta name="author" content="MasArray" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#0f766e" />
+    <meta name="theme-color" content="#0b1a25" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="canonical" href="https://masarray.github.io/IEC101MasterTester/" />
-    <link rel="icon" href="assets/iec60870-icon.png" />
-    <link rel="apple-touch-icon" href="assets/iec60870-icon.png" />
+    <link rel="icon" href="assets/app.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="assets/app-icon-256.png" />
+    <link rel="apple-touch-icon" href="assets/app-icon-180.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="preload" href="assets/screenshot/mission-control.webp" as="image" />
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
     <meta property="og:type" content="website" />
@@ -39,96 +45,256 @@
     </script>
   </head>
   <body>
-    <header class="site-header">
-      <a class="brand" href="#top" aria-label="IEC101 Master Tester">
-        <img src="assets/iec60870-icon.png" width="44" height="44" alt="" />
-        <span><strong>IEC101 Master Tester</strong><small>SCADA FAT evidence workspace</small></span>
-      </a>
-      <nav class="nav-links" aria-label="Main navigation">
-        <a href="#features">Features</a>
-        <a href="#workflow">Workflow</a>
-        <a href="#screens">Screens</a>
-        <a href="#faq">FAQ</a>
-        <a href="#download">Download</a>
-      </nav>
-    </header>
+    <div class="ambient-waves" aria-hidden="true">
+      <canvas id="liquidWaveCanvas" class="liquid-wave-canvas"></canvas>
+    </div>
 
-    <main id="top">
-      <section class="hero">
-        <div class="hero-copy reveal">
-          <p class="eyebrow">IEC 60870-5-101 · SCADA FAT · SAT preparation · NUC redundancy</p>
-          <h1>IEC101 testing with visible protocol evidence.</h1>
-          <p class="lead">A Windows desktop master tester for engineers who need to verify serial IEC-101 communication, General Interrogation, Class 1/Class 2 polling, command feedback, SOE replay, and active/standby link behavior without hiding the protocol facts.</p>
-          <div class="hero-actions">
-            <a class="button primary" href="https://github.com/masarray/IEC101MasterTester/releases">Download Windows portable</a>
-            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester">View on GitHub</a>
+
+    <div class="page-shell">
+      <header class="site-header" aria-label="Site header">
+        <a class="brand" href="#top" aria-label="IEC101 Master Tester home">
+          <img src="assets/app-icon-256.png" width="42" height="42" alt="" />
+          <span>
+            <strong>IEC101 Master Tester</strong>
+            <small>SCADA evidence workspace</small>
+          </span>
+        </a>
+        <nav class="nav-links" aria-label="Main navigation">
+          <a href="#features">Features</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#screens">Screens</a>
+          <a href="#professional-use">FAT/SAT</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <a class="header-cta" href="https://github.com/masarray/IEC101MasterTester/releases">Download</a>
+      </header>
+
+      <main id="top">
+        <section class="hero" aria-label="Product introduction">
+          <div class="hero-copy reveal">
+            <p class="eyebrow">IEC 60870-5-101 · Serial master · Redundancy testing</p>
+            <h1>Make IEC-101 testing readable, repeatable, and evidence-ready.</h1>
+            <p class="lead">A Windows desktop master tester for engineers who need to verify General Interrogation, Class 1/Class 2 polling, command feedback, SOE replay, and active/standby link behavior with protocol evidence visible on screen.</p>
+            <div class="hero-actions">
+              <a class="button primary shine" href="https://github.com/masarray/IEC101MasterTester/releases">Download Windows portable</a>
+              <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/main/docs/QUICK_START.md">Read quick start</a>
+            </div>
+            <div class="signal-strip" aria-label="Application capabilities">
+              <span>GI verification</span>
+              <span>Class 1 / Class 2</span>
+              <span>Command lifecycle</span>
+              <span>SOE evidence</span>
+            </div>
           </div>
-          <div class="trust-strip" aria-label="Core capabilities">
-            <span>Value Viewer</span><span>Line Monitor</span><span>Command monitor</span><span>SOE audit</span><span>NUC redundancy</span>
+
+          <div class="hero-visual reveal delay-1">
+            <div class="visual-topline">
+              <span class="status-dot"></span>
+              <span>Mission Control Preview</span>
+              <strong>Windows · Apache-2.0</strong>
+            </div>
+            <button class="screen-frame featured-screen screenshot-trigger" type="button" data-full="assets/screenshot/mission-control.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
+              <img src="assets/screenshot/mission-control.webp" width="1917" height="1002" alt="IEC101 Master Tester mission control screenshot" decoding="async" />
+              <span class="screen-zoom-cue">Inspect fullscreen</span>
+            </button>
+            <div class="hero-proof-grid" aria-label="Quick product facts">
+              <div><span>Mode</span><strong>Single / dual link</strong></div>
+              <div><span>Evidence</span><strong>Decoded line trace</strong></div>
+              <div><span>Use case</span><strong>FAT · SAT · debug</strong></div>
+            </div>
           </div>
-        </div>
-        <aside class="hero-panel reveal delay-1" aria-label="Application preview">
-          <div class="panel-header">
-            <img src="assets/iec60870-icon.png" width="72" height="72" alt="" />
-            <div><span class="live-pill">Windows · Apache-2.0</span><h2>Portable engineering tool</h2></div>
+        </section>
+
+        <section class="proof-band" aria-label="Core proof points">
+          <div class="proof-item"><span>01</span><strong>Interrogate</strong><em>Build the application image from the slave response.</em></div>
+          <div class="proof-item"><span>02</span><strong>Observe</strong><em>See ACD, DFC, COT, IOA, quality, and decoded ASDU detail.</em></div>
+          <div class="proof-item"><span>03</span><strong>Operate</strong><em>Track command issue, confirmation, timeout, and feedback.</em></div>
+          <div class="proof-item"><span>04</span><strong>Validate</strong><em>Review redundancy switchover and SOE replay behavior.</em></div>
+        </section>
+
+        <section class="section section-intro" id="features">
+          <div class="section-heading reveal">
+            <p class="eyebrow">Built for practical engineering</p>
+            <h2>One workspace for values, events, commands, and protocol truth.</h2>
+            <p>IEC101 Master Tester is designed for bench testing and commissioning preparation where engineers need to know not only that a value changed, but which frame, cause, class, quality, and response path produced it.</p>
           </div>
-          <div class="screen-frame featured-screen"><img src="assets/screenshot/mission-control.webp" width="1917" height="1002" alt="IEC101 Master Tester mission control screenshot" decoding="async" /></div>
-          <div class="metric-row"><div><span>Profile</span><strong>IEC-101</strong></div><div><span>Mode</span><strong>Serial master</strong></div><div><span>Use</span><strong>FAT/SAT</strong></div></div>
-        </aside>
-      </section>
+          <div class="feature-matrix">
+            <article class="feature-card reveal">
+              <div class="feature-icon">GI</div>
+              <h3>Application image confidence</h3>
+              <p>Check whether the session has received useful application data, not just link-layer acknowledgements or background traffic.</p>
+            </article>
+            <article class="feature-card reveal delay-1">
+              <div class="feature-icon">RX</div>
+              <h3>Decoded line monitor</h3>
+              <p>Inspect request and response direction, frame type, ACD, DFC, COT, CASDU, IOA, and quality in one readable trace.</p>
+            </article>
+            <article class="feature-card reveal delay-2">
+              <div class="feature-icon">DO</div>
+              <h3>Command lifecycle</h3>
+              <p>Follow select, execute, direct operate, confirmation, timeout, and feedback value changes without guessing from raw serial traffic.</p>
+            </article>
+            <article class="feature-card reveal delay-3">
+              <div class="feature-icon">AB</div>
+              <h3>Dual-link redundancy</h3>
+              <p>Observe active/standby links, switchover state, recovery, communication health, and post-switch application behavior.</p>
+            </article>
+          </div>
+        </section>
 
-      <section class="ticker" aria-label="Workflow highlights"><div class="ticker-track">
-        <span>General Interrogation</span><span>Class 1 / Class 2 polling</span><span>ACD and DFC visibility</span><span>Command lifecycle</span><span>SOE replay audit</span><span>Redundancy switchover</span><span>Protocol evidence</span><span>Built-in simulator</span>
-        <span>General Interrogation</span><span>Class 1 / Class 2 polling</span><span>ACD and DFC visibility</span><span>Command lifecycle</span><span>SOE replay audit</span><span>Redundancy switchover</span><span>Protocol evidence</span><span>Built-in simulator</span>
-      </div></section>
+        <section class="section workflow-section" id="workflow">
+          <div class="section-heading reveal">
+            <p class="eyebrow">Test flow</p>
+            <h2>From serial connection to evidence package.</h2>
+          </div>
+          <div class="timeline reveal delay-1" aria-label="IEC101 tester workflow">
+            <div class="timeline-step"><span>1</span><h3>Configure</h3><p>Select COM port, baud rate, link address, ASDU address, and operating mode.</p></div>
+            <div class="timeline-step"><span>2</span><h3>Start</h3><p>Open single-link or dual-link workspace and verify link-layer responsiveness.</p></div>
+            <div class="timeline-step"><span>3</span><h3>Interrogate</h3><p>Run General Interrogation and confirm returned values, causes, classes, and quality.</p></div>
+            <div class="timeline-step"><span>4</span><h3>Operate</h3><p>Send commands and confirm the response path from issue to feedback value.</p></div>
+            <div class="timeline-step"><span>5</span><h3>Review</h3><p>Inspect trace, SOE replay, findings, availability, and redundancy continuity evidence.</p></div>
+          </div>
+        </section>
 
-      <section class="section" id="features">
-        <div class="section-heading reveal"><p class="eyebrow">What it solves</p><h2>Built for real test benches, not protocol slides.</h2><p>IEC101 Master Tester keeps operator views and protocol evidence side by side, so engineers can see what the slave returned, what the master requested, and what should be documented.</p></div>
-        <div class="value-grid">
-          <article class="value-card reveal"><span class="value-index">01</span><h3>Startup image review</h3><p>Observe GI, application image readiness, and whether the session is receiving complete data or only background traffic.</p></article>
-          <article class="value-card reveal delay-1"><span class="value-index">02</span><h3>Protocol trace clarity</h3><p>Inspect direction, frame type, ACD, DFC, COT, CASDU, IOA, quality, and decoded detail in the Line Monitor.</p></article>
-          <article class="value-card reveal delay-2"><span class="value-index">03</span><h3>Command confidence</h3><p>Track command transmit, confirmation, timeout, and feedback value changes in one practical workflow.</p></article>
-          <article class="value-card reveal delay-3"><span class="value-index">04</span><h3>NUC redundancy</h3><p>Test active/standby links, switchover, recovery, post-switch GI behavior, and continuity evidence.</p></article>
+        <section class="section evidence-section" aria-label="Evidence views">
+          <div class="evidence-copy reveal">
+            <p class="eyebrow">Evidence-first interface</p>
+            <h2>Designed so engineers can defend what they saw.</h2>
+            <p>Every major window is meant to reduce ambiguity during FAT, SAT preparation, or troubleshooting: visible values, visible events, visible command state, and visible protocol trace.</p>
+            <ul class="check-list">
+              <li>Confirm if the slave returns a complete startup image.</li>
+              <li>Separate Class 1 events from Class 2 background traffic.</li>
+              <li>Show command status and feedback in the same working context.</li>
+              <li>Capture redundancy behavior without hiding the link state.</li>
+            </ul>
+          </div>
+          <button class="evidence-shot screenshot-trigger reveal delay-1" type="button" data-full="assets/screenshot/nuc-redundancy.webp" data-title="NUC Redundancy" aria-label="Open NUC Redundancy screenshot preview">
+            <img src="assets/screenshot/nuc-redundancy.webp" alt="NUC redundancy screenshot" loading="lazy" />
+            <span class="screen-zoom-cue">Inspect fullscreen</span>
+          </button>
+        </section>
+
+        <section class="section" id="screens">
+          <div class="section-heading reveal">
+            <p class="eyebrow">Screenshots</p>
+            <h2>Click, zoom, and inspect the workspace details.</h2>
+            <p>The preview viewer supports fullscreen overlay, wheel zoom, pinch zoom, drag-to-pan, reset, and Esc close.</p>
+          </div>
+          <div class="screen-grid">
+            <figure class="screen-card screen-card-large reveal">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/mission-control.webp" data-title="Mission Control" aria-label="Open Mission Control screenshot preview">
+                <img src="assets/screenshot/mission-control.webp" alt="Mission control screenshot" loading="lazy" />
+                <span class="screen-zoom-cue">Preview</span>
+              </button>
+              <figcaption><strong>Mission Control</strong><span>Values, events, commands, and trace in one operational view.</span></figcaption>
+            </figure>
+            <figure class="screen-card reveal delay-1">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/line-monitor.webp" data-title="Line Monitor" aria-label="Open Line Monitor screenshot preview">
+                <img src="assets/screenshot/line-monitor.webp" alt="Line monitor screenshot" loading="lazy" />
+                <span class="screen-zoom-cue">Preview</span>
+              </button>
+              <figcaption><strong>Line Monitor</strong><span>Frame-level evidence and decoded protocol facts.</span></figcaption>
+            </figure>
+            <figure class="screen-card reveal delay-2">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/soe-buffer-audit.webp" data-title="SOE Buffer Audit" aria-label="Open SOE Buffer Audit screenshot preview">
+                <img src="assets/screenshot/soe-buffer-audit.webp" alt="SOE buffer audit screenshot" loading="lazy" />
+                <span class="screen-zoom-cue">Preview</span>
+              </button>
+              <figcaption><strong>SOE Buffer Audit</strong><span>Replay and review event behavior from the tester workspace.</span></figcaption>
+            </figure>
+            <figure class="screen-card reveal delay-3">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/availability-dashboard.webp" data-title="Availability Dashboard" aria-label="Open Availability Dashboard screenshot preview">
+                <img src="assets/screenshot/availability-dashboard.webp" alt="Availability dashboard screenshot" loading="lazy" />
+                <span class="screen-zoom-cue">Preview</span>
+              </button>
+              <figcaption><strong>48h Availability</strong><span>Support long-duration communication observation.</span></figcaption>
+            </figure>
+            <figure class="screen-card reveal delay-1">
+              <button class="screenshot-trigger" type="button" data-full="assets/screenshot/findings-dashboard.webp" data-title="Findings Dashboard" aria-label="Open Findings Dashboard screenshot preview">
+                <img src="assets/screenshot/findings-dashboard.webp" alt="Findings dashboard screenshot" loading="lazy" />
+                <span class="screen-zoom-cue">Preview</span>
+              </button>
+              <figcaption><strong>Findings</strong><span>Surface suspicious behavior for review and follow-up testing.</span></figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section class="section professional-section" id="professional-use">
+          <div class="professional-card reveal">
+            <p class="eyebrow">Professional use</p>
+            <h2>Useful for FAT, SAT preparation, commissioning support, and troubleshooting.</h2>
+            <p>Use the application as an engineering support tool together with approved project procedures, safe test boundaries, and the acceptance criteria defined by the project or utility.</p>
+            <div class="professional-grid">
+              <div><strong>Bench FAT</strong><span>RTU, gateway, and protection interface checks before site delivery.</span></div>
+              <div><strong>SAT preparation</strong><span>Prepare expected IOA lists, command cases, and evidence screenshots.</span></div>
+              <div><strong>Redundancy tests</strong><span>Observe active/standby link health, switchover, and recovery behavior.</span></div>
+              <div><strong>Fault diagnosis</strong><span>Separate wiring/serial issues from protocol, class, COT, and quality issues.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section faq-section" id="faq">
+          <div class="section-heading reveal">
+            <p class="eyebrow">FAQ</p>
+            <h2>Answers before you connect to a device.</h2>
+          </div>
+          <div class="faq-list reveal delay-1">
+            <details open>
+              <summary>Can this be used for professional FAT/SAT?</summary>
+              <p>Yes, as an engineering support tool. Use it with an approved test procedure, safe isolation boundary, and project acceptance criteria.</p>
+            </details>
+            <details>
+              <summary>Does it need installation?</summary>
+              <p>No. Download the Windows portable ZIP from GitHub Releases, extract it, and run the application on a compatible Windows machine.</p>
+            </details>
+            <details>
+              <summary>Why is the link responsive but values are empty?</summary>
+              <p>The link layer may be alive while the application image is not ready. Check General Interrogation, Class 1 polling, and returned ASDU data in the Line Monitor.</p>
+            </details>
+            <details>
+              <summary>Can I build it myself?</summary>
+              <p>Yes. Build from source on Windows using Visual Studio or MSBuild. The main application does not require package restore.</p>
+            </details>
+          </div>
+        </section>
+
+        <section class="download" id="download">
+          <div class="download-copy reveal">
+            <p class="eyebrow">Free and open source</p>
+            <h2>Download the portable build or inspect the source.</h2>
+            <p>IEC101 Master Tester is released under Apache-2.0 and organized for engineers who want a readable, auditable, and practical IEC-101 testing workspace.</p>
+          </div>
+          <div class="download-actions reveal delay-1">
+            <div class="download-mark" aria-hidden="true"><img src="assets/app-icon-256.png" width="36" height="36" alt="" /><span>IEC101</span></div>
+            <a class="button primary shine" href="https://github.com/masarray/IEC101MasterTester/releases">Download release</a>
+            <a class="button secondary" href="https://github.com/masarray/IEC101MasterTester">View repository</a>
+            <a class="button tertiary" href="https://github.com/masarray/IEC101MasterTester/blob/main/docs/BUILD_FROM_SOURCE.md">Build from source</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span class="footer-brand"><img src="assets/app-icon-64.png" width="22" height="22" alt="" />IEC101 Master Tester</span>
+        <span>Windows · Apache-2.0 · IEC 60870-5-101</span>
+      </footer>
+    </div>
+
+    <div class="screenshot-lightbox" id="screenshotLightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="lightboxTitle">
+      <div class="lightbox-topbar">
+        <div class="lightbox-title-group">
+          <strong id="lightboxTitle">Screenshot preview</strong>
+          <span>Drag to pan · wheel or pinch to zoom · Esc to close</span>
         </div>
-      </section>
-
-      <section class="section split" id="workflow">
-        <div class="section-heading reveal"><p class="eyebrow">Workflow</p><h2>From connection to evidence.</h2><p>Use the tester to connect, interrogate, observe, command, and document IEC-101 behavior in a repeatable workflow.</p></div>
-        <div class="status-board reveal delay-1">
-          <div><span>1</span><strong>Configure serial profile</strong></div>
-          <div><span>2</span><strong>Start single or dual link</strong></div>
-          <div><span>3</span><strong>Verify GI and values</strong></div>
-          <div><span>4</span><strong>Inspect line evidence</strong></div>
-          <div><span>5</span><strong>Test commands and SOE</strong></div>
-          <div><span>6</span><strong>Export supporting evidence</strong></div>
+        <div class="lightbox-actions" aria-label="Screenshot preview controls">
+          <button type="button" class="lightbox-control" data-lightbox-zoom="out" aria-label="Zoom out">−</button>
+          <button type="button" class="lightbox-control zoom-readout" data-lightbox-zoom="reset" aria-label="Reset zoom">100%</button>
+          <button type="button" class="lightbox-control" data-lightbox-zoom="in" aria-label="Zoom in">+</button>
+          <button type="button" class="lightbox-close" data-lightbox-close aria-label="Close screenshot preview">Close</button>
         </div>
-      </section>
-
-      <section class="section" id="screens">
-        <div class="section-heading reveal"><p class="eyebrow">Screenshots</p><h2>Focused windows for field engineers.</h2></div>
-        <div class="screen-grid">
-          <figure class="screen-card reveal"><img src="assets/screenshot/mission-control.webp" alt="Mission control screenshot" loading="lazy" /><figcaption>Mission Control</figcaption></figure>
-          <figure class="screen-card reveal delay-1"><img src="assets/screenshot/nuc-redundancy.webp" alt="NUC redundancy screenshot" loading="lazy" /><figcaption>NUC Redundancy</figcaption></figure>
-          <figure class="screen-card reveal delay-2"><img src="assets/screenshot/line-monitor.webp" alt="Line monitor screenshot" loading="lazy" /><figcaption>Line Monitor</figcaption></figure>
-          <figure class="screen-card reveal delay-3"><img src="assets/screenshot/soe-buffer-audit.webp" alt="SOE audit screenshot" loading="lazy" /><figcaption>SOE Buffer Audit</figcaption></figure>
-        </div>
-      </section>
-
-      <section class="section split" id="faq">
-        <div class="section-heading reveal"><p class="eyebrow">FAQ</p><h2>Practical answers before you connect.</h2></div>
-        <div class="faq-list reveal delay-1">
-          <details open><summary>Can this be used for professional FAT/SAT?</summary><p>Yes, as an engineering support tool. Use it with an approved test procedure, safe isolation boundary, and project acceptance criteria.</p></details>
-          <details><summary>Does it need installation?</summary><p>No. Use the Windows portable ZIP from GitHub Releases.</p></details>
-          <details><summary>Why is the link responsive but values are empty?</summary><p>The link layer may be alive while the application image is not ready. Check General Interrogation, Class 1 polling, and returned ASDU data in Line Monitor.</p></details>
-          <details><summary>Can I build it myself?</summary><p>Yes. Build with Visual Studio or MSBuild on Windows. See the Build from Source documentation.</p></details>
-        </div>
-      </section>
-
-      <section class="download" id="download">
-        <div class="reveal"><p class="eyebrow">Free and open source</p><h2>Download, test, inspect, and improve it.</h2><p>IEC101 Master Tester is released under Apache-2.0 and is designed to be readable, auditable, and practical for engineering teams.</p><div class="hero-actions"><a class="button primary" href="https://github.com/masarray/IEC101MasterTester/releases">Download release</a><a class="button secondary" href="https://github.com/masarray/IEC101MasterTester/blob/main/docs/QUICK_START.md">Read quick start</a></div></div>
-      </section>
-    </main>
-
-    <footer class="site-footer"><span>IEC101 Master Tester</span><span>Apache-2.0 · Windows · IEC 60870-5-101</span></footer>
+      </div>
+      <div class="lightbox-stage" tabindex="0" aria-label="Zoomable screenshot canvas">
+        <img id="lightboxImage" alt="" draggable="false" />
+      </div>
+    </div>
   </body>
 </html>

@@ -85,3 +85,7 @@ git push origin main
 ```
 
 The website is deployed without creating any additional branch.
+
+## Pre-release validation
+
+Before publishing a public tag, follow the [Release Checklist](RELEASE_CHECKLIST.md).

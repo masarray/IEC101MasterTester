@@ -385,7 +385,7 @@
                         <TextBlock x:Name="SelectedTimeTextBlock"
                                    Text="--:--:--.---"
                                    Margin="10,0,0,0"
-                                   FontFamily="Consolas"
+                                   FontFamily="Plus Jakarta Sans"
                                    FontSize="15"
                                    FontWeight="SemiBold"
                                    Foreground="#FFF2D6" />
@@ -580,7 +580,7 @@
                                Text="--:--:--.---"
                                Foreground="{StaticResource MutedTextBrush}"
                                FontSize="10"
-                               FontFamily="Consolas"
+                               FontFamily="Plus Jakarta Sans"
                                VerticalAlignment="Center" />
 
                     <TextBlock Grid.Column="1"
@@ -597,7 +597,7 @@
                                Text="--:--:--.---"
                                Foreground="{StaticResource MutedTextBrush}"
                                FontSize="10"
-                               FontFamily="Consolas"
+                               FontFamily="Plus Jakarta Sans"
                                VerticalAlignment="Center" />
                 </Grid>
 

@@ -3,5 +3,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Startup="App_Startup">
     <Application.Resources>
+        <FontFamily x:Key="AppFontFamily">Plus Jakarta Sans, Segoe UI</FontFamily>
+        <Style TargetType="{x:Type Window}">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+        </Style>
+        <Style TargetType="{x:Type Control}">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+        </Style>
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+        </Style>
+        <Style TargetType="{x:Type Label}">
+            <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}"/>
+        </Style>
     </Application.Resources>
 </Application>

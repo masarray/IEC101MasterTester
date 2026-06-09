@@ -6,7 +6,7 @@
         Height="860"
         MinWidth="1080"
         MinHeight="720"
-        Background="#0F172A" Icon="/SharedUi/Assets/Icons/iec60870-icon.png">
+        Background="#0F172A" Icon="/SharedUi/Assets/Icons/app-icon.png">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

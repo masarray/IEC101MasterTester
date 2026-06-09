@@ -1,28 +1,34 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 - 2026-06-09
 
 ### Added
 
-- Windows build workflow.
-- Portable release workflow with checksum generation.
-- GitHub Pages deployment workflow.
-- User-focused README, Quick Start, FAQ, Troubleshooting, Professional Use, Validation, Architecture, and Build documentation.
-- Improved NUC startup GI behavior and application image readiness tracking.
-- Improved active/standby redundancy recovery and state visibility.
+- Public Windows portable release workflow with SHA256 checksum generation.
+- GitHub Pages deployment from `docs/` through GitHub Actions.
+- Windows build workflow for the main application and the built-in slave simulator.
+- User-focused README, Quick Start, FAQ, Troubleshooting, Professional Use, Validation, Architecture, Build, and Repository Setup documentation.
+- Interactive landing page with screenshot fullscreen preview, zoom, pan, polished product icon usage, and refined engineering-product motion.
+- Application image readiness awareness for startup interrogation and NUC redundancy sessions.
+- NUC active/standby redundancy observation, switchover visibility, and recovery state reporting.
+- Built-in IEC-101 slave simulator packaged under `tools/IecSlaveSimulator` in the portable release.
 
 ### Changed
 
-- Public documentation now focuses on product usage, download, build, validation, and professional engineering workflow.
-- Release package now includes the slave simulator under `tools/IecSlaveSimulator`.
+- Repository documentation now focuses on product usage, download, build, validation, professional engineering workflow, and contribution.
+- Release package is prepared as a clean Windows portable ZIP for GitHub Releases.
+- Main application build uses .NET Framework/WPF assemblies without external project package restore.
+- Landing page visual polish improved for a more credible public engineering product presentation.
 
-### Notes
+### Release validation notes
 
-- Validate every release candidate with simulator and bench testing before using it for professional FAT/SAT evidence.
+Before publishing a public release, run the Windows Build workflow or build locally, then validate:
 
-## Repository automation
-
-- Prepared a `main`-only GitHub workflow model.
-- Added GitHub Pages deployment from `docs/` through GitHub Actions.
-- Hardened Windows portable release automation with checksum output.
-- Added repository setup documentation for default branch, Pages, and release tagging.
+- main application starts;
+- slave simulator starts;
+- single-link master/slave communication works;
+- NUC dual-link session starts;
+- startup General Interrogation populates values;
+- command lifecycle monitor reports confirmation/feedback;
+- Link A/Link B switchover and recovery are observable;
+- Line Monitor and Event Log capture usable evidence.

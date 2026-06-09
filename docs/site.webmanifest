@@ -1,0 +1,19 @@
+{
+  "name": "IEC101 Master Tester",
+  "short_name": "IEC101 Tester",
+  "icons": [
+    {
+      "src": "assets/app-icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0b1a25",
+  "background_color": "#061017",
+  "display": "standalone"
+}

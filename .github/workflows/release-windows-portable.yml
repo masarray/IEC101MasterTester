@@ -23,15 +23,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
-
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-
-      - name: Restore main application packages
-        shell: pwsh
-        run: nuget restore IEC101MasterTester.csproj -PackagesDirectory packages
 
       - name: Build main application Release
         shell: pwsh
@@ -62,10 +55,12 @@ jobs:
 
           Copy-Item -Path 'bin\Release\*' -Destination $packageDir -Recurse -Force
           Copy-Item -Path 'IecSlaveSimulator\bin\Release\net48\*' -Destination $simDir -Recurse -Force
+          Remove-Item -Path (Join-Path $packageDir '*.pdb') -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path (Join-Path $simDir '*.pdb') -Force -ErrorAction SilentlyContinue
           Copy-Item -Path 'README.md','LICENSE','NOTICE','THIRD_PARTY_NOTICES.md' -Destination $packageDir -Force
 
           New-Item -ItemType Directory -Force -Path (Join-Path $packageDir 'docs') | Out-Null
-          Copy-Item -Path 'docs\QUICK_START.md','docs\FAQ.md','docs\TROUBLESHOOTING.md','docs\PROFESSIONAL_USE.md','docs\VALIDATION.md' -Destination (Join-Path $packageDir 'docs') -Force
+          Copy-Item -Path 'docs\QUICK_START.md','docs\FAQ.md','docs\TROUBLESHOOTING.md','docs\PROFESSIONAL_USE.md','docs\VALIDATION.md','docs\RELEASE_CHECKLIST.md' -Destination (Join-Path $packageDir 'docs') -Force
 
           $zipPath = Join-Path $outDir "IEC101MasterTester-$version-windows-portable.zip"
           Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force

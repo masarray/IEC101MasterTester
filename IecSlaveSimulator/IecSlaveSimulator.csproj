@@ -10,10 +10,14 @@
     <Platforms>AnyCPU;x64</Platforms>
     <StartupObject>IecSlaveSimulator.App</StartupObject>
     <ApplicationIcon>app.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <Authors>MasArray</Authors>
+    <Product>IEC101 Master Tester Slave Simulator</Product>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="System.IO.Ports" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
@@ -37,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="..\SharedUi\Assets\Icons\iec60870-icon.png" Link="SharedUi\Assets\Icons\iec60870-icon.png" />
+    <Resource Include="..\SharedUi\Assets\Icons\app-icon.png" Link="SharedUi\Assets\Icons\app-icon.png" />
     <Resource Include="..\SharedUi\Assets\Profile\ari-profile.jpg" Link="SharedUi\Assets\Profile\ari-profile.jpg" />
   </ItemGroup>
 </Project>

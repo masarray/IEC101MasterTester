@@ -7,12 +7,12 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IEC101MasterTester")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("IEC101 Master Tester")]
+[assembly: AssemblyDescription("IEC 60870-5-101 Windows master tester and analyzer for FAT, SAT, commissioning, redundancy testing, and protocol evidence.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("IEC101MasterTester")]
-[assembly: AssemblyCopyright("Copyright ©  2026")]
+[assembly: AssemblyCompany("MasArray")]
+[assembly: AssemblyProduct("IEC101 Master Tester")]
+[assembly: AssemblyCopyright("Copyright © 2026 MasArray")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -48,5 +48,7 @@ using System.Windows;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.1.0.0")]
+[assembly: AssemblyFileVersion("0.1.0.0")]
+
+[assembly: AssemblyInformationalVersion("0.1.0")]

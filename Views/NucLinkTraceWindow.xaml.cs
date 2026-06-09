@@ -415,7 +415,7 @@ namespace IEC101MasterTester.Views
                     Text = tickTime.ToString("HH:mm:ss", CultureInfo.InvariantCulture),
                     Foreground = (Brush)FindResource("MutedTextBrush"),
                     FontSize = 10,
-                    FontFamily = new FontFamily("Consolas")
+                    FontFamily = new FontFamily("Plus Jakarta Sans")
                 };
                 Canvas.SetLeft(label, Math.Max(TimelineLeftMargin, x - 28));
                 Canvas.SetTop(label, 0);

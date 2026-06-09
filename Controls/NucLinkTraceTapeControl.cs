@@ -27,8 +27,8 @@ namespace IEC101MasterTester.Controls
         private static readonly Brush MarkerBandBrush = CreateBrush(243, 182, 51, 45);
         private static readonly Brush MarkerLineBrush = CreateBrush(243, 182, 51);
         private static readonly Brush BadgeFillBrush = CreateBrush(30, 42, 58);
-        private static readonly Typeface LabelTypeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-        private static readonly Typeface BadgeTypeface = new Typeface(new FontFamily("Consolas"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
+        private static readonly Typeface LabelTypeface = new Typeface(new FontFamily("Plus Jakarta Sans"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
+        private static readonly Typeface BadgeTypeface = new Typeface(new FontFamily("Plus Jakarta Sans"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
         private IReadOnlyList<float> _laneA;
         private IReadOnlyList<float> _laneB;
         private Rect _plotRect;
