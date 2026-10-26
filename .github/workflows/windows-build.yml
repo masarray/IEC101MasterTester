@@ -37,3 +37,21 @@ jobs:
       - name: Build slave simulator Release
         shell: pwsh
         run: msbuild IecSlaveSimulator\IecSlaveSimulator.csproj /restore /t:Rebuild /p:Configuration=Release /p:Platform=AnyCPU /p:UseSharedCompilation=false /m
+
+      - name: Verify slave simulator Release executable
+        shell: pwsh
+        run: |
+          $exe = 'IecSlaveSimulator\bin\Release\net48\IecSlaveSimulator.exe'
+          if (-not (Test-Path $exe)) { throw "Missing build output: $exe" }
+          Write-Host "Build output found: $exe"
+
+      - name: Upload IEC101 Slave Simulator Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: IEC101SlaveSimulator-net48-windows
+          path: |
+            IecSlaveSimulator/bin/Release/net48/IecSlaveSimulator.exe
+            IecSlaveSimulator/bin/Release/net48/*.dll
+            IecSlaveSimulator/bin/Release/net48/*.config
+          if-no-files-found: error
+          retention-days: 30
